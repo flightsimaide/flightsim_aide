@@ -35,6 +35,8 @@ flutter test
 flutter run                       # pick a device
 ```
 
+`flutter test` skips 3 tests (the contract tests against the plugin's test server) until the plugin core has been built, see "The plugin" below. After `pluginbuild.ps1` they run and pass.
+
 Release builds:
 
 ```
