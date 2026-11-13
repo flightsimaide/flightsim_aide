@@ -1,0 +1,34 @@
+name: app
+
+# Runs the same gate as a developer does before a commit, `tools/verify.sh`:
+# folder structure, layer rules, fixtures, acceptance tags, format, analyze and
+# the Flutter tests. Linux only: it is the cheapest runner, and the Dart code
+# is the same on every platform. The plugin has its own workflow (plugin.yml).
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# A newer push to the same branch makes the older run pointless.
+concurrency:
+  group: app-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Pinned to the version the project is developed with.
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.47.7'
+          channel: stable
+          cache: true
+
+      - name: Dependencies
+        run: flutter pub get
+
+      - name: Verify
+        run: tools/verify.sh
