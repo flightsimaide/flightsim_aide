@@ -1,0 +1,19 @@
+{
+ "source": "user manual (sw_continue, lines 509-530), parser.cpp checklist::activate_next_item and the real checker walkthrough",
+ "met": [],
+ "not_met": [],
+ "unknown": [],
+ "continue": {
+  "Start": "Hit",
+  "Hit": "Order test",
+  "Order test": "Second",
+  "Second": "Misplaced",
+  "Misplaced": "Last hit",
+  "Last hit": null,
+  "After none": null,
+  "Bare": "Bare next"
+ },
+ "warnings": [
+  "Line 29: sw_continue should be at the end of its checklist"
+ ]
+}

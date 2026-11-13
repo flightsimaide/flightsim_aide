@@ -1,0 +1,14 @@
+{
+  "signals": {
+    "sim/flightmodel/failures/onground_any": 1,
+    "sim/time/total_running_time_sec": 100.5,
+    "sim/flightmodel/position/indicated_airspeed": 77.5,
+    "sim/flightmodel/position/latitude": 44.491250047029595,
+    "flightsim_aide/aircraft_generation": 12
+  },
+  "arrays": {
+    "sim/cockpit2/engine/actuators/throttle_ratio": [0.25, 0.5, 0.75, 1],
+    "sim/cockpit2/engine/actuators/ignition_key": [3, 0, 0, 0]
+  },
+  "unsupported": ["sim/aircraft/view/acf_ICAO"]
+}

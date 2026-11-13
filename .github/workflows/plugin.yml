@@ -1,0 +1,79 @@
+name: plugin
+
+# Compiles the companion plugin and runs its core tests on all three desktop
+# systems, then runs the protocol contract against core_test_server. X-Plane
+# itself is not available on CI, so the shell is compiled but never loaded;
+# macOS and Linux builds are untested at runtime.
+on:
+  push:
+    paths:
+      - 'plugin/**'
+      - 'testing/fixtures/protocol/**'
+      - 'tools/protocol_contract.dart'
+      - '.github/workflows/plugin.yml'
+  pull_request:
+    paths:
+      - 'plugin/**'
+      - 'testing/fixtures/protocol/**'
+      - 'tools/protocol_contract.dart'
+      - '.github/workflows/plugin.yml'
+
+env:
+  # Pinned SDK. A failed download or a wrong archive fails the job.
+  XPLANE_SDK_URL: https://developer.x-plane.com/wp-content/plugins/code-sample-generation/sdk_zip_files/XPSDK430.zip
+
+jobs:
+  plugin:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ilammy/msvc-dev-cmd@v1
+        if: runner.os == 'Windows'
+
+      - uses: dart-lang/setup-dart@v1
+        with:
+          sdk: stable
+
+      - name: Download the X-Plane SDK
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/xpsdk"
+          curl --fail --silent --show-error --location --retry 3 \
+            --output "$RUNNER_TEMP/xpsdk.zip" "$XPLANE_SDK_URL"
+          unzip -q "$RUNNER_TEMP/xpsdk.zip" -d "$RUNNER_TEMP/xpsdk"
+          test -f "$RUNNER_TEMP/xpsdk/SDK/CHeaders/XPLM/XPLMDefs.h" \
+            || { echo "SDK archive does not contain SDK/CHeaders/XPLM/XPLMDefs.h"; exit 1; }
+          echo "XPLANE_SDK=$RUNNER_TEMP/xpsdk/SDK" >> "$GITHUB_ENV"
+
+      - name: Configure
+        shell: bash
+        run: |
+          cmake -S plugin -B plugin/build -G Ninja -DCMAKE_BUILD_TYPE=Release \
+            -DBUILD_TESTS=ON -DXPLANE_SDK="$XPLANE_SDK"
+
+      - name: Build (core, tests, test server, plugin shell)
+        shell: bash
+        run: cmake --build plugin/build
+
+      - name: Core tests
+        shell: bash
+        run: ctest --test-dir plugin/build --output-on-failure
+
+      - name: Contract against core_test_server
+        shell: bash
+        run: |
+          set -euo pipefail
+          exe=plugin/build/core_test_server
+          [ -f "$exe.exe" ] && exe="$exe.exe"
+          # The server exits when its stdin closes, so the pipe bounds its life.
+          (sleep 120) | "$exe" --exit-on-stdin-close --bind 127.0.0.1 > cts.out 2>&1 &
+          for i in $(seq 1 100); do grep -q 'PORT=' cts.out 2>/dev/null && break; sleep 0.1; done
+          port=$(sed -n 's/.*PORT=\([0-9]*\).*/\1/p' cts.out | head -1)
+          test -n "$port" || { cat cts.out; exit 1; }
+          dart tools/protocol_contract.dart "http://127.0.0.1:$port" --scenario default

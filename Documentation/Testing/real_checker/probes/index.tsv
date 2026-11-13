@@ -1,0 +1,14 @@
+q1.txt	stray words here
+q2.txt	// slash comment
+q3.txt	; semi comment
+q4.txt	SW_ITEM:Upper|X
+q5.txt	bogus_keyword:whatever
+q6.txt	@sw_item:Silenced|OK
+q7.txt	   sw_item:Indented|OK
+q8.txt	sw_item:NoPipe:sim/foo:1
+q9.txt	sw_item:Hash #1|ON
+q10.txt	sw_item:Pipe|A|B
+q11.txt	sw_item:Colon after pipe|A:B
+q12.txt	sw_item:|Empty label
+q13.txt	sw_itemvoid:
+q14.txt	sw_item:Dref|SET:sim/foo/bar:1

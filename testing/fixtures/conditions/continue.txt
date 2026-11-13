@@ -1,0 +1,43 @@
+# sw_continue: conditional links, order and position. Decoy pages sit between a page and its target so a jump shows
+# Hand-written for this project. Source of the expected results: user manual (sw_continue, lines 509-530), parser.cpp checklist::activate_next_item and the real checker walkthrough
+sw_checklist:Start
+sw_item:item of Start|CHECK
+sw_continue:Hit:fx/c/yes:1
+sw_checklist:Skipped 1
+sw_item:item of Skipped 1|CHECK
+sw_checklist:Hit
+sw_item:item of Hit|CHECK
+sw_continue:Order test
+sw_checklist:Skipped 2
+sw_item:item of Skipped 2|CHECK
+sw_checklist:Order test
+sw_item:item of Order test|CHECK
+sw_continue:Second:fx/c/yes:1
+sw_continue:Third:fx/c/yes:1
+sw_checklist:Skipped 3
+sw_item:item of Skipped 3|CHECK
+sw_checklist:Second
+sw_item:item of Second|CHECK
+sw_continue:False target:fx/c/no:1
+sw_continue:Misplaced
+sw_checklist:Third
+sw_item:item of Third|CHECK
+sw_checklist:False target
+sw_item:item of False target|CHECK
+sw_checklist:Misplaced
+sw_item:item a of Misplaced|CHECK
+sw_continue:Last hit:fx/c/yes:1
+sw_item:item b of Misplaced, after the link|CHECK
+sw_checklist:Skipped 4
+sw_item:item of Skipped 4|CHECK
+sw_checklist:Last hit
+sw_item:item of Last hit|CHECK
+sw_continue:Hit:fx/c/no:1
+sw_checklist:After none
+sw_item:item of After none|CHECK
+sw_continue:Bare:fx/c/up:+>1
+sw_checklist:Bare
+sw_item:item of Bare|CHECK
+sw_continue
+sw_checklist:Bare next
+sw_item:item of Bare next|CHECK

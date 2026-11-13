@@ -1,0 +1,4 @@
+sw_checklist:One
+sw_item:Before|A
+sw_item:Hash #1|ON
+sw_item:After|B

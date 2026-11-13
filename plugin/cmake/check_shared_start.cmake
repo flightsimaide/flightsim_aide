@@ -1,0 +1,20 @@
+# ctest helper: the plugin shell and core_test_server must start the server the
+# same way, through ServerLifecycle, and never call Server::start directly.
+#   cmake -DSHELL=<plugin.cpp> -DTEST_SERVER=<core_test_server.cpp> -P check_shared_start.cmake
+set(bad "")
+foreach(f "${SHELL}" "${TEST_SERVER}")
+  if(NOT EXISTS "${f}")
+    list(APPEND bad "missing: ${f}")
+    continue()
+  endif()
+  file(READ "${f}" text)
+  if(NOT text MATCHES "ServerLifecycle")
+    list(APPEND bad "${f} does not use ServerLifecycle")
+  endif()
+  if(text MATCHES "Server::start")
+    list(APPEND bad "${f} calls Server::start directly")
+  endif()
+endforeach()
+if(bad)
+  message(FATAL_ERROR "the shell and core_test_server must share ServerLifecycle: ${bad}")
+endif()

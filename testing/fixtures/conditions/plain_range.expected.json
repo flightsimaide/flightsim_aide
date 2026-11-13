@@ -1,0 +1,18 @@
+{
+ "source": "the user manual (XchecklistUserManual.tex 360-460) and parser.cpp dataref_dsc::trigered; XC_IN is data >= a && data <= b (parser.cpp dataref_dsc::trigered)",
+ "met": [
+  0,
+  1,
+  2,
+  6
+ ],
+ "not_met": [
+  3,
+  4,
+  5
+ ],
+ "unknown": [
+  7
+ ],
+ "warnings": []
+}

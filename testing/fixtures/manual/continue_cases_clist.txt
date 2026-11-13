@@ -1,0 +1,29 @@
+sw_checklist:Case 1:Case 1
+sw_item:Beacon|ON:sim/cockpit2/switches/beacon_on:1
+sw_item:Nav lights|ON:sim/cockpit2/switches/navigation_lights_on:1
+sw_continue:Landing path:sim/cockpit2/switches/landing_lights_on:1
+sw_continue:Taxi path:sim/cockpit2/switches/taxi_light_on:1
+sw_continue:Fallback path
+sw_checklist:Case 2:Case 2
+sw_item:Beacon|ON:sim/cockpit2/switches/beacon_on:1
+sw_item:Nav lights|ON:sim/cockpit2/switches/navigation_lights_on:1
+sw_continue:Landing path:sim/cockpit2/switches/landing_lights_on:1
+sw_continue:Taxi path:sim/cockpit2/switches/taxi_light_on:1
+sw_continue:Fallback path
+sw_checklist:Case 3:Case 3
+sw_item:Beacon|ON:sim/cockpit2/switches/beacon_on:1
+sw_item:Nav lights|ON:sim/cockpit2/switches/navigation_lights_on:1
+sw_continue:Landing path:sim/cockpit2/switches/landing_lights_on:1
+sw_continue:Taxi path:sim/cockpit2/switches/taxi_light_on:1
+sw_continue:Fallback path
+sw_checklist:Case 4:Link before the last item
+sw_item:Beacon|ON:sim/cockpit2/switches/beacon_on:1
+sw_continue:Taxi path:sim/cockpit2/switches/taxi_light_on:1
+sw_continue:Fallback path
+sw_item:Nav lights|ON:sim/cockpit2/switches/navigation_lights_on:1
+sw_checklist:Landing path:Landing path
+sw_item:Arrived at Landing path|done
+sw_checklist:Taxi path:Taxi path
+sw_item:Arrived at Taxi path|done
+sw_checklist:Fallback path:Fallback path
+sw_item:Arrived at Fallback path|done

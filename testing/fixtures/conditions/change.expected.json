@@ -1,0 +1,25 @@
+{
+ "source": "the user manual (XchecklistUserManual.tex 360-460) and parser.cpp dataref_dsc::trigered; the baseline is the value at the first evaluation after the item is activated (parser.cpp dataref_dsc::trigered, state INIT)",
+ "met": [
+  0,
+  3,
+  6,
+  7,
+  10
+ ],
+ "not_met": [
+  1,
+  2,
+  4,
+  5,
+  8,
+  9,
+  11,
+  12,
+  14
+ ],
+ "unknown": [
+  13
+ ],
+ "warnings": []
+}

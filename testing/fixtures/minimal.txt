@@ -1,0 +1,5 @@
+sw_checklist:Prepare:Prepare for flight
+sw_itemvoid:----- Prepare -----
+sw_item:Parking brake|SET
+sw_item:Batteries|ON
+sw_item:Flight plan|loaded

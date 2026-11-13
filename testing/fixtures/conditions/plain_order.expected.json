@@ -1,0 +1,25 @@
+{
+ "source": "the user manual (XchecklistUserManual.tex 360-460) and parser.cpp dataref_dsc::trigered; ordering compares raw doubles with no tolerance (parser.cpp operator< and friends)",
+ "met": [
+  0,
+  5,
+  6,
+  7,
+  10,
+  11,
+  13
+ ],
+ "not_met": [
+  1,
+  2,
+  3,
+  4,
+  8,
+  9,
+  12
+ ],
+ "unknown": [
+  14
+ ],
+ "warnings": []
+}

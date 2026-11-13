@@ -1,0 +1,18 @@
+# Less, greater, less or equal, greater or equal: at, just below and just above the boundary
+# Hand-written for this project. Source of the expected results: the user manual (XchecklistUserManual.tex 360-460) and parser.cpp dataref_dsc::trigered; ordering compares raw doubles with no tolerance (parser.cpp operator< and friends)
+sw_checklist:Order
+sw_item:< below|CHECK:fx/plain_order/01a:<10
+sw_item:< at|CHECK:fx/plain_order/02a:<10
+sw_item:< above|CHECK:fx/plain_order/03a:<10
+sw_item:> below|CHECK:fx/plain_order/04a:>10
+sw_item:> at|CHECK:fx/plain_order/05a:>10
+sw_item:> above|CHECK:fx/plain_order/06a:>10
+sw_item:<= below|CHECK:fx/plain_order/07a:<=10
+sw_item:<= at|CHECK:fx/plain_order/08a:<=10
+sw_item:<= above|CHECK:fx/plain_order/09a:<=10
+sw_item:>= below|CHECK:fx/plain_order/10a:>=10
+sw_item:>= at|CHECK:fx/plain_order/11a:>=10
+sw_item:>= above|CHECK:fx/plain_order/12a:>=10
+sw_item:<= just over, inside the equality tolerance|CHECK:fx/plain_order/13a:<=10
+sw_item:< negative bound|CHECK:fx/plain_order/14a:<-5
+sw_item:< no value yet|CHECK:fx/plain_order/15a:<10

@@ -1,0 +1,11 @@
+# Array elements name[n]
+# Hand-written for this project. Source of the expected results: the user manual (XchecklistUserManual.tex 360-460) and parser.cpp dataref_dsc::trigered and chkl.y dataref_name (name[index]); an element with no value (out of range or missing) is unknown in this app
+sw_checklist:Arrays
+sw_item:element 0|CHECK:fx/arrays/01a[0]:1
+sw_item:element 3|CHECK:fx/arrays/02a[3]:1
+sw_item:element 3 other value|CHECK:fx/arrays/03a[3]:1
+sw_item:element 3 with an operator|CHECK:fx/arrays/04a[3]:>0.5
+sw_item:only element 2 has a value, element 3 asked|CHECK:fx/arrays/05a[3]:1
+sw_item:index far out of range|CHECK:fx/arrays/06a[99]:0
+sw_item:two elements of one array|CHECK:(fx/arrays/07a[0]:1)&&(fx/arrays/07a[1]:1)
+sw_item:array element on the right side|CHECK:fx/arrays/08a:{fx/arrays/08b[2]}

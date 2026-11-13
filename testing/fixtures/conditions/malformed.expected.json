@@ -1,0 +1,19 @@
+{
+ "source": "chkl.y / chkl.l: the real parser reports a syntax error and rejects the whole file; this app keeps the file, skips the condition and warns",
+ "met": [
+  10
+ ],
+ "not_met": [],
+ "unknown": [],
+ "warnings": [
+  "Line 4: condition not supported: unbalanced parentheses",
+  "Line 5: condition not supported: unbalanced parentheses",
+  "Line 6: condition not supported: missing value",
+  "Line 7: condition not supported: unexpected \")\"",
+  "Line 8: condition not supported: unexpected text \"foo\"",
+  "Line 9: condition not supported: unexpected text \"~5\"",
+  "Line 10: condition not supported: unknown function \"frob\"",
+  "Line 11: condition not supported: missing condition after \"&&\"",
+  "Line 12: condition not supported: missing \":\" after the name"
+ ]
+}

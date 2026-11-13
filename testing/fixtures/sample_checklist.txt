@@ -1,0 +1,14 @@
+sw_checklist:Before Start:Before Start
+sw_itemvoid:----- Before Start -----
+sw_item:Preflight inspection|COMPLETE
+sw_item:Seats and belts|ADJUSTED
+sw_item:Parking brake|SET:sim/flightmodel/controls/parkbrake:1
+sw_item:Battery|ON
+sw_item:Avionics|ON
+sw_item:Beacon|ON
+
+sw_checklist:Before Takeoff:Before Takeoff
+sw_item:Flaps|SET
+sw_item:Trim|SET
+sw_item:Flight controls|FREE AND CORRECT
+sw_item:Takeoff briefing|COMPLETE

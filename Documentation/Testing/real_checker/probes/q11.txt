@@ -1,0 +1,4 @@
+sw_checklist:One
+sw_item:Before|A
+sw_item:Colon after pipe|A:B
+sw_item:After|B

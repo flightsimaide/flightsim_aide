@@ -1,0 +1,233 @@
+[
+  {
+    "name": "hello 200",
+    "method": "GET",
+    "path": "/v1/hello",
+    "expect": {
+      "status": 200,
+      "headers": {
+        "Content-Type": "application/json; charset=utf-8",
+        "Cache-Control": "no-store"
+      },
+      "bodyFile": "hello.json",
+      "jsonIgnore": ["port", "sim", "os", "pluginVersion", "runId"],
+      "portMatchesUrl": true
+    }
+  },
+  {
+    "name": "aircraft 200",
+    "needsFixtureAircraft": true,
+    "method": "GET",
+    "path": "/v1/aircraft",
+    "expect": {
+      "status": 200,
+      "headers": {
+        "Content-Type": "application/json; charset=utf-8",
+        "Cache-Control": "no-store"
+      },
+      "bodyFile": "aircraft_with_checklist.json"
+    }
+  },
+  {
+    "name": "aircraft 200 no checklist",
+    "scenario": "no_checklist",
+    "method": "GET",
+    "path": "/v1/aircraft",
+    "expect": {
+      "status": 200,
+      "bodyFile": "aircraft_no_checklist.json"
+    }
+  },
+  {
+    "name": "aircraft query ignored",
+    "needsFixtureAircraft": true,
+    "method": "GET",
+    "path": "/v1/aircraft?icao=B738&path=../x",
+    "expect": {
+      "status": 200,
+      "bodyFile": "aircraft_with_checklist.json"
+    }
+  },
+  {
+    "name": "checklist 200",
+    "needsFixtureAircraft": true,
+    "method": "GET",
+    "path": "/v1/checklist",
+    "expect": {
+      "status": 200,
+      "headers": {
+        "Content-Type": "text/plain",
+        "ETag": "\"1761206400123-267\"",
+        "X-Aircraft-Generation": "12",
+        "Content-Length": "267"
+      },
+      "headersPresent": ["Last-Modified"],
+      "bodyFile": "checklist_sample.txt"
+    }
+  },
+  {
+    "name": "checklist 304",
+    "needsFixtureAircraft": true,
+    "method": "GET",
+    "path": "/v1/checklist",
+    "headers": { "If-None-Match": "\"1761206400123-267\"" },
+    "expect": {
+      "status": 304,
+      "headers": { "ETag": "\"1761206400123-267\"" },
+      "bodyEmpty": true
+    }
+  },
+  {
+    "name": "checklist 304 weak value in a list",
+    "needsFixtureAircraft": true,
+    "method": "GET",
+    "path": "/v1/checklist",
+    "headers": { "If-None-Match": "\"1-1\", W/\"1761206400123-267\"" },
+    "expect": { "status": 304, "bodyEmpty": true }
+  },
+  {
+    "name": "checklist 304 star",
+    "method": "GET",
+    "path": "/v1/checklist",
+    "headers": { "If-None-Match": "*" },
+    "expect": { "status": 304, "bodyEmpty": true }
+  },
+  {
+    "name": "checklist 200 on a different etag",
+    "needsFixtureAircraft": true,
+    "method": "GET",
+    "path": "/v1/checklist",
+    "headers": { "If-None-Match": "\"1761206400123-268\"" },
+    "expect": { "status": 200, "bodyFile": "checklist_sample.txt" }
+  },
+  {
+    "name": "checklist 200 on garbage if-none-match",
+    "needsFixtureAircraft": true,
+    "method": "GET",
+    "path": "/v1/checklist",
+    "headers": { "If-None-Match": "garbage,,\"" },
+    "expect": { "status": 200, "bodyFile": "checklist_sample.txt" }
+  },
+  {
+    "name": "checklist 404 no checklist",
+    "scenario": "no_checklist",
+    "method": "GET",
+    "path": "/v1/checklist",
+    "expect": {
+      "status": 404,
+      "headers": { "Content-Type": "application/json; charset=utf-8" },
+      "bodyFile": "error_404.json"
+    }
+  },
+  {
+    "name": "checklist 413 oversize",
+    "scenario": "oversize",
+    "pluginOnly": true,
+    "method": "GET",
+    "path": "/v1/checklist",
+    "expect": { "status": 413, "jsonSubset": { "error": "too_large" } }
+  },
+  {
+    "name": "checklist query ignored",
+    "needsFixtureAircraft": true,
+    "method": "GET",
+    "path": "/v1/checklist?path=../x",
+    "expect": { "status": 200, "bodyFile": "checklist_sample.txt" }
+  },
+  {
+    "name": "POST aircraft 405",
+    "method": "POST",
+    "path": "/v1/aircraft",
+    "expect": {
+      "status": 405,
+      "headers": { "Allow": "GET, HEAD" },
+      "jsonSubset": { "error": "method_not_allowed" }
+    }
+  },
+  {
+    "name": "PUT checklist 405",
+    "method": "PUT",
+    "path": "/v1/checklist",
+    "expect": { "status": 405, "jsonSubset": { "error": "method_not_allowed" } }
+  },
+  {
+    "name": "DELETE hello 405",
+    "method": "DELETE",
+    "path": "/v1/hello",
+    "expect": { "status": 405, "jsonSubset": { "error": "method_not_allowed" } }
+  },
+  {
+    "name": "POST stream 405",
+    "method": "POST",
+    "path": "/v1/stream",
+    "expect": { "status": 405, "jsonSubset": { "error": "method_not_allowed" } }
+  },
+  {
+    "name": "plain GET stream 400",
+    "method": "GET",
+    "path": "/v1/stream",
+    "expect": { "status": 400, "jsonSubset": { "error": "upgrade_required" } }
+  },
+  {
+    "name": "unknown path 404",
+    "method": "GET",
+    "path": "/v1/other",
+    "expect": { "status": 404, "jsonSubset": { "error": "not_found" } }
+  },
+  {
+    "name": "root 404",
+    "method": "GET",
+    "path": "/",
+    "expect": { "status": 404, "jsonSubset": { "error": "not_found" } }
+  },
+  {
+    "name": "POST unknown path 404",
+    "method": "POST",
+    "path": "/nothing",
+    "expect": { "status": 404, "jsonSubset": { "error": "not_found" } }
+  },
+  {
+    "name": "traversal encoded 404",
+    "method": "GET",
+    "path": "/v1/checklist/..%2f..%2fetc%2fpasswd",
+    "expect": { "status": 404, "jsonSubset": { "error": "not_found" } }
+  },
+  {
+    "name": "traversal dots 404",
+    "method": "GET",
+    "path": "/v1/%2e%2e/aircraft",
+    "expect": { "status": 404, "jsonSubset": { "error": "not_found" } }
+  },
+  {
+    "name": "double slash 404",
+    "method": "GET",
+    "path": "//v1/aircraft",
+    "expect": { "status": 404 }
+  },
+  {
+    "name": "HEAD aircraft",
+    "needsFixtureAircraft": true,
+    "method": "HEAD",
+    "path": "/v1/aircraft",
+    "expect": {
+      "status": 200,
+      "headers": { "Content-Type": "application/json; charset=utf-8" },
+      "headersLengthOfFile": { "Content-Length": "aircraft_with_checklist.json" },
+      "bodyEmpty": true
+    }
+  },
+  {
+    "name": "HEAD checklist",
+    "needsFixtureAircraft": true,
+    "method": "HEAD",
+    "path": "/v1/checklist",
+    "expect": {
+      "status": 200,
+      "headers": {
+        "ETag": "\"1761206400123-267\"",
+        "Content-Length": "267"
+      },
+      "bodyEmpty": true
+    }
+  }
+]

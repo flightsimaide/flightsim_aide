@@ -1,0 +1,18 @@
+{
+ "source": "the user manual (XchecklistUserManual.tex 360-460) and parser.cpp dataref_dsc::trigered and chkl.y dataref_name (name[index]); an element with no value (out of range or missing) is unknown in this app",
+ "met": [
+  0,
+  1,
+  3,
+  6,
+  7
+ ],
+ "not_met": [
+  2
+ ],
+ "unknown": [
+  4,
+  5
+ ],
+ "warnings": []
+}

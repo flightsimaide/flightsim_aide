@@ -1,0 +1,40 @@
+{
+ "steps": [
+  {
+   "fx/change/01a": 10,
+   "fx/change/02a": 10,
+   "fx/change/03a": 10,
+   "fx/change/04a": 10,
+   "fx/change/05a": 10,
+   "fx/change/06a": 10,
+   "fx/change/07a": 10,
+   "fx/change/08a": 10,
+   "fx/change/09a": 10,
+   "fx/change/10a": 10,
+   "fx/change/11a": 10,
+   "fx/change/12a": 100,
+   "fx/change/13a": null,
+   "fx/change/14a": 10,
+   "fx/change/15a": 10
+  },
+  {
+   "fx/change/01a": 16,
+   "fx/change/02a": 15,
+   "fx/change/03a": 4,
+   "fx/change/04a": 4,
+   "fx/change/05a": 5,
+   "fx/change/06a": 16,
+   "fx/change/07a": 16,
+   "fx/change/08a": 4,
+   "fx/change/09a": 15,
+   "fx/change/10a": 10,
+   "fx/change/11a": 10.5,
+   "fx/change/13a": 100,
+   "fx/change/14a": null,
+   "fx/change/15a": 16
+  },
+  {
+   "fx/change/15a": 10
+  }
+ ]
+}

@@ -1,0 +1,354 @@
+{
+  "colours": {
+    "white": [
+      0.9,
+      0.9,
+      0.9
+    ],
+    "grey": [
+      0.6,
+      0.6,
+      0.6
+    ],
+    "amber": [
+      1.0,
+      0.75,
+      0.0
+    ]
+  },
+  "checklists": [
+    {
+      "name": "EXAMPLE TWIN TURBOPROP - NORMAL PROCEDURES",
+      "title": "EXAMPLE TWIN TURBOPROP - NORMAL PROCEDURES",
+      "continues": [
+        "(next)"
+      ],
+      "items": [
+        {
+          "type": "note",
+          "label": "EXAMPLE TWIN TURBOPROP",
+          "result": "",
+          "labelRuns": [
+            {
+              "text": "EXAMPLE TWIN TURBOPROP",
+              "colour": "white"
+            }
+          ]
+        },
+        {
+          "type": "note",
+          "label": "LOOKALIKE FIXTURE - NOT A REAL AIRCRAFT",
+          "result": "",
+          "labelRuns": [
+            {
+              "text": "LOOKALIKE FIXTURE - NOT A REAL AIRCRAFT",
+              "colour": "grey"
+            }
+          ]
+        },
+        {
+          "type": "note",
+          "label": "Complete each checklist from top to bottom.",
+          "result": ""
+        },
+        {
+          "type": "check",
+          "label": "CONTINUE TO CHECKLISTS",
+          "result": ""
+        }
+      ]
+    },
+    {
+      "name": "EXTERIOR PREFLIGHT",
+      "title": "EXTERIOR PREFLIGHT",
+      "continues": [
+        "COCKPIT PREPARATION"
+      ],
+      "items": [
+        {
+          "type": "note",
+          "label": "::::::::::::::: WALKAROUND ::::::::::::::::",
+          "result": ""
+        },
+        {
+          "type": "check",
+          "label": "Chocks",
+          "result": "IN PLACE"
+        },
+        {
+          "type": "check",
+          "label": "Pitot covers",
+          "result": "REMOVED"
+        },
+        {
+          "type": "check",
+          "label": "Control surfaces",
+          "result": "FREE AND CLEAR"
+        },
+        {
+          "type": "check",
+          "label": "Fuel quantity, both tanks",
+          "result": "CHECKED",
+          "labelRuns": [
+            {
+              "text": "Fuel quantity",
+              "colour": "white"
+            },
+            {
+              "text": ", both tanks",
+              "colour": "grey"
+            }
+          ]
+        },
+        {
+          "type": "check",
+          "label": "Fuel caps",
+          "result": "SECURE"
+        },
+        {
+          "type": "check",
+          "label": "Landing gear",
+          "result": "CHECKED"
+        },
+        {
+          "type": "note",
+          "label": "Fuel quantity limit",
+          "result": "3200 LBS"
+        }
+      ]
+    },
+    {
+      "name": "COCKPIT PREPARATION",
+      "title": "COCKPIT PREPARATION",
+      "continues": [
+        "ENGINE START"
+      ],
+      "items": [
+        {
+          "type": "note",
+          "label": "---------- OVERHEAD PANEL ----------",
+          "result": ""
+        },
+        {
+          "type": "check",
+          "label": "Battery",
+          "result": "ON"
+        },
+        {
+          "type": "check",
+          "label": "Avionics master",
+          "result": "ON"
+        },
+        {
+          "type": "check",
+          "label": "Beacon light",
+          "result": "ON",
+          "labelRuns": [
+            {
+              "text": "Beacon",
+              "colour": "white"
+            },
+            {
+              "text": " light",
+              "colour": "grey"
+            }
+          ]
+        },
+        {
+          "type": "check",
+          "label": "Cabin lights",
+          "result": "AS NEEDED"
+        },
+        {
+          "type": "check",
+          "label": "Parking brake",
+          "result": "SET"
+        },
+        {
+          "type": "check",
+          "label": "Flight plan",
+          "result": "LOADED"
+        },
+        {
+          "type": "note",
+          "label": "CAUTION: CHECK FUEL SELECTORS",
+          "result": "",
+          "labelRuns": [
+            {
+              "text": "CAUTION: CHECK FUEL SELECTORS",
+              "colour": "amber"
+            }
+          ]
+        },
+        {
+          "type": "check",
+          "label": "Fuel selectors",
+          "result": "ON"
+        },
+        {
+          "type": "check",
+          "label": "Altimeter",
+          "result": "SET"
+        },
+        {
+          "type": "check",
+          "label": "Transponder",
+          "result": "STANDBY"
+        }
+      ]
+    },
+    {
+      "name": "ENGINE START",
+      "title": "ENGINE START",
+      "continues": [
+        "BEFORE TAKEOFF"
+      ],
+      "items": [
+        {
+          "type": "check",
+          "label": "Propeller",
+          "result": "FEATHERED"
+        },
+        {
+          "type": "check",
+          "label": "Condition levers",
+          "result": "FUEL OFF"
+        },
+        {
+          "type": "check",
+          "label": "Beacon",
+          "result": "ON"
+        },
+        {
+          "type": "check",
+          "label": "Starter",
+          "result": "ENGAGE"
+        },
+        {
+          "type": "check",
+          "label": "Oil pressure, both engines",
+          "result": "IN GREEN",
+          "labelRuns": [
+            {
+              "text": "Oil pressure",
+              "colour": "white"
+            },
+            {
+              "text": ", both engines",
+              "colour": "grey"
+            }
+          ]
+        },
+        {
+          "type": "check",
+          "label": "Generators",
+          "result": "ON"
+        },
+        {
+          "type": "check",
+          "label": "Engine instruments",
+          "result": "CHECKED"
+        },
+        {
+          "type": "note",
+          "label": "Call \"Clear prop\" before starting each engine.",
+          "result": ""
+        }
+      ]
+    },
+    {
+      "name": "BEFORE TAKEOFF",
+      "title": "BEFORE TAKEOFF",
+      "continues": [
+        "CRUISE"
+      ],
+      "items": [
+        {
+          "type": "check",
+          "label": "Flaps",
+          "result": "TAKEOFF"
+        },
+        {
+          "type": "check",
+          "label": "Trim",
+          "result": "SET"
+        },
+        {
+          "type": "check",
+          "label": "Flight controls",
+          "result": "FREE AND CORRECT"
+        },
+        {
+          "type": "check",
+          "label": "Takeoff briefing",
+          "result": "COMPLETE"
+        },
+        {
+          "type": "check",
+          "label": "Strobe lights",
+          "result": "ON"
+        }
+      ]
+    },
+    {
+      "name": "LANDING",
+      "title": "LANDING",
+      "continues": [],
+      "items": [
+        {
+          "type": "note",
+          "label": "---------- APPROACH ----------",
+          "result": ""
+        },
+        {
+          "type": "check",
+          "label": "Landing gear",
+          "result": "DOWN"
+        },
+        {
+          "type": "check",
+          "label": "Flaps",
+          "result": "LANDING"
+        },
+        {
+          "type": "check",
+          "label": "Speed, final approach",
+          "result": "VREF",
+          "labelRuns": [
+            {
+              "text": "Speed",
+              "colour": "white"
+            },
+            {
+              "text": ", final",
+              "colour": "grey"
+            },
+            {
+              "text": " approach",
+              "colour": "white"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "CRUISE",
+      "title": "CRUISE",
+      "continues": [
+        "LANDING"
+      ],
+      "items": [
+        {
+          "type": "check",
+          "label": "Power",
+          "result": "SET"
+        },
+        {
+          "type": "check",
+          "label": "Fuel",
+          "result": "CHECKED"
+        }
+      ]
+    }
+  ]
+}

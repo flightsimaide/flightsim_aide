@@ -1,0 +1,10 @@
+# Not equal, written ! and !=
+# Hand-written for this project. Source of the expected results: the user manual (XchecklistUserManual.tex 360-460) and parser.cpp dataref_dsc::trigered; ! is "not equal", not a logical not (chkl.y rel_operation)
+sw_checklist:Not equal
+sw_item:! differs|CHECK:fx/plain_not_equal/01a:!1
+sw_item:! same|CHECK:fx/plain_not_equal/02a:!1
+sw_item:!= differs|CHECK:fx/plain_not_equal/03a:!=1
+sw_item:!= same|CHECK:fx/plain_not_equal/04a:!=1
+sw_item:! equal within the tolerance (5e-7)|CHECK:fx/plain_not_equal/05a:!1
+sw_item:! differs outside the tolerance (2e-6)|CHECK:fx/plain_not_equal/06a:!1
+sw_item:! no value yet|CHECK:fx/plain_not_equal/07a:!1

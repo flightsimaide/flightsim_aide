@@ -1,0 +1,4 @@
+sw_checklist:One
+sw_item:Before|A
+; semi comment
+sw_item:After|B

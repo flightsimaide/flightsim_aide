@@ -1,0 +1,17 @@
+{
+ "source": "the user manual (XchecklistUserManual.tex 360-460) and parser.cpp dataref_dsc::trigered; XC_HYST state machine in parser.cpp dataref_dsc::checkTrig",
+ "met": [
+  0,
+  3,
+  4
+ ],
+ "not_met": [
+  1,
+  2,
+  5
+ ],
+ "unknown": [
+  6
+ ],
+ "warnings": []
+}

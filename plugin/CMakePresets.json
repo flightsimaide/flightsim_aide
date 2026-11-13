@@ -1,0 +1,35 @@
+{
+  "version": 3,
+  "cmakeMinimumRequired": { "major": 3, "minor": 21, "patch": 0 },
+  "configurePresets": [
+    {
+      "name": "tests",
+      "displayName": "Core, tests and core_test_server (Debug)",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/tests",
+      "cacheVariables": { "CMAKE_BUILD_TYPE": "Debug", "BUILD_TESTS": "ON" }
+    },
+    {
+      "name": "shell",
+      "displayName": "X-Plane plugin (Release; set XPLANE_SDK to the SDK folder)",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/shell",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "BUILD_TESTS": "OFF",
+        "XPLANE_SDK": "$env{XPLANE_SDK}"
+      }
+    }
+  ],
+  "buildPresets": [
+    { "name": "tests", "configurePreset": "tests" },
+    { "name": "shell", "configurePreset": "shell", "targets": ["flightsim_aide"] }
+  ],
+  "testPresets": [
+    {
+      "name": "tests",
+      "configurePreset": "tests",
+      "output": { "outputOnFailure": true }
+    }
+  ]
+}

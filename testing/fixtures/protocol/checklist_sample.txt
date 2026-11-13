@@ -1,0 +1,9 @@
+sw_checklist:Before start:Before start checklist
+sw_itemvoid:----- Before start -----
+sw_item:Parking brake|SET
+sw_item:Battery|ON
+sw_item:Avionics|OFF
+sw_checklist:Shutdown:Shutdown checklist
+sw_item:Throttle|IDLE
+sw_item:Mixture|CUTOFF
+sw_item:Battery|OFF

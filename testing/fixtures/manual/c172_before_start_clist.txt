@@ -1,0 +1,11 @@
+sw_checklist:Before start:Before start checklist
+sw_itemvoid:----- Before start -----
+sw_item:Battery|ON:sim/cockpit2/electrical/battery_on[0]:1
+sw_item:Avionics master|ON:sim/cockpit2/switches/avionics_power_on:1
+sw_item:Beacon light|ON:sim/cockpit2/switches/beacon_on:1
+sw_item:Parking brake|SET:sim/flightmodel/controls/parkbrake:1
+sw_item:Flight plan|loaded
+sw_checklist:Shutdown:Shutdown checklist
+sw_item:Throttle|IDLE
+sw_item:Mixture|CUTOFF
+sw_item:Battery|OFF

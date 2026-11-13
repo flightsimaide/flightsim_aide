@@ -1,0 +1,82 @@
+######################################## COLOUR DEFINES ########################################################
+sw_define_colour:white:0.9,0.9,0.9
+sw_define_colour:grey:0.6,0.6,0.6
+sw_define_colour:amber:1.0,0.75,0.0
+################################################################################################################
+sw_checklist:EXAMPLE TWIN TURBOPROP - NORMAL PROCEDURES
+################################################################################################################
+sw_itemvoid_c:\white\          EXAMPLE TWIN TURBOPROP
+sw_itemvoid_c:\grey\          LOOKALIKE FIXTURE - NOT A REAL AIRCRAFT
+sw_itemvoid:
+sw_rcolsize:60
+sw_remark:Complete each checklist from top to bottom.
+sw_item_c:CONTINUE TO CHECKLISTS| 
+sw_continue
+
+################################################################################################################
+sw_checklist:EXTERIOR PREFLIGHT:EXTERIOR PREFLIGHT
+################################################################################################################
+sw_itemvoid:::::::::::::::: WALKAROUND ::::::::::::::::
+sw_item:Chocks|IN PLACE
+sw_item:Pitot covers|REMOVED
+sw_item:Control surfaces|FREE AND CLEAR
+sw_item_c:\white\Fuel quantity\grey\, both tanks|CHECKED
+sw_item:Fuel caps|SECURE
+sw_item:Landing gear|CHECKED
+sw_iteminfo:Fuel quantity limit|3200 LBS
+sw_continue: COCKPIT PREPARATION
+
+################################################################################################################
+sw_checklist:COCKPIT PREPARATION:COCKPIT PREPARATION
+################################################################################################################
+sw_itemvoid:---------- OVERHEAD PANEL ----------
+sw_item:Battery|ON:sim/cockpit2/electrical/battery_on[0]:1
+sw_item:Avionics master|ON:sim/cockpit2/switches/avionics_power_on:1
+sw_item_c:\white\Beacon\grey\ light|ON:sim/cockpit2/switches/beacon_on:1
+sw_item:Cabin lights|AS NEEDED
+sw_item:Parking brake|SET:sim/flightmodel/controls/parkbrake:1
+sw_item:Flight plan|LOADED
+sw_show:sim/cockpit2/electrical/battery_on[0]:1
+sw_itemvoid_c:\amber\          CAUTION: CHECK FUEL SELECTORS
+sw_item:Fuel selectors|ON
+sw_item:Altimeter|SET
+sw_item:Transponder|STANDBY
+sw_continue: ENGINE START
+
+################################################################################################################
+sw_checklist:ENGINE START:ENGINE START
+################################################################################################################
+sw_item:Propeller|FEATHERED
+sw_item:Condition levers|FUEL OFF
+sw_item:Beacon|ON
+sw_item:Starter|ENGAGE
+sw_item_c:\white\Oil pressure\grey\, both engines|IN GREEN:(sim/cockpit2/engine/indicators/oil_pressure_psi[0]:40)&&(sim/cockpit2/engine/indicators/oil_pressure_psi[1]:40)
+sw_item:Generators|ON
+sw_item:Engine instruments|CHECKED
+sw_remark:Call "Clear prop" before starting each engine.
+sw_continue:BEFORE TAKEOFF
+
+################################################################################################################
+sw_checklist:BEFORE TAKEOFF
+################################################################################################################
+sw_item:Flaps|TAKEOFF
+sw_item:Trim|SET
+sw_item:Flight controls|FREE AND CORRECT
+sw_item:Takeoff briefing|COMPLETE
+sw_item:Strobe lights|ON
+sw_continue:CRUISE
+
+################################################################################################################
+sw_checklist:LANDING
+################################################################################################################
+sw_itemvoid:---------- APPROACH ----------
+sw_item:Landing gear|DOWN
+sw_item:Flaps|LANDING
+sw_item_c:\white\Speed\grey\, final\\ approach|VREF
+
+################################################################################################################
+sw_checklist:CRUISE
+################################################################################################################
+sw_item:Power|SET
+sw_item:Fuel|CHECKED
+sw_continue:LANDING

@@ -1,0 +1,17 @@
+{
+ "source": "the user manual (XchecklistUserManual.tex 360-460) and parser.cpp dataref_dsc::trigered; ! is \"not equal\", not a logical not (chkl.y rel_operation)",
+ "met": [
+  0,
+  2,
+  5
+ ],
+ "not_met": [
+  1,
+  3,
+  4
+ ],
+ "unknown": [
+  6
+ ],
+ "warnings": []
+}

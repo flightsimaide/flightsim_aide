@@ -1,0 +1,22 @@
+sw_item:Orphan item|before any checklist
+
+# a comment line
+// not a comment
+
+@sw_checklist: Preliminary:Preliminary
+@sw_item:Parking brake|SET|set:sim/flightmodel/controls/parkbrake:1
+sw_item:Item with no pipe
+sw_itemvoid:----- Preliminary -----
+SW_ITEM:Upper case keyword|OK
+bogus_keyword:whatever
+
+sw_checklist:Empty
+sw_checklist:Colours
+sw_define_colour:red:1.0,0.0,0.0
+sw_define_colour:red:0,1,0
+sw_define_colour:blue:2,0,0
+sw_define_colour:bad:1,2
+sw_item_c:\red\Red\\ plain|\blue\ON
+sw_item_c:\ghost\Ghost colour|OK
+sw_show:sim/cockpit2/electrical/battery_on[0]:1
+sw_continue:Nowhere

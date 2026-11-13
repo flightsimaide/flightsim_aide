@@ -1,0 +1,18 @@
+# Change since activation: +>, -< and ><. Step 1 is the baseline, step 2 the current value
+# Hand-written for this project. Source of the expected results: the user manual (XchecklistUserManual.tex 360-460) and parser.cpp dataref_dsc::trigered; the baseline is the value at the first evaluation after the item is activated (parser.cpp dataref_dsc::trigered, state INIT)
+sw_checklist:Change
+sw_item:+> grew by more|CHECK:fx/change/01a:+>5
+sw_item:+> grew by exactly the limit|CHECK:fx/change/02a:+>5
+sw_item:+> shrank instead|CHECK:fx/change/03a:+>5
+sw_item:-< shrank by more|CHECK:fx/change/04a:-<5
+sw_item:-< shrank by exactly the limit|CHECK:fx/change/05a:-<5
+sw_item:-< grew instead|CHECK:fx/change/06a:-<5
+sw_item:>< up by more|CHECK:fx/change/07a:><5
+sw_item:>< down by more|CHECK:fx/change/08a:><5
+sw_item:>< by exactly the limit|CHECK:fx/change/09a:><5
+sw_item:>< no change|CHECK:fx/change/10a:><0
+sw_item:>< any change over zero|CHECK:fx/change/11a:><0
+sw_item:no baseline - first value only|CHECK:fx/change/12a:+>5
+sw_item:baseline step has no value|CHECK:fx/change/13a:+>5
+sw_item:current value missing after a baseline|CHECK:fx/change/14a:+>5
+sw_item:met in step 2, back at the start in step 3 (the tick stays elsewhere)|CHECK:fx/change/15a:+>5

@@ -1,0 +1,14 @@
+# Malformed conditions: each keeps the item manual and adds one warning
+# Hand-written for this project. Source of the expected results: chkl.y / chkl.l: the real parser reports a syntax error and rejects the whole file; this app keeps the file, skips the condition and warns
+sw_checklist:Malformed
+sw_item:unbalanced, missing )|CHECK:(fx/m/a:1
+sw_item:unbalanced, extra )|CHECK:fx/m/b:1)
+sw_item:missing operand|CHECK:fx/m/c:>
+sw_item:empty group|CHECK:()
+sw_item:stray text after the value|CHECK:fx/m/d:1 foo
+sw_item:unknown operator|CHECK:fx/m/e:~5
+sw_item:unknown function|CHECK:fx/m/f:frob(1)
+sw_item:and with nothing after|CHECK:(fx/m/g:1)&&
+sw_item:no colon after the name|CHECK:fx/m/h
+sw_item:empty condition after the colon|CHECK:
+sw_item:good item after the bad ones|CHECK:fx/m/ok:1

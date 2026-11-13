@@ -1,0 +1,823 @@
+[
+  {
+    "name": "subscribe is acknowledged",
+    "steps": [
+      {
+        "send": {
+          "op": "subscribe",
+          "id": 1,
+          "name": "sim/flightmodel/failures/onground_any",
+          "hz": 2
+        }
+      },
+      {
+        "expect": {
+          "op": "subscribed",
+          "id": 1
+        },
+        "withinMs": 1500
+      }
+    ]
+  },
+  {
+    "name": "values arrive at the requested rate",
+    "steps": [
+      {
+        "send": {
+          "op": "subscribe",
+          "id": 1,
+          "name": "sim/flightmodel/failures/onground_any",
+          "hz": 2
+        }
+      },
+      {
+        "expect": {
+          "op": "subscribed",
+          "id": 1
+        },
+        "withinMs": 1500
+      },
+      {
+        "collect": {
+          "match": {
+            "op": "values",
+            "v": {
+              "1": 1
+            }
+          },
+          "forMs": 2000,
+          "min": 3,
+          "max": 6
+        }
+      }
+    ]
+  },
+  {
+    "name": "unknown name",
+    "steps": [
+      {
+        "send": {
+          "op": "subscribe",
+          "id": 2,
+          "name": "no/such/dataref",
+          "hz": 1
+        }
+      },
+      {
+        "expect": {
+          "op": "error",
+          "id": 2,
+          "code": "unknown_name"
+        },
+        "withinMs": 1500
+      }
+    ]
+  },
+  {
+    "name": "unsupported: a whole array",
+    "steps": [
+      {
+        "send": {
+          "op": "subscribe",
+          "id": 3,
+          "name": "sim/cockpit2/engine/actuators/throttle_ratio",
+          "hz": 1
+        }
+      },
+      {
+        "expect": {
+          "op": "error",
+          "id": 3,
+          "code": "unsupported"
+        },
+        "withinMs": 1500
+      }
+    ]
+  },
+  {
+    "name": "missing name is a bad request",
+    "steps": [
+      {
+        "send": {
+          "op": "subscribe",
+          "id": 4,
+          "hz": 1
+        }
+      },
+      {
+        "expect": {
+          "op": "error",
+          "id": 4,
+          "code": "bad_request"
+        },
+        "withinMs": 500
+      }
+    ]
+  },
+  {
+    "name": "hz above 60 is a bad request",
+    "steps": [
+      {
+        "send": {
+          "op": "subscribe",
+          "id": 5,
+          "name": "sim/flightmodel/failures/onground_any",
+          "hz": 61
+        }
+      },
+      {
+        "expect": {
+          "op": "error",
+          "id": 5,
+          "code": "bad_request"
+        },
+        "withinMs": 500
+      }
+    ]
+  },
+  {
+    "name": "hz of zero is a bad request",
+    "steps": [
+      {
+        "send": {
+          "op": "subscribe",
+          "id": 6,
+          "name": "sim/flightmodel/failures/onground_any",
+          "hz": 0
+        }
+      },
+      {
+        "expect": {
+          "op": "error",
+          "id": 6,
+          "code": "bad_request"
+        },
+        "withinMs": 500
+      }
+    ]
+  },
+  {
+    "name": "invalid json is a bad request",
+    "steps": [
+      {
+        "sendRaw": "this is not json"
+      },
+      {
+        "expect": {
+          "op": "error",
+          "code": "bad_request"
+        },
+        "withinMs": 500
+      }
+    ]
+  },
+  {
+    "name": "unknown op is a bad request",
+    "steps": [
+      {
+        "send": {
+          "op": "frobnicate",
+          "id": 8
+        }
+      },
+      {
+        "expect": {
+          "op": "error",
+          "code": "bad_request"
+        },
+        "withinMs": 500
+      }
+    ]
+  },
+  {
+    "name": "set is unsupported",
+    "steps": [
+      {
+        "send": {
+          "op": "set",
+          "id": 7,
+          "name": "sim/flightmodel/failures/onground_any",
+          "value": 0
+        }
+      },
+      {
+        "expect": {
+          "op": "error",
+          "id": 7,
+          "code": "unsupported"
+        },
+        "withinMs": 500
+      }
+    ]
+  },
+  {
+    "name": "the 129th subscription is over the limit",
+    "steps": [
+      {
+        "subscribeMany": {
+          "name": "sim/flightmodel/failures/onground_any",
+          "hz": 1,
+          "firstId": 1,
+          "count": 129
+        }
+      },
+      {
+        "expect": {
+          "op": "error",
+          "id": 129,
+          "code": "limit"
+        },
+        "withinMs": 1500
+      },
+      {
+        "collect": {
+          "match": {
+            "op": "subscribed"
+          },
+          "forMs": 1500,
+          "min": 128,
+          "max": 128
+        }
+      }
+    ]
+  },
+  {
+    "name": "replacing an id does not count towards the limit",
+    "steps": [
+      {
+        "subscribeMany": {
+          "name": "sim/flightmodel/failures/onground_any",
+          "hz": 1,
+          "firstId": 1,
+          "count": 128
+        }
+      },
+      {
+        "wait": 1500
+      },
+      {
+        "send": {
+          "op": "subscribe",
+          "id": 1,
+          "name": "sim/flightmodel/failures/onground_any",
+          "hz": 2
+        }
+      },
+      {
+        "expectNone": {
+          "op": "error"
+        },
+        "forMs": 1200
+      }
+    ]
+  },
+  {
+    "name": "heartbeat when idle",
+    "steps": [
+      {
+        "expect": {
+          "op": "hb"
+        },
+        "withinMs": 1600
+      }
+    ]
+  },
+  {
+    "name": "generation is delivered at subscribe",
+    "steps": [
+      {
+        "send": {
+          "op": "subscribe",
+          "id": 1,
+          "name": "flightsim_aide/aircraft_generation",
+          "hz": 1
+        }
+      },
+      {
+        "expect": {
+          "op": "subscribed",
+          "id": 1
+        },
+        "withinMs": 1500
+      },
+      {
+        "expect": {
+          "op": "values",
+          "v": {
+            "1": 12
+          }
+        },
+        "withinMs": 1500
+      }
+    ]
+  },
+  {
+    "name": "unsubscribe stops values",
+    "steps": [
+      {
+        "send": {
+          "op": "subscribe",
+          "id": 1,
+          "name": "sim/flightmodel/failures/onground_any",
+          "hz": 10
+        }
+      },
+      {
+        "expect": {
+          "op": "values",
+          "v": {
+            "1": 1
+          }
+        },
+        "withinMs": 1500
+      },
+      {
+        "send": {
+          "op": "unsubscribe",
+          "id": 1
+        }
+      },
+      {
+        "wait": 400
+      },
+      {
+        "expectNone": {
+          "op": "values"
+        },
+        "forMs": 1500
+      }
+    ]
+  },
+  {
+    "name": "ping gets pong",
+    "steps": [
+      {
+        "send": {
+          "op": "ping"
+        }
+      },
+      {
+        "expect": {
+          "op": "pong"
+        },
+        "withinMs": 500
+      }
+    ]
+  },
+  {
+    "name": "fifth client is refused",
+    "steps": [
+      {
+        "openExtraClients": 3
+      },
+      {
+        "expectUpgradeStatus": 503
+      }
+    ]
+  },
+  {
+    "name": "unsupported: a string dataref",
+    "steps": [
+      {
+        "send": {
+          "op": "subscribe",
+          "id": 3,
+          "name": "sim/aircraft/view/acf_ICAO",
+          "hz": 1
+        }
+      },
+      {
+        "expect": {
+          "op": "error",
+          "id": 3,
+          "code": "unsupported"
+        },
+        "withinMs": 1500
+      }
+    ]
+  },
+  {
+    "name": "kind: float",
+    "steps": [
+      {
+        "send": {
+          "op": "subscribe",
+          "id": 1,
+          "name": "sim/flightmodel/position/indicated_airspeed",
+          "hz": 5
+        }
+      },
+      {
+        "expect": {
+          "op": "subscribed",
+          "id": 1
+        },
+        "withinMs": 1500
+      },
+      {
+        "expect": {
+          "op": "values",
+          "v": {
+            "1": 77.5
+          }
+        },
+        "withinMs": 1500
+      }
+    ]
+  },
+  {
+    "name": "kind: double",
+    "steps": [
+      {
+        "send": {
+          "op": "subscribe",
+          "id": 1,
+          "name": "sim/flightmodel/position/latitude",
+          "hz": 5
+        }
+      },
+      {
+        "expect": {
+          "op": "subscribed",
+          "id": 1
+        },
+        "withinMs": 1500
+      },
+      {
+        "expect": {
+          "op": "values",
+          "v": {
+            "1": 44.491250047029595
+          }
+        },
+        "withinMs": 1500
+      }
+    ]
+  },
+  {
+    "name": "array element of a float array",
+    "steps": [
+      {
+        "send": {
+          "op": "subscribe",
+          "id": 4,
+          "name": "sim/cockpit2/engine/actuators/throttle_ratio[1]",
+          "hz": 5
+        }
+      },
+      {
+        "expect": {
+          "op": "subscribed",
+          "id": 4
+        },
+        "withinMs": 1500
+      },
+      {
+        "expect": {
+          "op": "values",
+          "v": {
+            "4": 0.5
+          }
+        },
+        "withinMs": 1500
+      }
+    ]
+  },
+  {
+    "name": "array element of an int array",
+    "steps": [
+      {
+        "send": {
+          "op": "subscribe",
+          "id": 5,
+          "name": "sim/cockpit2/engine/actuators/ignition_key[0]",
+          "hz": 5
+        }
+      },
+      {
+        "expect": {
+          "op": "subscribed",
+          "id": 5
+        },
+        "withinMs": 1500
+      },
+      {
+        "expect": {
+          "op": "values",
+          "v": {
+            "5": 3
+          }
+        },
+        "withinMs": 1500
+      }
+    ]
+  },
+  {
+    "name": "array index past the end reads null",
+    "steps": [
+      {
+        "send": {
+          "op": "subscribe",
+          "id": 7,
+          "name": "sim/cockpit2/engine/actuators/throttle_ratio[99]",
+          "hz": 5
+        }
+      },
+      {
+        "expect": {
+          "op": "subscribed",
+          "id": 7
+        },
+        "withinMs": 1500
+      },
+      {
+        "expect": {
+          "op": "values",
+          "v": {
+            "7": null
+          }
+        },
+        "withinMs": 1500
+      }
+    ]
+  },
+  {
+    "name": "index on a name that is not an array",
+    "steps": [
+      {
+        "send": {
+          "op": "subscribe",
+          "id": 6,
+          "name": "sim/flightmodel/failures/onground_any[0]",
+          "hz": 1
+        }
+      },
+      {
+        "expect": {
+          "op": "error",
+          "id": 6,
+          "code": "unknown_name"
+        },
+        "withinMs": 1500
+      }
+    ]
+  },
+  {
+    "name": "index on an unknown name",
+    "steps": [
+      {
+        "send": {
+          "op": "subscribe",
+          "id": 6,
+          "name": "no/such/dataref[0]",
+          "hz": 1
+        }
+      },
+      {
+        "expect": {
+          "op": "error",
+          "id": 6,
+          "code": "unknown_name"
+        },
+        "withinMs": 1500
+      }
+    ]
+  },
+  {
+    "name": "malformed index is a bad request",
+    "steps": [
+      {
+        "send": {
+          "op": "subscribe",
+          "id": 8,
+          "name": "sim/cockpit2/engine/actuators/throttle_ratio[a]",
+          "hz": 1
+        }
+      },
+      {
+        "expect": {
+          "op": "error",
+          "id": 8,
+          "code": "bad_request"
+        },
+        "withinMs": 500
+      },
+      {
+        "send": {
+          "op": "subscribe",
+          "id": 9,
+          "name": "sim/cockpit2/engine/actuators/throttle_ratio[",
+          "hz": 1
+        }
+      },
+      {
+        "expect": {
+          "op": "error",
+          "id": 9,
+          "code": "bad_request"
+        },
+        "withinMs": 500
+      },
+      {
+        "send": {
+          "op": "subscribe",
+          "id": 10,
+          "name": "sim/cockpit2/engine/actuators/throttle_ratio[-1]",
+          "hz": 1
+        }
+      },
+      {
+        "expect": {
+          "op": "error",
+          "id": 10,
+          "code": "bad_request"
+        },
+        "withinMs": 500
+      },
+      {
+        "send": {
+          "op": "subscribe",
+          "id": 11,
+          "name": "sim/cockpit2/engine/actuators/throttle_ratio[1][2]",
+          "hz": 1
+        }
+      },
+      {
+        "expect": {
+          "op": "error",
+          "id": 11,
+          "code": "bad_request"
+        },
+        "withinMs": 500
+      }
+    ]
+  },
+    {
+      "name": "array range is one list of values",
+      "steps": [
+        {
+          "send": {
+            "op": "subscribe",
+            "id": 20,
+            "name": "sim/cockpit2/engine/actuators/throttle_ratio[0..2]",
+            "hz": 5
+          }
+        },
+        {
+          "expect": {
+            "op": "subscribed",
+            "id": 20
+          },
+          "withinMs": 1500
+        },
+        {
+          "expect": {
+            "op": "values",
+            "v": {
+              "20": [
+                0.25,
+                0.5,
+                0.75
+              ]
+            }
+          },
+          "withinMs": 1500
+        }
+      ]
+    },
+    {
+      "name": "array range cut short where the array ends",
+      "steps": [
+        {
+          "send": {
+            "op": "subscribe",
+            "id": 21,
+            "name": "sim/cockpit2/engine/actuators/throttle_ratio[2..9]",
+            "hz": 5
+          }
+        },
+        {
+          "expect": {
+            "op": "subscribed",
+            "id": 21
+          },
+          "withinMs": 1500
+        },
+        {
+          "expect": {
+            "op": "values",
+            "v": {
+              "21": [
+                0.75,
+                1
+              ]
+            }
+          },
+          "withinMs": 1500
+        }
+      ]
+    },
+    {
+      "name": "array range past the end is an empty list",
+      "steps": [
+        {
+          "send": {
+            "op": "subscribe",
+            "id": 22,
+            "name": "sim/cockpit2/engine/actuators/throttle_ratio[10..12]",
+            "hz": 5
+          }
+        },
+        {
+          "expect": {
+            "op": "subscribed",
+            "id": 22
+          },
+          "withinMs": 1500
+        },
+        {
+          "expect": {
+            "op": "values",
+            "v": {
+              "22": []
+            }
+          },
+          "withinMs": 1500
+        }
+      ]
+    },
+    {
+      "name": "range on a name that is not an array",
+      "steps": [
+        {
+          "send": {
+            "op": "subscribe",
+            "id": 23,
+            "name": "sim/flightmodel/failures/onground_any[0..1]",
+            "hz": 5
+          }
+        },
+        {
+          "expect": {
+            "op": "error",
+            "id": 23,
+            "code": "unknown_name"
+          },
+          "withinMs": 500
+        }
+      ]
+    },
+    {
+      "name": "malformed or oversize range is a bad request",
+      "steps": [
+        {
+          "send": {
+            "op": "subscribe",
+            "id": 24,
+            "name": "sim/cockpit2/engine/actuators/throttle_ratio[2..1]",
+            "hz": 1
+          }
+        },
+        {
+          "expect": {
+            "op": "error",
+            "id": 24,
+            "code": "bad_request"
+          },
+          "withinMs": 500
+        },
+        {
+          "send": {
+            "op": "subscribe",
+            "id": 25,
+            "name": "sim/cockpit2/engine/actuators/throttle_ratio[0..128]",
+            "hz": 1
+          }
+        },
+        {
+          "expect": {
+            "op": "error",
+            "id": 25,
+            "code": "bad_request"
+          },
+          "withinMs": 500
+        },
+        {
+          "send": {
+            "op": "subscribe",
+            "id": 26,
+            "name": "sim/cockpit2/engine/actuators/throttle_ratio[0..]",
+            "hz": 1
+          }
+        },
+        {
+          "expect": {
+            "op": "error",
+            "id": 26,
+            "code": "bad_request"
+          },
+          "withinMs": 500
+        }
+      ]
+    }
+]

@@ -1,0 +1,22 @@
+# The right side: number forms, other datarefs, arithmetic, casts and functions
+# Hand-written for this project. Source of the expected results: the user manual (XchecklistUserManual.tex 360-460) and parser.cpp dataref_dsc::trigered (right side section) and chkl.y expression rules
+sw_checklist:Values
+sw_item:plus sign|CHECK:fx/plain_values/01a:+5
+sw_item:decimal without a leading digit|CHECK:fx/plain_values/02a:>.5
+sw_item:exponent|CHECK:fx/plain_values/03a:<1.0e-3
+sw_item:exponent with a sign|CHECK:fx/plain_values/04a:1e2
+sw_item:another dataref on the right|CHECK:fx/plain_values/05a:>{fx/plain_values/05b}
+sw_item:other dataref missing|CHECK:fx/plain_values/06a:>{fx/plain_values/06b}
+sw_item:addition and multiplication|CHECK:fx/plain_values/07a:1+2*3
+sw_item:parentheses|CHECK:fx/plain_values/08a:(1+2)*3
+sw_item:power|CHECK:fx/plain_values/09a:2**3
+sw_item:division|CHECK:fx/plain_values/10a:7/2
+sw_item:unary minus|CHECK:fx/plain_values/11a:-(2+3)
+sw_item:int cast truncates the right side|CHECK:fx/plain_values/12a:(int)10.9
+sw_item:round|CHECK:fx/plain_values/13a:round(2.6)
+sw_item:step below zero|CHECK:fx/plain_values/14a:step(-1)
+sw_item:step at zero|CHECK:fx/plain_values/15a:step(0)
+sw_item:closer_than inside|CHECK:1:closer_than({fx/plain_values/16a},{fx/plain_values/16b},2)
+sw_item:closer_than at the limit|CHECK:1:closer_than({fx/plain_values/17a},{fx/plain_values/17b},2)
+sw_item:closer_than missing value|CHECK:1:closer_than({fx/plain_values/18a},{fx/plain_values/18b},2)
+sw_item:mixed float and int on both sides|CHECK:fx/plain_values/19a:{fx/plain_values/19b}*2

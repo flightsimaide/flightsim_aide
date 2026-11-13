@@ -1,0 +1,27 @@
+{
+ "steps": [
+  {
+   "fx/crossing/01a": 5,
+   "fx/crossing/02a": 5,
+   "fx/crossing/03a": 15,
+   "fx/crossing/04a": 15,
+   "fx/crossing/05a": 270,
+   "fx/crossing/06a": 270,
+   "fx/crossing/07a": null
+  },
+  {
+   "fx/crossing/01a": 15,
+   "fx/crossing/02a": 15,
+   "fx/crossing/03a": 25,
+   "fx/crossing/04a": 10,
+   "fx/crossing/05a": 255,
+   "fx/crossing/06a": 255,
+   "fx/crossing/07a": null
+  },
+  {
+   "fx/crossing/01a": 25,
+   "fx/crossing/04a": 25,
+   "fx/crossing/05a": 245
+  }
+ ]
+}

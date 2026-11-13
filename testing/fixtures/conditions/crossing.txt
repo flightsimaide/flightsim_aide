@@ -1,0 +1,10 @@
+# Crossing a:b (from beyond a to beyond b), which remembers what it has seen
+# Hand-written for this project. Source of the expected results: the user manual (XchecklistUserManual.tex 360-460) and parser.cpp dataref_dsc::trigered; XC_HYST state machine in parser.cpp dataref_dsc::checkTrig
+sw_checklist:Crossing
+sw_item:rises through 10 to 20|CHECK:fx/crossing/01a:10:20
+sw_item:stops short of 20|CHECK:fx/crossing/02a:10:20
+sw_item:starts above 10, never dipped|CHECK:fx/crossing/03a:10:20
+sw_item:starts above 10, dips to 10, then rises|CHECK:fx/crossing/04a:10:20
+sw_item:falls from 260 to 250|CHECK:fx/crossing/05a:260:250
+sw_item:falls but stays above 250|CHECK:fx/crossing/06a:260:250
+sw_item:crossing with no value|CHECK:fx/crossing/07a:10:20

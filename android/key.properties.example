@@ -1,0 +1,11 @@
+# Copy this file to android/key.properties and fill it in. key.properties is ignored by git.
+# Never commit the keystore (.jks) or this file with real values. Back the keystore up
+# outside the project: if it is lost you cannot update the app on Google Play with it.
+#
+# Create the keystore once, in a folder outside the project (for example %USERPROFILE%\keystores):
+#   keytool -genkey -v -keystore flightsim-aide-upload.jks -keyalg RSA -keysize 2048 -validity 10000 -alias upload
+storePassword=<the keystore password>
+keyPassword=<the key password>
+keyAlias=upload
+# Absolute path to the .jks file; forward slashes also work on Windows.
+storeFile=C:/path/outside/the/project/flightsim-aide-upload.jks

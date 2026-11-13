@@ -1,0 +1,30 @@
+{
+ "source": "the user manual (XchecklistUserManual.tex 360-460) and parser.cpp dataref_dsc::trigered and chkl.y (dataref_expr: OR below AND, dataref_prim: parentheses)",
+ "met": [
+  0,
+  2,
+  3,
+  5,
+  6,
+  7,
+  9,
+  10,
+  12,
+  13,
+  17,
+  18
+ ],
+ "not_met": [
+  1,
+  4,
+  8,
+  11,
+  19
+ ],
+ "unknown": [
+  14,
+  15,
+  16
+ ],
+ "warnings": []
+}
