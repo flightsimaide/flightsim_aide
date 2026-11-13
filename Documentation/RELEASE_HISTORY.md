@@ -11,7 +11,7 @@ The steps that took this project from a private working name to a public open-so
 | 5 | Code licence | 2026-11-12 (date of the `LICENSE` file) | MIT. | `LICENSE` |
 | 6 | Content licence | 2026-11-13 | MIT for everything, documentation and checklists included; no separate content licence. | D-81 |
 | 7 | Trademark and brand wording | 2026-11-13 (date of the notices file) | "For X-Plane" as a description only, no simulator logos, an unaffiliated and sim-only disclaimer. | `README.md`, `THIRD_PARTY_NOTICES.md` |
-| 8 | Public-release audit | 2026-11-13 | Clean, with one open decision on the private test IP addresses. | `tools/audit_public_release.sh` |
+| 8 | Public-release audit | 2026-11-13 | Clean. The private-range test IP addresses were reviewed and kept (2026-11-13). | `tools/audit_public_release.sh` |
 | 9 | Moved to the new repository | 2026-11-13 | Package `flightsim_aide`, plugin 0.1.0, tests and live contract green. | - |
 | 10 | First push, private | 2026-11-13 | Private repository `flightsimaide/flightsim_aide`; CI green on Windows, Linux and macOS. | - |
 | 11 | Repository public | not yet | | |

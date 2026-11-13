@@ -1,0 +1,45 @@
+name: Bug report
+description: Something does not work as it should
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting. FlightSim Aide is for flight simulation only. Please do not report anything about a real aircraft.
+        For a security problem, do not open an issue: use **Security**, then **Report a vulnerability** (see SECURITY.md).
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you did, what you saw, and what you expected instead.
+    validations:
+      required: true
+  - type: input
+    id: app
+    attributes:
+      label: App version
+      description: The release you downloaded, or `version` in pubspec.yaml if you built it.
+    validations:
+      required: true
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform
+      options: [Windows, Android, iOS, macOS, Linux]
+    validations:
+      required: true
+  - type: input
+    id: xplane
+    attributes:
+      label: X-Plane version and aircraft
+      description: For example "12.4.4, Cessna 172SP". Leave empty if it has nothing to do with the simulator.
+  - type: input
+    id: plugin
+    attributes:
+      label: Companion plugin version
+      description: Shown in X-Plane under Plugins, then Plugin Admin, as "FlightSim Aide x.y.z".
+  - type: textarea
+    id: log
+    attributes:
+      label: Log or screenshot
+      description: Optional. Remove anything private before pasting.

@@ -2,6 +2,8 @@
 
 Thank you for helping. FlightSim Aide is for flight simulation only: it is never to be used for a real aircraft or for real-world navigation, and contributions must not suggest otherwise.
 
+Everyone taking part is expected to follow the [Code of Conduct](CODE_OF_CONDUCT.md). Looking for somewhere to start? Issues labelled `good first issue` are small and well described.
+
 ## Before you start
 
 - Read [`Documentation/Architecture/ARCHITECTURE.md`](Documentation/Architecture/ARCHITECTURE.md). It is the source of truth for the layers (`domain/`, `data/`, `ui/`, `config/`) and for where new code goes (section 11).
