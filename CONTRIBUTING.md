@@ -43,7 +43,17 @@ Do **not** contribute checklist text copied from payware or other copyrighted ai
 
 - Commit subject: `<area>: <summary>` in the imperative, up to about 72 characters (`plugin: reject paths in requests`, `docs: fix the port range`). The body says why the change was made.
 - Keep a pull request to one subject. Say what you tested and, for anything that needs X-Plane or a device, what you ran it on.
-- Never commit personal paths, LAN addresses, email addresses, keystores or signing keys.
+- Never commit personal paths, your own LAN addresses (the sample addresses in the tests are made up), email addresses, keystores or signing keys.
+
+## Support
+
+FlightSim Aide is a free hobby project, maintained by one person in their spare time. There is no service level and no paid support.
+
+- **Questions and bugs:** open an issue with the template. Replies usually come within a week or two, sometimes sooner and sometimes later. A report with the app version, platform, X-Plane version, aircraft and plugin version can be looked at much faster.
+- **Pull requests:** small, focused changes that pass `tools/verify.sh` are the easiest to review. A pull request may be declined or changed if it does not fit the design in `Documentation/Architecture/ARCHITECTURE.md`; for anything large, open an issue first.
+- **Aircraft and add-ons:** the app reads the XChecklist file format and uses X-Plane's own datarefs, so most aircraft work as they are. Bugs that only appear in one payware aircraft are looked at when the aircraft's data can be reproduced.
+- **Supported:** the current release and `main`, X-Plane 12. Older releases get no fixes.
+- **Conduct:** see [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md).
 
 ## Licence
 
