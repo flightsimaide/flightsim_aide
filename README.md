@@ -53,4 +53,4 @@ dart run flutter_launcher_icons
 
 ## Licence
 
-MIT, copyright (c) 2026 Ed Swafford: see [LICENSE](LICENSE). Third-party notices, including the acknowledgement of XChecklist (whose checklist format this app reads), are in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+MIT, copyright (c) 2026 Ed Swafford, for the code and for the documentation and checklists too: see [LICENSE](LICENSE). Third-party notices, including the acknowledgement of XChecklist (whose checklist format this app reads), are in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).

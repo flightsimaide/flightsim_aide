@@ -41,6 +41,5 @@ Deferred: these builds need the MacBook (Xcode). What can be prepared on the PC 
 
 ## Still to decide
 
-- The content licence for checklists and docs (CC-BY-4.0 proposed). The code licence is decided: MIT.
 - Privacy policy text and where it is hosted.
 - Real screenshots, which wait for the app itself.
