@@ -36,7 +36,7 @@ Future<void> _pump(
   Size? size,
   bool skipped = false,
   bool disagreed = false,
-  bool first = false,
+  bool autoOn = false,
 }) {
   if (size != null) {
     tester.view.physicalSize = size;
@@ -60,7 +60,7 @@ Future<void> _pump(
             colours: colours,
             skipped: skipped,
             disagreed: disagreed,
-            first: first,
+            autoOn: autoOn,
           ),
         ),
       ),
@@ -251,7 +251,7 @@ void main() {
       expect(tester.getRect(find.text('SET')).right, unchecked.right);
     });
 
-    testWidgets('every row has a line below, inset 16; the first also above', (
+    testWidgets('every check row has one line, on its top edge, inset 16', (
       tester,
     ) async {
       Finder lines() => find.descendant(
@@ -264,8 +264,7 @@ void main() {
       final line = tester.getRect(lines());
       expect(line.left - tile.left, 16);
       expect(tile.right - line.right, 16);
-      await _pump(tester, _check, first: true);
-      expect(lines(), findsNWidgets(2));
+      expect(line.top, closeTo(tile.top, 1), reason: 'above the row');
     });
 
     testWidgets('the marker is 18 from the left and the label starts at 50', (
@@ -482,32 +481,41 @@ void main() {
       ),
     );
 
-    testWidgets('open item without a condition says manual item', (
+    testWidgets('open item without a condition says manual item with auto on', (
       tester,
     ) async {
-      await _pump(tester, _manual);
+      await _pump(tester, _manual, autoOn: true);
       expect(find.text('manual item'), findsOneWidget);
     });
 
-    testWidgets('item with a condition has no label and the plain tint', (
+    testWidgets('with auto off nothing is flagged', (tester) async {
+      await _pump(tester, _manual);
+      expect(find.text('manual item'), findsNothing);
+    });
+
+    testWidgets('item with a condition has no label', (tester) async {
+      await _pump(tester, withCondition, autoOn: true);
+      expect(find.text('manual item'), findsNothing);
+    });
+
+    testWidgets('a flagged row keeps the normal tint (it joins its details)', (
       tester,
     ) async {
-      await _pump(tester, withCondition);
-      expect(find.text('manual item'), findsNothing);
+      await _pump(tester, withCondition, autoOn: true);
       final plain = _rowColour(tester);
-      await _pump(tester, _manual);
-      expect(_rowColour(tester), isNot(plain));
+      await _pump(tester, _manual, autoOn: true);
+      expect(_rowColour(tester), plain);
     });
 
     testWidgets('checked and skipped rows do not show it', (tester) async {
-      await _pump(tester, _manual, checked: true);
+      await _pump(tester, _manual, checked: true, autoOn: true);
       expect(find.text('manual item'), findsNothing);
-      await _pump(tester, _manual, skipped: true);
+      await _pump(tester, _manual, skipped: true, autoOn: true);
       expect(find.text('manual item'), findsNothing);
     });
 
     testWidgets('notes do not show it', (tester) async {
-      await _pump(tester, _note);
+      await _pump(tester, _note, autoOn: true);
       expect(find.text('manual item'), findsNothing);
     });
 
@@ -522,22 +530,26 @@ void main() {
               body: ChecklistItemTile(
                 item: _manual,
                 checked: false,
+                autoOn: true,
                 onTap: () {},
               ),
             ),
           ),
         );
         final label = tester.widget<Text>(find.text('manual item'));
-        final fill = tester
-            .widget<Material>(
-              find
-                  .descendant(
-                    of: find.byType(ChecklistItemTile),
-                    matching: find.byType(Material),
-                  )
-                  .first,
-            )
-            .color!;
+        final fill =
+            (tester
+                        .widget<DecoratedBox>(
+                          find
+                              .ancestor(
+                                of: find.text('manual item'),
+                                matching: find.byType(DecoratedBox),
+                              )
+                              .first,
+                        )
+                        .decoration
+                    as BoxDecoration)
+                .color!;
         expect(
           contrastRatio(label.style!.color!, fill),
           greaterThanOrEqualTo(4.5),

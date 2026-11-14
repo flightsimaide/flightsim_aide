@@ -4,6 +4,7 @@ import '../../../domain/models/checklist/checklist_colour.dart';
 import '../../../domain/models/checklist/checklist_item.dart';
 import '../../../domain/models/checklist/colour_run.dart';
 import '../../core/themes/status_colors.dart';
+import '../../core/widgets/status_pill.dart';
 import 'run_colours.dart';
 
 /// Finds the marker of an auto-checked row, for tests.
@@ -24,9 +25,9 @@ class ChecklistItemTile extends StatelessWidget {
     required this.onTap,
     this.colours = const {},
     this.skipped = false,
-    this.first = false,
     this.autoChecked = false,
     this.disagreed = false,
+    this.autoOn = false,
     super.key,
   });
 
@@ -46,9 +47,6 @@ class ChecklistItemTile extends StatelessWidget {
   /// app has no way to skip an item yet; the look is ready for it.)
   final bool skipped;
 
-  /// Whether this is the first row of the list, which also gets a line above.
-  final bool first;
-
   /// Whether the app checked this row from a sim value. It gets a small
   /// "auto" icon; tapping works as for any row.
   final bool autoChecked;
@@ -57,6 +55,11 @@ class ChecklistItemTile extends StatelessWidget {
   /// (D-71): the marker is the red `error` icon instead of the green check.
   /// Only meaningful for a checked row.
   final bool disagreed;
+
+  /// Whether auto-check is on for the checklist. Only then is an open item
+  /// with no condition flagged "manual item" (a darker fill and a cyan pill):
+  /// it is the one the pilot must do by hand while auto runs.
+  final bool autoOn;
 
   @override
   Widget build(BuildContext context) {
@@ -190,20 +193,18 @@ class ChecklistItemTile extends StatelessWidget {
         : (skipped && !checked
               ? (status?.cautionBackground ?? scheme.error)
               : null);
-    // An open check row with no condition can never be ticked by auto: a
-    // slightly darker fill and a small "manual item" line mark it.
+    // While auto is on, an open check row with no condition can never be
+    // ticked by auto: a "manual item" pill marks it. The row keeps the normal
+    // fill so it still reads as one block with the details line under it.
     final manual =
+        autoOn &&
         item.condition == null &&
         !checked &&
         !skipped &&
         statusBackground == null;
     final tint =
         statusBackground ??
-        (checked
-            ? scheme.primaryContainer
-            : manual
-            ? manualRowColour(scheme)
-            : rowColour(scheme));
+        (checked ? scheme.primaryContainer : rowColour(scheme));
     final normal = scheme.onSurface;
     final foreground = statusBackground == null
         ? normal
@@ -246,9 +247,11 @@ class ChecklistItemTile extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              if (first) _hairline(side),
+              _hairline(side),
               ConstrainedBox(
-                constraints: const BoxConstraints(minHeight: 58),
+                // A flagged row is taller already (the pill), so it drops the minimum:
+                // the space above the pill then equals the space below it.
+                constraints: BoxConstraints(minHeight: manual ? 0 : 58),
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(18, 8, 16, 8),
                   child: LayoutBuilder(
@@ -307,15 +310,24 @@ class ChecklistItemTile extends StatelessWidget {
               ),
               if (manual)
                 Padding(
-                  padding: const EdgeInsets.only(bottom: 4),
-                  child: Text(
-                    'manual item',
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      color: scheme.onSurfaceVariant,
+                  padding: const EdgeInsets.fromLTRB(
+                    18 + ChecklistMarker.size + 10,
+                    0,
+                    16,
+                    8,
+                  ),
+                  child: Align(
+                    alignment: AlignmentDirectional.centerStart,
+                    child: StatusPill(
+                      status: PillStatus.info,
+                      text: 'manual item',
+                      showIcon: false,
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                 ),
-              _hairline(side),
             ],
           ),
         ),
@@ -329,13 +341,6 @@ class ChecklistItemTile extends StatelessWidget {
       alpha: scheme.brightness == Brightness.light ? 0.45 : 0.07,
     ),
     scheme.surface,
-  );
-
-  /// The background of an open manual item: [rowColour] with a faint shade of
-  /// the text colour, so it reads as slightly different in both themes.
-  static Color manualRowColour(ColorScheme scheme) => Color.alphaBlend(
-    scheme.onSurface.withValues(alpha: 0.07),
-    rowColour(scheme),
   );
 
   /// A line inset 16 on both sides.

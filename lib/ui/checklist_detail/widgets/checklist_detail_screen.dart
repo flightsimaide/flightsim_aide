@@ -10,7 +10,6 @@ import '../../../data/repositories/checklist/checklist_progress_repository.dart'
 import '../../../data/repositories/checklist/checklist_repository.dart';
 import '../../../data/repositories/flight_sim/flight_sim_repository.dart';
 import '../../../data/repositories/settings/settings_repository.dart';
-import '../../../domain/models/checklist/checklist_item.dart';
 import '../../../routing/routes.dart';
 import '../../connection/widgets/connection_status_indicator.dart';
 import '../../core/themes/status_colors.dart';
@@ -552,11 +551,6 @@ class _LoadedBodyState extends State<_LoadedBody> {
   Widget build(BuildContext context) {
     final state = widget.state;
     final cubit = context.read<ChecklistDetailCubit>();
-    // Lines belong to clickable (check) rows only: the first one also gets a
-    // line above it, notes get none.
-    final firstCheck = state.rows.indexWhere(
-      (row) => row.item.type == ChecklistItemType.check,
-    );
     return Column(
       children: [
         Semantics(
@@ -585,8 +579,8 @@ class _LoadedBodyState extends State<_LoadedBody> {
                   autoChecked: state.rows[i].autoChecked,
                   disagreed: state.rows[i].disagreed,
                   skipped: state.rows[i].skipped,
+                  autoOn: state.auto,
                   colours: state.colours,
-                  first: i == firstCheck,
                   onTap: () {
                     _anchor = i;
                     _acted = true;

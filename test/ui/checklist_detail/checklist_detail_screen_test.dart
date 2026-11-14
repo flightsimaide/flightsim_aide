@@ -127,6 +127,22 @@ void main() {
       expect(find.text('Reset checklist?'), findsNothing);
     });
 
+    testWidgets('manual items are flagged only while auto is on', (
+      tester,
+    ) async {
+      await pump(tester, _minimal(), 'Prepare');
+      final flagged = find.text('manual item');
+      final before = flagged.evaluate().length;
+      await tester.tap(find.text('Auto'));
+      await tester.pump();
+      final after = flagged.evaluate().length;
+      expect(
+        before != after,
+        isTrue,
+        reason: 'the flag follows the Auto/Manual button',
+      );
+    });
+
     testWidgets('Check ticks the next open item, one per tap, then greys out', (
       tester,
     ) async {
@@ -149,24 +165,28 @@ void main() {
       expect(check().onPressed, isNull);
     });
 
-    testWidgets('lines only belong to check rows; the first one has two', (
-      tester,
-    ) async {
-      await pump(tester, _minimal(), 'Prepare');
-      int lines(Finder row) => find
-          .descendant(of: row, matching: find.byType(Divider))
-          .evaluate()
-          .length;
-      expect(lines(rows().at(0)), 0, reason: 'the note has no line');
-      expect(lines(rows().at(1)), 2, reason: 'first check row: above + below');
-      expect(lines(rows().at(2)), 1);
-      expect(
-        find
-            .descendant(of: find.byType(AppBar), matching: find.byType(Divider))
-            .evaluate(),
-        isEmpty,
-      );
-    });
+    testWidgets(
+      'lines only belong to check rows, one on the top edge of each',
+      (tester) async {
+        await pump(tester, _minimal(), 'Prepare');
+        int lines(Finder row) => find
+            .descendant(of: row, matching: find.byType(Divider))
+            .evaluate()
+            .length;
+        expect(lines(rows().at(0)), 0, reason: 'the note has no line');
+        expect(lines(rows().at(1)), 1);
+        expect(lines(rows().at(2)), 1);
+        expect(
+          find
+              .descendant(
+                of: find.byType(AppBar),
+                matching: find.byType(Divider),
+              )
+              .evaluate(),
+          isEmpty,
+        );
+      },
+    );
 
     testWidgets('status row shows "0/3"', (tester) async {
       await pump(tester, _minimal(), 'Prepare');

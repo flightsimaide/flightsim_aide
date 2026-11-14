@@ -12,6 +12,10 @@ enum PillStatus {
 
   /// Warning: red, the error icon (overridden).
   warning,
+
+  /// Information: cyan, the info icon (a message that does not affect the
+  /// operation of the aircraft, like "manual item" while auto is on).
+  info,
 }
 
 /// A status message on a filled pill: the status icon and [text] in black or
@@ -24,6 +28,7 @@ class StatusPill extends StatelessWidget {
     required this.status,
     required this.text,
     this.style,
+    this.showIcon = true,
     super.key,
   });
 
@@ -35,6 +40,10 @@ class StatusPill extends StatelessWidget {
 
   /// Text style; the colour is replaced by the readable foreground.
   final TextStyle? style;
+
+  /// Whether the status icon shows before the text. Turn it off only where
+  /// the text alone says the status and space is tight.
+  final bool showIcon;
 
   @override
   Widget build(BuildContext context) {
@@ -53,6 +62,10 @@ class StatusPill extends StatelessWidget {
         colours?.error ?? theme.colorScheme.error,
         Icons.error,
       ),
+      PillStatus.info => (
+        colours?.info ?? theme.colorScheme.secondary,
+        Icons.info,
+      ),
     };
     final foreground = readableOn(fill);
     return DecoratedBox(
@@ -65,8 +78,10 @@ class StatusPill extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 18, color: foreground),
-            const SizedBox(width: 4),
+            if (showIcon) ...[
+              Icon(icon, size: 18, color: foreground),
+              const SizedBox(width: 4),
+            ],
             Text(
               text,
               // Without a given style the text would keep the theme's colour.
