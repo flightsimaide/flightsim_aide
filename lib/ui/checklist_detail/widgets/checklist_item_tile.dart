@@ -7,9 +7,6 @@ import '../../core/themes/status_colors.dart';
 import '../../core/widgets/status_pill.dart';
 import 'run_colours.dart';
 
-/// Finds the marker of an auto-checked row, for tests.
-const autoMarkerKey = ValueKey<String>('auto-checked-marker');
-
 /// Finds the red marker of a row ticked against the aircraft, for tests.
 const disagreedMarkerKey = ValueKey<String>('disagreed-marker');
 
@@ -47,8 +44,8 @@ class ChecklistItemTile extends StatelessWidget {
   /// app has no way to skip an item yet; the look is ready for it.)
   final bool skipped;
 
-  /// Whether the app checked this row from a sim value. It gets a small
-  /// "auto" icon; tapping works as for any row.
+  /// Whether the app checked this row from a sim value. Nothing shows on the
+  /// row; it only changes the spoken label ("checked automatically").
   final bool autoChecked;
 
   /// Whether the user ticked this row while the aircraft said it was not set
@@ -277,16 +274,6 @@ class ChecklistItemTile extends StatelessWidget {
                         Expanded(
                           child: _text(context, style, true, background: tint),
                         ),
-                        if (autoChecked) ...[
-                          const SizedBox(width: 8),
-                          Icon(
-                            Icons.auto_mode,
-                            key: autoMarkerKey,
-                            size: 18,
-                            color: scheme.onSurfaceVariant,
-                            semanticLabel: 'Checked automatically',
-                          ),
-                        ],
                         if (item.result.isNotEmpty) ...[
                           const SizedBox(width: 12),
                           // At most 45% of the row, so a long label still wraps.

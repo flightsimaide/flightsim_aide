@@ -53,7 +53,7 @@ Future<void> settle(WidgetTester tester) async {
 void main() {
   const check = ChecklistItem(ChecklistItemType.check, 'Parking brake', 'SET');
 
-  group('the auto-checked marker on a row', () {
+  group('an auto-checked row', () {
     Future<void> pumpTile(
       WidgetTester tester, {
       required bool checked,
@@ -72,19 +72,17 @@ void main() {
       ),
     );
 
-    testWidgets('shows for an auto-checked row', (tester) async {
+    testWidgets('an auto-checked row shows no icon, but is spoken as such', (
+      tester,
+    ) async {
+      final semantics = tester.ensureSemantics();
       await pumpTile(tester, checked: true, auto: true);
-      expect(find.byKey(autoMarkerKey), findsOneWidget);
-    });
-
-    testWidgets('is absent for a row checked by hand', (tester) async {
-      await pumpTile(tester, checked: true, auto: false);
-      expect(find.byKey(autoMarkerKey), findsNothing);
-    });
-
-    testWidgets('is absent on an open row', (tester) async {
-      await pumpTile(tester, checked: false, auto: false);
-      expect(find.byKey(autoMarkerKey), findsNothing);
+      expect(find.byIcon(Icons.auto_mode), findsNothing);
+      expect(
+        find.bySemanticsLabel(RegExp('checked automatically')),
+        findsOneWidget,
+      );
+      semantics.dispose();
     });
 
     testWidgets('tapping still calls onTap', (tester) async {
@@ -162,21 +160,19 @@ void main() {
       await tester.pump();
     }
 
-    testWidgets('a scripted value checks the row and shows the marker', (
-      tester,
-    ) async {
+    testWidgets('a scripted value checks the row', (tester) async {
       await pump(tester);
-      expect(find.byKey(autoMarkerKey), findsNothing);
+      expect(find.byIcon(Icons.check), findsNothing);
       sim.signals.setValue('a/gear', 1);
       await advance(tester);
-      expect(find.byKey(autoMarkerKey), findsOneWidget);
-      // A manual uncheck removes the marker and is not undone.
+      expect(find.byIcon(Icons.check), findsOneWidget);
+      // A manual uncheck is not undone.
       await tester.tap(find.text('Gear'));
       await tester.pump();
-      expect(find.byKey(autoMarkerKey), findsNothing);
+      expect(find.byIcon(Icons.check), findsNothing);
       await advance(tester);
       await advance(tester);
-      expect(find.byKey(autoMarkerKey), findsNothing);
+      expect(find.byIcon(Icons.check), findsNothing);
     });
 
     testWidgets('no Continue button before a link matched', (tester) async {
