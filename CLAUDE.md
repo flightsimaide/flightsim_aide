@@ -31,8 +31,13 @@
 
 ## Privacy
 - Never commit personal paths, LAN addresses, email addresses, keystores, signing keys or account details. Use placeholders (`<X-Plane>`, `192.168.1.x`, `you@example.com`).
+- Commits use the GitHub noreply address (`<id>+<login>@users.noreply.github.com`), set per repository with `git config user.email`, never a private mailbox: the history is public.
 - `Documentation/temp/` is never committed (it is in `.gitignore`).
 - Do not commit payware or third-party aircraft checklist content, or files from the real XChecklist.
+
+## Repository and tests
+- The repository is public (`github.com/flightsimaide/flightsim_aide`). `main` is protected by a ruleset: no deletion, no force-push, and the `verify` check (the `app` workflow) must pass; admins can bypass it. Private vulnerability reporting is on, and CI for a first-time contributor's pull request waits for approval. `Documentation/RELEASE_HISTORY.md` is the timeline of how it got here.
+- No test may assume an aircraft's data (datarefs are shared slots; array lengths and values differ between aircraft). A test that needs the fixture aircraft, an add-on or a device skips instead of failing, is optional, and has what it needs written down in `BUILDING.md`.
 
 ## Scripts in `tools/`
 - `tools/` holds scripts for every platform; scripts specific to one platform go under `tools/platform/<ios|mac|linux|win>/`.
