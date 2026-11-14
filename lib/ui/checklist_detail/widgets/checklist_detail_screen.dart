@@ -18,6 +18,7 @@ import '../../core/widgets/loading_indicator.dart';
 import '../../core/widgets/status_pill.dart';
 import '../cubit/checklist_detail_cubit.dart';
 import '../cubit/checklist_detail_state.dart';
+import 'checklist_app_bar_title.dart';
 import 'checklist_item_tile.dart';
 
 /// One checklist with tappable rows, progress and a reset action.
@@ -183,17 +184,9 @@ class _ChecklistDetailView extends StatelessWidget {
         ),
         final ChecklistDetailLoaded loaded => Scaffold(
           appBar: AppBar(
-            title: Text(loaded.title),
-            actions: [
-              IconButton(
-                icon: const Icon(Icons.restart_alt),
-                tooltip: 'Reset',
-                onPressed: loaded.done + loaded.skipped == 0
-                    ? null
-                    : () => _confirmReset(context),
-              ),
-              const ConnectionStatusIndicator(),
-            ],
+            centerTitle: true,
+            title: ChecklistAppBarTitle(title: loaded.title),
+            actions: [const ConnectionStatusIndicator()],
           ),
           body: _LoadedBody(state: loaded),
         ),

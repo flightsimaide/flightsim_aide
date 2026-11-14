@@ -87,7 +87,7 @@ void main() {
     await tester.tap(find.byType(ChecklistListTile).at(index));
     await tester.pumpAndSettle();
     expect(find.text('2/$total'), findsOneWidget);
-    await tester.tap(find.byTooltip('Reset'));
+    await tester.tap(find.widgetWithText(FilledButton, 'Reset'));
     await tester.pumpAndSettle();
     expect(find.byType(AlertDialog), findsOneWidget);
     await tester.tap(

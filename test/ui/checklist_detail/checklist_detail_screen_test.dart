@@ -332,7 +332,7 @@ void main() {
     testWidgets('reset button shows a dialog', (tester) async {
       await pump(tester, _minimal(), 'Prepare');
       await checkTwo(tester);
-      await tester.tap(find.byTooltip('Reset'));
+      await tester.tap(find.byKey(bottomResetKey));
       await tester.pumpAndSettle();
       expect(find.byType(AlertDialog), findsOneWidget);
       expect(find.text('Cancel'), findsOneWidget);
@@ -341,7 +341,7 @@ void main() {
     testWidgets('cancel leaves checks untouched', (tester) async {
       await pump(tester, _minimal(), 'Prepare');
       await checkTwo(tester);
-      await tester.tap(find.byTooltip('Reset'));
+      await tester.tap(find.byKey(bottomResetKey));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Cancel'));
       await tester.pumpAndSettle();
@@ -354,7 +354,7 @@ void main() {
     ) async {
       await pump(tester, _minimal(), 'Prepare');
       await checkTwo(tester);
-      await tester.tap(find.byTooltip('Reset'));
+      await tester.tap(find.byKey(bottomResetKey));
       await tester.pumpAndSettle();
       await tester.tap(
         find.descendant(
@@ -400,23 +400,24 @@ void main() {
       expect(find.text('2/3'), findsOneWidget);
     });
 
-    testWidgets('reset is disabled when nothing is checked', (tester) async {
+    testWidgets('the app bar has no reset icon (the bottom button does it)', (
+      tester,
+    ) async {
       await pump(tester, _minimal(), 'Prepare');
-      final button = tester.widget<IconButton>(
-        find.widgetWithIcon(IconButton, Icons.restart_alt),
+      expect(
+        find.descendant(
+          of: find.byType(AppBar),
+          matching: find.byIcon(Icons.restart_alt),
+        ),
+        findsNothing,
       );
-      expect(button.onPressed, isNull);
-      await checkTwo(tester);
-      final enabled = tester.widget<IconButton>(
-        find.widgetWithIcon(IconButton, Icons.restart_alt),
-      );
-      expect(enabled.onPressed, isNotNull);
+      expect(find.byTooltip('Reset'), findsNothing);
     });
 
     testWidgets('dialog is dismissible with back', (tester) async {
       await pump(tester, _minimal(), 'Prepare');
       await checkTwo(tester);
-      await tester.tap(find.byTooltip('Reset'));
+      await tester.tap(find.byKey(bottomResetKey));
       await tester.pumpAndSettle();
       await tester.binding.handlePopRoute();
       await tester.pumpAndSettle();
