@@ -14,7 +14,7 @@ The steps that took this project from a private working name to a public open-so
 | 8 | Public-release audit | 2026-11-13 | Clean. The private-range test IP addresses were reviewed and kept (2026-11-13). | `tools/audit_public_release.sh` |
 | 9 | Moved to the new repository | 2026-11-13 | Package `flightsim_aide`, plugin 0.1.0, tests and live contract green. | - |
 | 10 | First push, private | 2026-11-13 | Private repository `flightsimaide/flightsim_aide`; CI green on Windows, Linux and macOS. | - |
-| 11 | Repository public | not yet | | |
+| 11 | Repository public | 2026-11-13 | Public at `github.com/flightsimaide/flightsim_aide`. Private vulnerability reporting on; CI for first-time contributors' fork pull requests needs approval; `main` protected (no deletion, no force-push, the `verify` check must pass; admins can bypass). | - |
 | 12 | First release | not yet | | |
 
 ## Not checked
