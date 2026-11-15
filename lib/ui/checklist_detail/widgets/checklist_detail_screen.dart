@@ -195,17 +195,21 @@ class _ChecklistDetailView extends StatelessWidget {
   }
 }
 
-/// Goes on to [target], from Continue or from the button row. When items were
+/// Goes on to [target]. From the Continue button ([warn] true), when items were
 /// skipped, are still unchecked or disagree with the aircraft it first shows
 /// an amber caution dialog naming each non-zero count, with Cancel (stay) and
-/// Continue (go on); with none of them it goes straight on.
+/// Continue (go on); with none of them it goes straight on. A tap on the
+/// checklist row ([warn] false) opens the checklist at once: the pilot chose
+/// it on purpose.
 Future<void> _continue(
   BuildContext context,
   ChecklistDetailLoaded state,
-  NextChecklist target,
-) async {
+  NextChecklist target, {
+  bool warn = true,
+}) async {
   final router = GoRouter.of(context);
-  if (state.skipped > 0 || state.disagreedCount > 0 || state.unchecked > 0) {
+  if (warn &&
+      (state.skipped > 0 || state.disagreedCount > 0 || state.unchecked > 0)) {
     final theme = Theme.of(context);
     final amber =
         theme.extension<StatusColors>()?.caution ?? theme.colorScheme.error;
@@ -592,7 +596,7 @@ class _LoadedBodyState extends State<_LoadedBody> {
                 _ChecklistButtons(
                   state: state,
                   onOpen: (target) =>
-                      unawaited(_continue(context, state, target)),
+                      unawaited(_continue(context, state, target, warn: false)),
                 ),
             ],
           ),
@@ -808,6 +812,16 @@ class _ChecklistButtonsState extends State<_ChecklistButtons> {
   final _current = GlobalKey();
   final _scroll = ScrollController();
 
+  /// Keeps the scrolling row, and its position, when the edge fades come and go
+  /// and the row moves between parents: without it the row is built again and
+  /// starts at the left.
+  final _row = GlobalKey();
+
+  /// Whether the focused chip has been centred since it last changed. The row
+  /// has no scroll extent on the first frame, so the first attempt can find
+  /// nothing to scroll; it is repeated when the extent becomes known.
+  bool _centred = false;
+
   @override
   void dispose() {
     _scroll.dispose();
@@ -830,6 +844,7 @@ class _ChecklistButtonsState extends State<_ChecklistButtons> {
     final now = widget.state;
     if (old.isComplete != now.isComplete ||
         old.nextInFile?.name != now.nextInFile?.name) {
+      _centred = false;
       _centre();
     }
   }
@@ -855,6 +870,9 @@ class _ChecklistButtonsState extends State<_ChecklistButtons> {
       final viewport = RenderAbstractViewport.maybeOf(object);
       if (viewport == null) return;
       final position = _scroll.position;
+      // No extent yet (the row is not laid out): wait for the metrics.
+      if (position.maxScrollExtent <= 0) return;
+      _centred = true;
       final target = viewport
           .getOffsetToReveal(object, 0.5)
           .offset
@@ -902,8 +920,12 @@ class _ChecklistButtonsState extends State<_ChecklistButtons> {
           );
         },
         child: NotificationListener<ScrollMetricsNotification>(
+          key: _row,
           // Rebuilds the fades when the size of the row changes.
-          onNotification: (_) {
+          onNotification: (notification) {
+            if (!_centred && notification.metrics.maxScrollExtent > 0) {
+              _centre();
+            }
             WidgetsBinding.instance.addPostFrameCallback((_) {
               if (mounted) setState(() {});
             });
@@ -918,6 +940,8 @@ class _ChecklistButtonsState extends State<_ChecklistButtons> {
               children: [
                 for (final c in state.checklists)
                   Padding(
+                    // The focused chip is the one centred in the row.
+                    key: _focusName == c.name ? _current : null,
                     padding: const EdgeInsets.symmetric(horizontal: 4),
                     child: c.name == state.name
                         ? ChoiceChip(
@@ -927,10 +951,7 @@ class _ChecklistButtonsState extends State<_ChecklistButtons> {
                             onSelected: null,
                             padding: _chipPadding,
                             shape: _chipShape,
-                            label: Container(
-                              key: _focusName == c.name ? _current : null,
-                              child: Text(c.title),
-                            ),
+                            label: Text(c.title),
                           )
                         : ActionChip(
                             key: checklistButtonKey(c.name),
@@ -941,19 +962,16 @@ class _ChecklistButtonsState extends State<_ChecklistButtons> {
                             backgroundColor: _focusName == c.name
                                 ? Theme.of(context).colorScheme.primary
                                 : null,
-                            label: Container(
-                              key: _focusName == c.name ? _current : null,
-                              child: Text(
-                                c.title,
-                                style: _focusName == c.name
-                                    ? TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        color: Theme.of(context)
-                                            .colorScheme
-                                            .onPrimary,
-                                      )
-                                    : null,
-                              ),
+                            label: Text(
+                              c.title,
+                              style: _focusName == c.name
+                                  ? TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onPrimary,
+                                    )
+                                  : null,
                             ),
                           ),
                   ),

@@ -49,8 +49,13 @@ void main() {
   late FakeSettingsRepository settings;
   late GoRouter router;
 
-  Future<void> pump(WidgetTester tester) async {
-    tester.view.physicalSize = const Size(800, 1200);
+  Future<void> pump(
+    WidgetTester tester, {
+    String text = _text,
+    String open = 'one',
+    double width = 800,
+  }) async {
+    tester.view.physicalSize = Size(width, 1200);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
     final clock = ManualClock();
@@ -65,7 +70,7 @@ void main() {
         ),
       );
     repository = FakeChecklistRepository(
-      current: const AircraftWorkflowParser().parse(_text),
+      current: const AircraftWorkflowParser().parse(text),
     );
     progress = ChecklistProgressRepositoryImpl();
     router = createRouter(initialLocation: Routes.list);
@@ -86,7 +91,7 @@ void main() {
         child: MaterialApp.router(theme: AppTheme.light, routerConfig: router),
       ),
     );
-    unawaited(router.push(Routes.detailPath('one')));
+    unawaited(router.push(Routes.detailPath(open)));
     await settle(tester);
   }
 
@@ -123,33 +128,39 @@ void main() {
     expect(find.text('Second'), findsWidgets);
   });
 
-  testWidgets('a tap with unchecked items asks; Cancel stays', (tester) async {
+  testWidgets('a tap with unchecked items opens the checklist at once', (
+    tester,
+  ) async {
     await pump(tester);
     await tester.tap(find.text('Check'));
     await settle(tester);
     await tester.ensureVisible(find.byKey(checklistButtonKey('mid')));
     await tester.tap(find.byKey(checklistButtonKey('mid')));
     await settle(tester);
-    expect(find.byKey(continueCautionDialogKey), findsOneWidget);
-    expect(find.text('1 checklist item is not checked'), findsOneWidget);
-    await tester.tap(find.byKey(continueCautionCancelKey));
-    await settle(tester);
     expect(find.byKey(continueCautionDialogKey), findsNothing);
-    expect(find.text('First'), findsWidgets);
+    expect(find.text('Middle'), findsWidgets);
   });
 
-  testWidgets('Continue in the dialog opens the tapped checklist', (
+  testWidgets('a tap with skipped items opens the checklist at once', (
     tester,
   ) async {
     await pump(tester);
-    await tester.ensureVisible(find.byKey(checklistButtonKey('mid')));
-    await tester.tap(find.byKey(checklistButtonKey('mid')));
+    await tester.tap(find.byKey(skipKey));
     await settle(tester);
-    expect(find.text('2 checklist items are not checked'), findsOneWidget);
-    await tester.tap(find.byKey(continueCautionContinueKey));
+    await tester.ensureVisible(find.byKey(checklistButtonKey('two')));
+    await tester.tap(find.byKey(checklistButtonKey('two')));
     await settle(tester);
-    expect(find.text('Middle'), findsWidgets);
     expect(find.byKey(continueCautionDialogKey), findsNothing);
+    expect(find.text('Second'), findsWidgets);
+  });
+
+  testWidgets('a tap on an earlier checklist opens it at once', (tester) async {
+    await pump(tester, open: 'two');
+    await tester.ensureVisible(find.byKey(checklistButtonKey('one')));
+    await tester.tap(find.byKey(checklistButtonKey('one')));
+    await settle(tester);
+    expect(find.byKey(continueCautionDialogKey), findsNothing);
+    expect(find.text('First'), findsWidgets);
   });
 
   testWidgets('Continue is hidden when its target is the next checklist', (
@@ -167,5 +178,28 @@ void main() {
     await tester.tap(find.text('Check'));
     await settle(tester);
     expect(find.byKey(continueButtonKey), findsNothing);
+  });
+
+  testWidgets('the row scrolls to centre the open checklist', (tester) async {
+    final text = StringBuffer();
+    for (var i = 1; i <= 12; i++) {
+      text.writeln('sw_checklist:c$i:Checklist number $i');
+      text.writeln('sw_item:Item|ok');
+    }
+    await pump(tester, text: text.toString(), open: 'c10', width: 400);
+    final row = find.byKey(checklistButtonsKey);
+    await tester.scrollUntilVisible(
+      row,
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await settle(tester);
+    final rowBox = tester.getRect(row);
+    final chip = tester.getRect(find.byKey(checklistButtonKey('c10')));
+    expect(
+      (chip.center.dx - rowBox.center.dx).abs(),
+      lessThan(2),
+      reason: 'chip $chip in row $rowBox',
+    );
   });
 }
