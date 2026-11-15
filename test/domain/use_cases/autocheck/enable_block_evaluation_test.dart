@@ -5,15 +5,18 @@ import 'package:flightsim_aide/domain/use_cases/autocheck/condition_evaluator.da
 import 'package:flightsim_aide/domain/use_cases/autocheck/evaluate_item_conditions_use_case.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-// Switch blocks (D-82). 0 Before, 1 Use GPU, 2 GPU, 3 GPU power, 4 After
+// Switches (D-82). 0 Before, 1 Use GPU (switch, default OFF), 2 GPU and
+// 3 GPU power (ON branch), 4 Unplug (OFF branch), 5 After.
 Checklist _list() => const AircraftWorkflowParser()
     .parse('''
 sw_checklist:A
 sw_item:Before|ON:a/before:1
-sw_enable_start:Use GPU
+sw_switch:Use GPU|gpu|OFF
 sw_item:GPU|ON:a/gpu:1
 sw_item:GPU power|ON:a/power:1
-sw_enable_end
+sw_else
+sw_item:Unplug|ON:a/unplug:1
+sw_end
 sw_item:After|ON:a/after:1
 ''')
     .checklists
@@ -21,11 +24,13 @@ sw_item:After|ON:a/after:1
 
 void main() {
   final list = _list();
+  final gpu = list.items[1].switchDef!;
   late EvaluateItemConditionsUseCase useCase;
   const values = MapValues({
     'a/before': 1,
     'a/gpu': 1,
     'a/power': 1,
+    'a/unplug': 1,
     'a/after': 1,
   });
 
@@ -34,31 +39,32 @@ void main() {
   AutoCheckResult run(ChecklistProgress progress) =>
       useCase.evaluate(checklist: list, values: values, progress: progress);
 
+  ChecklistProgress ticked([bool on = false]) {
+    final progress = ChecklistProgress().toggled('A', 0).toggled('A', 1);
+    return on ? progress.switchSet([list], gpu, on: true) : progress;
+  }
+
   test('auto stops at the switch row until the pilot ticks it', () {
     final result = run(ChecklistProgress());
     expect(result.toCheck, {0});
     expect(result.cursor, 1);
-    final on = run(ChecklistProgress().optionSet(list, 1, on: true));
+    final on = run(ChecklistProgress().switchSet([list], gpu, on: true));
     expect(on.toCheck, {0}, reason: 'on or off, it waits for the tick');
   });
 
-  test('items of a switch that is off are passed over once it is ticked', () {
-    final result = run(ChecklistProgress().toggled('A', 1));
-    expect(result.toCheck, {4});
+  test('with the switch off auto evaluates the OFF branch only', () {
+    final result = run(ticked());
+    expect(result.toCheck, {4, 5});
     expect(result.itemResults.keys, isNot(contains(2)));
   });
 
-  test('items of a switch that is on are evaluated in order', () {
-    final result = run(
-      ChecklistProgress()
-          .toggled('A', 0)
-          .toggled('A', 1)
-          .optionSet(list, 1, on: true),
-    );
-    expect(result.toCheck, {2, 3, 4});
+  test('with the switch on auto evaluates the ON branch only, in order', () {
+    final result = run(ticked(true));
+    expect(result.toCheck, {2, 3, 5});
+    expect(result.itemResults.keys, isNot(contains(4)));
   });
 
-  test('auto waits on an enabled item that is not met', () {
+  test('auto waits on a shown item that is not met', () {
     const off = MapValues({
       'a/before': 1,
       'a/gpu': 0,
@@ -68,19 +74,14 @@ void main() {
     final result = useCase.evaluate(
       checklist: list,
       values: off,
-      progress: ChecklistProgress()
-          .toggled('A', 1)
-          .optionSet(list, 1, on: true),
+      progress: ticked(true),
     );
     expect(result.toCheck, isEmpty);
     expect(result.itemResults[2], Tri.notMet);
   });
 
-  test('the checklist is complete when the enabled items are done', () {
-    final progress = ChecklistProgress()
-        .toggled('A', 0)
-        .toggled('A', 1)
-        .toggled('A', 4);
+  test('the checklist is complete when the shown items are done', () {
+    final progress = ticked().toggled('A', 4).toggled('A', 5);
     final result = useCase.evaluate(
       checklist: list,
       values: values,

@@ -90,15 +90,7 @@ class FileProgressStorageService implements ProgressStorageService {
       // Older files may hold 'manuallyUnchecked'; it is ignored.
       final disagreed = _indexes(value['disagreed']);
       final skipped = _indexes(value['skipped']);
-      // Added with the switch blocks (D-82); absent in older files of this
-      // version, which then read as every switch off.
-      final enabled = _indexes(value['enabled']);
-      if (auto == null ||
-          disagreed == null ||
-          skipped == null ||
-          enabled == null) {
-        return null;
-      }
+      if (auto == null || disagreed == null || skipped == null) return null;
       // A damaged cursor is not worth losing the marks for: back to the top.
       final cursor = value['cursor'];
       checklists[entry.key] = StoredChecklistProgress(
@@ -107,14 +99,22 @@ class FileProgressStorageService implements ProgressStorageService {
         autoChecked: auto,
         disagreed: disagreed,
         skipped: skipped,
-        enabled: enabled,
         cursor: cursor is int && cursor > 0 ? cursor : 0,
       );
     }
+    // Added with the switches (D-82); absent in older files, which then read
+    // as every switch at its default. A damaged entry is dropped, not fatal.
+    final saved = json['switches'];
+    final switches = <String, bool>{
+      if (saved is Map<String, Object?>)
+        for (final e in saved.entries)
+          if (e.value is bool) e.key: e.value as bool,
+    };
     return StoredProgress(
       lastViewed: lastViewed as String?,
       runId: runId as String?,
       checklists: checklists,
+      switches: switches,
     );
   }
 
@@ -139,6 +139,7 @@ class FileProgressStorageService implements ProgressStorageService {
           'aircraftPath': aircraftPath,
           'lastViewed': data.lastViewed,
           'runId': data.runId,
+          'switches': data.switches,
           'checklists': {
             for (final e in data.checklists.entries)
               e.key: {
@@ -146,7 +147,6 @@ class FileProgressStorageService implements ProgressStorageService {
                 'autoChecked': ([...e.value.autoChecked]..sort()),
                 'disagreed': ([...e.value.disagreed]..sort()),
                 'skipped': ([...e.value.skipped]..sort()),
-                'enabled': ([...e.value.enabled]..sort()),
                 'cursor': e.value.cursor,
                 'fingerprint': e.value.fingerprint,
               },

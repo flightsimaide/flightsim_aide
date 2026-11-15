@@ -328,63 +328,58 @@ void switchStorageTests() {
   test('the switch positions round trip', () async {
     const data = StoredProgress(
       runId: 'r',
+      switches: {'gpu': true, 'other': false},
       checklists: {
-        'A': StoredChecklistProgress(
-          checked: [2],
-          enabled: [1, 7],
-          fingerprint: 'f-3',
-        ),
+        'A': StoredChecklistProgress(checked: [2], fingerprint: 'f-3'),
       },
     );
     expect((await storage.write(path, data)).isOk, isTrue);
     expect(await storage.read(path), data);
   });
 
-  test('a file without the key reads as every switch off', () async {
-    final file = File(
-      '${dir.path}${Platform.pathSeparator}${aircraftFileName(path)}',
-    );
-    file.writeAsStringSync(
-      jsonEncode({
-        'version': 4,
-        'aircraftPath': path,
-        'lastViewed': null,
-        'runId': 'r',
-        'checklists': {
-          'A': {
-            'checked': [0],
-            'autoChecked': [],
-            'disagreed': [],
-            'skipped': [],
-            'cursor': 0,
-            'fingerprint': 'f-1',
-          },
-        },
-      }),
-    );
+  File file() =>
+      File('${dir.path}${Platform.pathSeparator}${aircraftFileName(path)}');
+
+  Map<String, Object?> record(Object? switches) => {
+    'version': 4,
+    'aircraftPath': path,
+    'lastViewed': null,
+    'runId': 'r',
+    'switches': ?switches,
+    'checklists': {
+      'A': {
+        'checked': [0],
+        'autoChecked': [],
+        'disagreed': [],
+        'skipped': [],
+        'cursor': 0,
+        'fingerprint': 'f-1',
+      },
+    },
+  };
+
+  test('a file without the key reads as every switch at its default', () async {
+    file().writeAsStringSync(jsonEncode(record(null)));
     final read = await storage.read(path);
-    expect(read!.checklists['A']!.enabled, isEmpty);
+    expect(read!.switches, isEmpty);
     expect(read.checklists['A']!.checked, [0]);
   });
 
-  test('a damaged switch list makes the file a miss', () async {
-    final file = File(
-      '${dir.path}${Platform.pathSeparator}${aircraftFileName(path)}',
-    );
-    file.writeAsStringSync(
-      jsonEncode({
-        'version': 4,
-        'aircraftPath': path,
-        'runId': 'r',
-        'checklists': {
-          'A': {
-            'checked': [0],
-            'enabled': 'yes',
-            'fingerprint': 'f-1',
-          },
-        },
-      }),
-    );
-    expect(await storage.read(path), isNull);
+  test('a damaged switches entry is dropped, the marks are kept', () async {
+    file().writeAsStringSync(jsonEncode(record('yes')));
+    expect((await storage.read(path))!.switches, isEmpty);
+    file().writeAsStringSync(jsonEncode(record({'a': 'x', 'b': true})));
+    final read = await storage.read(path);
+    expect(read!.switches, {'b': true});
+    expect(read.checklists['A']!.checked, [0]);
+  });
+
+  test('an old enabled list in a checklist entry is ignored', () async {
+    final data = record(null);
+    ((data['checklists']! as Map)['A']! as Map)['enabled'] = [1, 7];
+    file().writeAsStringSync(jsonEncode(data));
+    final read = await storage.read(path);
+    expect(read!.checklists['A']!.checked, [0]);
+    expect(read.switches, isEmpty);
   });
 }

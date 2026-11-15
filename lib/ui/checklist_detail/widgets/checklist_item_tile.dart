@@ -28,7 +28,6 @@ class ChecklistItemTile extends StatelessWidget {
     this.autoChecked = false,
     this.disagreed = false,
     this.autoOn = false,
-    this.enabled = true,
     this.optionOn = false,
     this.onSwitch,
     super.key,
@@ -40,8 +39,7 @@ class ChecklistItemTile extends StatelessWidget {
   /// Whether a check row is checked.
   final bool checked;
 
-  /// Called when a check row or a switch row is tapped to tick it (a disabled
-  /// row is not tappable and never calls it).
+  /// Called when a check row or a switch row is tapped to tick it.
   final VoidCallback onTap;
 
   /// The document's colour palette, keyed by name.
@@ -65,11 +63,6 @@ class ChecklistItemTile extends StatelessWidget {
   /// it is the one the pilot must do by hand while auto runs.
   final bool autoOn;
 
-  /// Whether the row is enabled (D-82): it is in no switch block, or its
-  /// switch is on. A disabled row is greyed out at the standard Material 3
-  /// disabled opacity, cannot be tapped and is read as "disabled".
-  final bool enabled;
-
   /// For a switch row: whether the switch is on.
   final bool optionOn;
 
@@ -77,19 +70,14 @@ class ChecklistItemTile extends StatelessWidget {
   /// row, as for a manual item.
   final VoidCallback? onSwitch;
 
-  /// Opacity of a disabled row (Material 3).
-  static const double disabledOpacity = 0.38;
-
   @override
   Widget build(BuildContext context) {
-    final tile = switch (item.type) {
+    return switch (item.type) {
       ChecklistItemType.note => _note(context),
       ChecklistItemType.heading => _heading(context),
       ChecklistItemType.details => _details(context),
       ChecklistItemType.option || ChecklistItemType.check => _check(context),
     };
-    if (enabled) return tile;
-    return Opacity(opacity: disabledOpacity, child: tile);
   }
 
   Widget _text(
@@ -220,7 +208,6 @@ class ChecklistItemTile extends StatelessWidget {
     final isOption = item.type == ChecklistItemType.option;
     final manual =
         autoOn &&
-        enabled &&
         item.condition == null &&
         !checked &&
         !skipped &&
@@ -259,17 +246,16 @@ class ChecklistItemTile extends StatelessWidget {
           : 'unchecked',
       if (manual) 'manual item',
       if (isOption) 'switch ${optionOn ? 'on' : 'off'}',
-      if (!enabled) 'disabled, turn on its switch to use it',
     ].join(', ');
     return Semantics(
       container: true,
       excludeSemantics: true,
       label: spoken,
-      onTap: enabled ? onTap : null,
+      onTap: onTap,
       child: Material(
         color: tint,
         child: InkWell(
-          onTap: enabled ? onTap : null,
+          onTap: onTap,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [

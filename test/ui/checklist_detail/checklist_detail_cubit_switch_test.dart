@@ -10,15 +10,15 @@ import '../../../testing/fakes/repositories/fake_flight_sim_repository.dart';
 import '../../../testing/fakes/repositories/fake_settings_repository.dart';
 import '../../../testing/fakes/services/manual_clock.dart';
 
-// Switch blocks (D-82). Rows: 0 Before, 1 Use GPU (switch), 2 GPU,
+// Switch blocks (D-82; default OFF). Rows: 0 Before, 1 Use GPU (switch), 2 GPU,
 // 3 GPU power, 4 After.
 const _text = '''
 sw_checklist:Start
 sw_item:Before|ON:a/before:1
-sw_enable_start:Use GPU
+sw_switch:Use GPU|gpu|OFF
 sw_item:GPU|ON:a/gpu:1
 sw_item:GPU power|ON:a/power:1
-sw_enable_end
+sw_end
 sw_item:After|ON:a/after:1
 ''';
 
@@ -95,6 +95,16 @@ void main() {
     expect(loaded().total, 5);
     await flip(1);
     expect(loaded().total, 3);
+  });
+
+  test('the else branch is enabled while the switch is off', () async {
+    expect(loaded().rows.map((r) => r.enabled), [
+      true,
+      true,
+      false,
+      false,
+      true,
+    ]);
   });
 
   test('a disabled item cannot be ticked', () async {

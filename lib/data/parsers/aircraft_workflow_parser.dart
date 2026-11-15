@@ -4,6 +4,7 @@ import '../../domain/models/checklist/checklist_document.dart';
 import '../../domain/models/checklist/checklist_item.dart';
 import '../../domain/models/checklist/colour_run.dart';
 import '../../domain/models/checklist/continue_link.dart';
+import '../../domain/models/checklist/switch_gate.dart';
 import '../../domain/models/flight_sim/item_condition.dart';
 import 'condition_expression_parser.dart';
 
@@ -27,9 +28,18 @@ class AircraftWorkflowParser {
     final continueLists = <List<_PendingContinue>>[];
     List<_PendingContinue>? currentContinues;
     var untitledCount = 0;
-    // The switch row of the open `sw_enable_start` block, if any (section 5b).
-    int? openGate;
-    int openGateLine = 0;
+    // The open switch block, if any (section 5b): its switch, the position in
+    // which the branch before `sw_else` is shown, and whether `sw_else` was
+    // seen. [ignoredBlocks] counts blocks that were started but ignored, so
+    // their `sw_else` and `sw_end` do not touch the open one.
+    SwitchDef? openSwitch;
+    var openFirstWhen = true;
+    var openInElse = false;
+    var openKeyword = '';
+    var openLine = 0;
+    var ignoredBlocks = 0;
+    final switchDefs = <String, SwitchDef>{};
+    final ifUses = <({int line, String id})>[];
 
     // `sw_continue` belongs to the open checklist (`GRAMMAR.md` F1, F2). The
     // name is the text before the next `:`; a condition after it is dropped.
@@ -63,73 +73,158 @@ class AircraftWorkflowParser {
       open.add(pending);
     }
 
-    // An `sw_enable_start` block ends at `sw_enable_end`; one still open when
-    // its checklist or the file ends is closed there, with a warning (G5).
-    void closeOpenGate() {
-      if (openGate != null) {
+    // A block ends at `sw_end`; one still open when its checklist or the file
+    // ends is closed there, with a warning (G5).
+    void closeOpenBlock() {
+      if (openSwitch != null) {
         warnings.add(
-          'Line $openGateLine: sw_enable_start has no sw_enable_end; '
+          'Line $openLine: $openKeyword has no sw_end; '
           'closed at the end of the checklist',
         );
-        openGate = null;
+        openSwitch = null;
       }
+      ignoredBlocks = 0;
     }
 
-    void startGate(int number, String value) {
+    // Reads the on/off word of a block start; [fallback] when it is bad.
+    bool readState(int number, String keyword, String? word, bool fallback) {
+      if (word == null || word.isEmpty) return fallback;
+      switch (word.toLowerCase()) {
+        case 'on':
+          return true;
+        case 'off':
+          return false;
+      }
+      warnings.add(
+        'Line $number: $keyword state must be ON or OFF; '
+        '${fallback ? 'ON' : 'OFF'} assumed',
+      );
+      return fallback;
+    }
+
+    // Starts a block of [keyword] on [switchDef]; the branch before `sw_else`
+    // is shown while the switch is [firstWhen].
+    void openBlock(
+      int number,
+      String keyword,
+      SwitchDef switchDef,
+      bool firstWhen,
+    ) {
+      openSwitch = switchDef;
+      openFirstWhen = firstWhen;
+      openInElse = false;
+      openKeyword = keyword;
+      openLine = number;
+    }
+
+    // `sw_switch:Label|id|ON` and `sw_if|id|ON`.
+    void startBlock(int number, String keyword, String value) {
       final items = currentItems;
       if (items == null) {
         warnings.add('Line $number: item before any checklist');
         return;
       }
-      if (openGate != null) {
-        warnings.add(
-          'Line $number: sw_enable_start inside another block; ignored',
-        );
+      if (openSwitch != null || ignoredBlocks > 0) {
+        warnings.add('Line $number: $keyword inside another block; ignored');
+        ignoredBlocks++;
         return;
       }
-      for (final name in colourNamesIn(value)) {
-        markerUses.add((line: number, name: name));
+      final parts = value.split('|');
+      final isSwitch = keyword == 'sw_switch';
+      final labelText = isSwitch ? parts.first : '';
+      final idIndex = isSwitch ? 1 : 0;
+      final id = parts.length > idIndex ? parts[idIndex].trim() : '';
+      final stateWord = parts.length > idIndex + 1
+          ? parts[idIndex + 1].trim()
+          : null;
+      if (parts.length > idIndex + 2) {
+        warnings.add('Line $number: $keyword has extra parts; ignored');
       }
-      final colon = value.indexOf(':');
-      if (colon >= 0 || value.contains('|')) {
+      if (isSwitch) {
+        for (final name in colourNamesIn(labelText)) {
+          markerUses.add((line: number, name: name));
+        }
+      }
+      final row = isSwitch
+          ? _buildItem(ChecklistItemType.option, labelText, '')
+          : null;
+      if (row != null && row.label.isEmpty) {
+        warnings.add('Line $number: sw_switch has no label; ignored');
+        ignoredBlocks++;
+        return;
+      }
+      if (id.isEmpty) {
+        warnings.add('Line $number: $keyword has no switch id; ignored');
+        ignoredBlocks++;
+        return;
+      }
+      final key = id.toLowerCase();
+      if (row == null) {
+        final first = readState(number, keyword, stateWord, true);
+        ifUses.add((line: number, id: key));
+        openBlock(number, keyword, SwitchDef(key), first);
+        return;
+      }
+      final known = switchDefs[key];
+      if (known != null) {
         warnings.add(
-          'Line $number: sw_enable_start takes a label only; the rest is '
-          'ignored',
+          'Line $number: duplicate switch "$key"; first definition kept, '
+          'no switch row',
         );
+        openBlock(number, keyword, known, true);
+        return;
       }
-      final bar = value.indexOf('|');
-      final cut = [
-        colon,
-        bar,
-      ].where((i) => i >= 0).fold<int>(value.length, (a, b) => a < b ? a : b);
-      final item = _buildItem(
-        ChecklistItemType.option,
-        value.substring(0, cut),
-        '',
+      final def = SwitchDef(
+        key,
+        defaultOn: readState(number, keyword, stateWord, false),
       );
-      if (item.label.isEmpty) {
-        warnings.add('Line $number: sw_enable_start has no label; ignored');
-        return;
-      }
-      openGate = items.length;
-      openGateLine = number;
-      items.add(item);
+      switchDefs[key] = def;
+      items.add(_withSwitch(row, def));
+      openBlock(number, keyword, def, true);
     }
 
-    void endGate(int number) {
+    void elseBlock(int number) {
       if (currentItems == null) {
         warnings.add('Line $number: item before any checklist');
-      } else if (openGate == null) {
-        warnings.add('Line $number: sw_enable_end without sw_enable_start');
+      } else if (ignoredBlocks > 0) {
+        // The ignored block was already reported.
+      } else if (openSwitch == null) {
+        warnings.add('Line $number: sw_else without sw_if or sw_switch');
+      } else if (openInElse) {
+        warnings.add('Line $number: second sw_else in a block; ignored');
       } else {
-        openGate = null;
+        openInElse = true;
       }
+    }
+
+    void endBlock(int number) {
+      if (currentItems == null) {
+        warnings.add('Line $number: item before any checklist');
+      } else if (ignoredBlocks > 0) {
+        ignoredBlocks--;
+      } else if (openSwitch == null) {
+        warnings.add('Line $number: sw_end without sw_if or sw_switch');
+      } else {
+        openSwitch = null;
+      }
+    }
+
+    // The branch an item read now belongs to, or null outside a block.
+    SwitchGate? currentGate() {
+      final open = openSwitch;
+      if (open == null) return null;
+      return SwitchGate(
+        open,
+        whenOn: openInElse ? !openFirstWhen : openFirstWhen,
+      );
     }
 
     for (var index = 0; index < lines.length; index++) {
       final line = lines[index];
       final kv = splitKeywordValue(line.text);
-      if (kv == null) {
+      if (kv == null && _isIfLine(line.text)) {
+        startBlock(line.number, 'sw_if', _ifValue(line.text));
+      } else if (kv == null) {
         final bare = line.text.toLowerCase();
         if (bare == 'sw_define_colour') {
           warnings.add('Line ${line.number}: bad colour definition');
@@ -137,10 +232,12 @@ class AircraftWorkflowParser {
           addContinue(index, '');
         } else if (bare == 'sw_show') {
           // sw_show is ignored like a comment (D-70).
-        } else if (bare == 'sw_enable_end') {
-          endGate(line.number);
-        } else if (bare == 'sw_enable_start') {
-          startGate(line.number, '');
+        } else if (bare == 'sw_end') {
+          endBlock(line.number);
+        } else if (bare == 'sw_else') {
+          elseBlock(line.number);
+        } else if (bare == 'sw_switch') {
+          startBlock(line.number, 'sw_switch', '');
         } else if (!_ignoredKeywords.contains(bare)) {
           // Ignored keywords may appear bare, e.g. `sw_rcolsize` (K3).
           warnings.add('Line ${line.number}: unrecognized line');
@@ -150,10 +247,12 @@ class AircraftWorkflowParser {
         // comment, with no warning and no effect (K6, D-70).
       } else if (kv.keyword == 'sw_continue') {
         addContinue(index, kv.value);
-      } else if (kv.keyword == 'sw_enable_start') {
-        startGate(line.number, kv.value);
-      } else if (kv.keyword == 'sw_enable_end') {
-        endGate(line.number);
+      } else if (kv.keyword == 'sw_switch') {
+        startBlock(line.number, 'sw_switch', kv.value);
+      } else if (kv.keyword == 'sw_end') {
+        endBlock(line.number);
+      } else if (kv.keyword == 'sw_else') {
+        elseBlock(line.number);
       } else if (kv.keyword == 'sw_define_colour') {
         final definition = parseColourDefinition(kv.value);
         if (definition == null) {
@@ -175,7 +274,7 @@ class AircraftWorkflowParser {
           }
         }
       } else if (kv.keyword == 'sw_checklist') {
-        closeOpenGate();
+        closeOpenBlock();
         var checklist = _parseChecklistHeader(kv.value);
         if (checklist.name.isEmpty) {
           untitledCount++;
@@ -254,7 +353,7 @@ class AircraftWorkflowParser {
               item.result.isEmpty) {
             warnings.add('Line ${line.number}: empty note');
           } else {
-            final gate = openGate;
+            final gate = currentGate();
             currentItems.add(gate == null ? item : _withGate(item, gate));
           }
         }
@@ -262,7 +361,29 @@ class AircraftWorkflowParser {
         warnings.add('Line ${line.number}: unknown keyword "${kv.keyword}"');
       }
     }
-    closeOpenGate();
+    closeOpenBlock();
+    // A gate takes the default of its switch, defined anywhere in the file; a
+    // block that names a switch nobody defines is shown always.
+    final unknown = <String>{};
+    for (final use in ifUses) {
+      if (!switchDefs.containsKey(use.id)) {
+        warnings.add(
+          'Line ${use.line}: sw_if names the unknown switch "${use.id}"; '
+          'its items are always shown',
+        );
+        unknown.add(use.id);
+      }
+    }
+    for (final list in itemLists) {
+      for (var i = 0; i < list.length; i++) {
+        final gate = list[i].gate;
+        if (gate == null) continue;
+        final def = switchDefs[gate.id];
+        list[i] = def == null
+            ? _withoutGate(list[i])
+            : _withGate(list[i], SwitchGate(def, whenOn: gate.whenOn));
+      }
+    }
     for (final use in markerUses) {
       if (!colours.containsKey(use.name)) {
         warnings.add('Line ${use.line}: unknown colour "${use.name}"');
@@ -328,9 +449,10 @@ class AircraftWorkflowParser {
         condition,
         item.justify,
         item.gate,
+        item.switchDef,
       );
 
-  ChecklistItem _withGate(ChecklistItem item, int gate) => ChecklistItem(
+  ChecklistItem _withGate(ChecklistItem item, SwitchGate gate) => ChecklistItem(
     item.type,
     item.label,
     item.result,
@@ -339,6 +461,31 @@ class AircraftWorkflowParser {
     item.condition,
     item.justify,
     gate,
+    item.switchDef,
+  );
+
+  ChecklistItem _withoutGate(ChecklistItem item) => ChecklistItem(
+    item.type,
+    item.label,
+    item.result,
+    item.labelRuns,
+    item.resultRuns,
+    item.condition,
+    item.justify,
+    null,
+    item.switchDef,
+  );
+
+  ChecklistItem _withSwitch(ChecklistItem item, SwitchDef def) => ChecklistItem(
+    item.type,
+    item.label,
+    item.result,
+    item.labelRuns,
+    item.resultRuns,
+    item.condition,
+    item.justify,
+    item.gate,
+    def,
   );
 
   /// The condition text of a check or info line: after the first `:` that
@@ -466,6 +613,19 @@ class _PendingContinue {
   bool dropped = false;
 }
 
+/// Whether [text] is a `sw_if|id|state` line: the keyword, then `|` or the end.
+bool _isIfLine(String text) {
+  final bar = text.indexOf('|');
+  final head = (bar < 0 ? text : text.substring(0, bar)).trim().toLowerCase();
+  return head == 'sw_if';
+}
+
+/// The part of a `sw_if` line after the keyword.
+String _ifValue(String text) {
+  final bar = text.indexOf('|');
+  return bar < 0 ? '' : text.substring(bar + 1);
+}
+
 bool _isContinueLine(String text) {
   if (text.toLowerCase() == 'sw_continue') return true;
   return splitKeywordValue(text)?.keyword == 'sw_continue';
@@ -488,7 +648,10 @@ bool _isShowLine(String text) {
     return (kind: _Follow.checklist, headerLine: lines[next].number);
   }
   if (kv != null &&
-      (_itemKeywords.contains(kv.keyword) || kv.keyword == 'sw_enable_start')) {
+      (_itemKeywords.contains(kv.keyword) || kv.keyword == 'sw_switch')) {
+    return (kind: _Follow.item, headerLine: null);
+  }
+  if (kv == null && _isIfLine(lines[next].text)) {
     return (kind: _Follow.item, headerLine: null);
   }
   return (kind: _Follow.other, headerLine: null);

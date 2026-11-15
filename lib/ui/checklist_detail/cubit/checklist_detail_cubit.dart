@@ -215,23 +215,25 @@ class ChecklistDetailCubit extends Cubit<ChecklistDetailState> {
     }
   }
 
-  /// Flips the switch row [index] (`sw_enable_start`, D-82). Turning it off
-  /// clears the marks of the items in its block; either way their auto-check
-  /// memory starts again, and turning it on lets auto-check look at them at
-  /// once. Anything but a switch row is ignored.
+  /// Flips the switch of the row [index] (`sw_switch`, D-82). The items of the
+  /// branch that is hidden lose their marks; the auto-check memory of the
+  /// items of its blocks starts again, and auto-check looks at the items that
+  /// are shown at once. Anything but a switch row is ignored.
   void toggleOption(int index) {
     final checklist = _find();
     if (checklist == null || index < 0 || index >= checklist.items.length) {
       return;
     }
-    if (checklist.items[index].type != ChecklistItemType.option) return;
-    final on = !_progressRepository.current.isOptionOn(_checklistName, index);
+    final def = checklist.items[index].switchDef;
+    final document = _document;
+    if (def == null || document == null) return;
+    final on = !_progressRepository.current.isSwitchOn(def);
     _autoCheck.resetItems(_checklistName, [
       for (var i = 0; i < checklist.items.length; i++)
-        if (checklist.items[i].gate == index) i,
+        if (checklist.items[i].gate?.id == def.id) i,
     ]);
-    _progressRepository.setOption(checklist, index, on: on);
-    if (on && _auto) _evaluate();
+    _progressRepository.setSwitch(document.checklists, def, on: on);
+    if (_auto) _evaluate();
   }
 
   /// Backs out of the tick that gave [warning]: the item is open again, as if
@@ -391,9 +393,10 @@ class ChecklistDetailCubit extends Cubit<ChecklistDetailState> {
                   checklist.items[i].isCheckable &&
                   progress.isSkipped(_checklistName, i),
               enabled: progress.isEnabled(checklist, i),
-              optionOn:
-                  checklist.items[i].type == ChecklistItemType.option &&
-                  progress.isOptionOn(_checklistName, i),
+              optionOn: switch (checklist.items[i].switchDef) {
+                final def? => progress.isSwitchOn(def),
+                null => false,
+              },
             ),
         ],
         done: counts.done,

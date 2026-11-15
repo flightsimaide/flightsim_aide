@@ -2,6 +2,7 @@ import 'package:equatable/equatable.dart';
 
 import '../flight_sim/item_condition.dart';
 import 'colour_run.dart';
+import 'switch_gate.dart';
 
 /// Kind of line in a checklist.
 enum ChecklistItemType {
@@ -20,8 +21,8 @@ enum ChecklistItemType {
   /// on a darker band, not checkable.
   details,
 
-  /// A switch row (`sw_enable_start`): the pilot turns the items of its block
-  /// on or off (`GRAMMAR.md` section 5b). Last, so the fingerprint indexes of
+  /// A switch row (`sw_switch`): the pilot turns a switch on or off, which
+  /// shows one branch of the blocks that follow it (`GRAMMAR.md` section 5b). Last, so the fingerprint indexes of
   /// the older kinds do not change. It is checked off, skipped and counted
   /// like a manual item (auto-check stops at it until the pilot ticks it), and
   /// it also holds the switch.
@@ -55,6 +56,7 @@ class ChecklistItem extends Equatable {
     this.condition,
     this.justify = ChecklistJustify.center,
     this.gate,
+    this.switchDef,
   ]);
 
   /// Whether this is a check item or a note.
@@ -84,11 +86,14 @@ class ChecklistItem extends Equatable {
   /// The text alignment of a heading; centre for every other kind (unused).
   final ChecklistJustify justify;
 
-  /// The index, in the checklist's items, of the switch row
-  /// (`sw_enable_start`) whose block holds this item, or null for an item in
-  /// no block. The item counts only while that switch is on. Worked out by the
-  /// parser; it is not part of the file syntax.
-  final int? gate;
+  /// The switch branch this item belongs to, or null for an item in no block.
+  /// The item is shown, counted and checked only while the switch is in the
+  /// branch's position. Worked out by the parser; it is not part of the file
+  /// syntax.
+  final SwitchGate? gate;
+
+  /// For a switch row: the switch it turns; null for every other line.
+  final SwitchDef? switchDef;
 
   /// Whether the pilot can tick or skip this line and it is counted: a check
   /// item or a switch row.
@@ -116,5 +121,6 @@ class ChecklistItem extends Equatable {
     condition,
     justify,
     gate,
+    switchDef,
   ];
 }

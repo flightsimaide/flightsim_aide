@@ -408,18 +408,19 @@ Result: PASS | 2026-11-05 | Windows 11 desktop | X-Plane 12.4.4, plugin 0.2.0 | 
 
 ## AC-54
 
-**Steps (switch block).** Aircraft with a checklist that has a block, for example the Thranda PC-12 with `sw_enable_start:Using GPU` in Before start.
-1. Open the checklist with Auto on. The `Using GPU` row has a check circle at the left, a `manual item` pill and a switch that is off; auto-check stops there and does not tick it or pass it; the items under it are greyed out and the count (`n/N`) includes the row but not them. the items under it are greyed out and the count (`n/N`) does not include them.
-2. Tap a greyed item: nothing ticks. Press Check until the greyed items would be next: it passes over them.
-3. Turn the switch on: the items are enabled and the total goes up. Tick one (or let auto tick it).
-4. Turn the switch off: the tick of those items is gone and the total goes down.
-5. Turn it on, press Reset and confirm: the ticks clear, the switch stays on.
+**Steps (switch).** Aircraft with a checklist that has a switch, for example the Thranda PC-12 with `sw_switch:Using GPU|gpu|OFF` in Before start and an `sw_if|gpu|ON` block in a later checklist.
+1. Open the checklist with Auto on. The `Using GPU` row has a check circle at the left, a `manual item` pill and a switch that is off; auto-check stops there and does not tick it or pass it. The ON branch is not shown at all (no grey rows) and the count (`n/N`) includes the row and the OFF branch but not the ON branch.
+2. Press Check until the hidden items would be next: it passes over them. Tapping the row ticks it; the switch does not move.
+3. Turn the switch on: the OFF branch disappears, the ON branch appears and the total changes. Tick one of the ON items (or let auto tick it).
+4. Turn the switch off: the tick of the ON items is gone and the total changes back.
+5. Open the later checklist with the `sw_if|gpu|ON` block: it shows the branch for the position of the switch and no switch row. Change the switch in the first checklist, come back: the later checklist follows.
 6. With the switch row open, press Skip: the row is skipped (amber) and the pointer moves past the block. Tap an item below the block: the pointer follows. Tick the row by hand: auto carries on.
-7. Close the app and open it again (same X-Plane run): the switch position is as it was when some item was ticked.
+7. Turn the switch on, press Reset and confirm: the ticks clear, the switch stays on.
+8. Close the app and open it again (same X-Plane run): the switch position is as it was when some item was ticked.
 
-Pass line: all seven hold, in the dark and the light theme.
+Pass line: all eight hold, in the dark and the light theme.
 
-Result: NOT RUN | 2026-11-14 | Needs the owner at the PC with the Thranda PC-12 checklist copied to X-Plane (the `Using GPU` blocks are in the local example file).
+Result: NOT RUN | 2026-11-15 | Needs the owner at the PC with the Thranda PC-12 checklist copied to X-Plane (rewritten to `sw_switch`, `sw_if`, `sw_else` and `sw_end`; the blocks are in the local example file).
 
 ## Plugin runs on the simulator (SIM)
 

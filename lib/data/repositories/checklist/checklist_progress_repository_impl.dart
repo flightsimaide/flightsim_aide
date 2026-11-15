@@ -5,9 +5,9 @@ import '../../../domain/models/checklist/attach_outcome.dart';
 import '../../../domain/models/checklist/checklist.dart';
 import '../../../domain/models/checklist/checklist_document.dart';
 import '../../../domain/models/checklist/checklist_fingerprint.dart';
-import '../../../domain/models/checklist/checklist_item.dart';
 import '../../../domain/models/checklist/checklist_progress.dart';
 import '../../../domain/models/checklist/progress_restore_policy.dart';
+import '../../../domain/models/checklist/switch_gate.dart';
 import '../../../utils/app_exception.dart';
 import '../../../utils/result.dart';
 import '../../services/local/model/stored_progress.dart';
@@ -73,8 +73,12 @@ class ChecklistProgressRepositoryImpl implements ChecklistProgressRepository {
   }
 
   @override
-  void setOption(Checklist checklist, int itemIndex, {required bool on}) {
-    final next = _current.optionSet(checklist, itemIndex, on: on);
+  void setSwitch(
+    List<Checklist> checklists,
+    SwitchDef def, {
+    required bool on,
+  }) {
+    final next = _current.switchSet(checklists, def, on: on);
     if (identical(next, _current)) return;
     _set(next);
     _persist();
@@ -239,7 +243,6 @@ class ChecklistProgressRepositoryImpl implements ChecklistProgressRepository {
     final auto = <String, Set<int>>{};
     final disagreed = <String, Set<int>>{};
     final skipped = <String, Set<int>>{};
-    final enabled = <String, Set<int>>{};
     final cursor = <String, int>{};
     for (final checklist in document.checklists) {
       final entry = saved.checklists[checklist.name];
@@ -259,14 +262,6 @@ class ChecklistProgressRepositoryImpl implements ChecklistProgressRepository {
       auto[checklist.name] = valid(entry.autoChecked).intersection(checked);
       disagreed[checklist.name] = valid(entry.disagreed).intersection(checked);
       skipped[checklist.name] = valid(entry.skipped).difference(checked);
-      // A saved switch counts only where the row is still a switch.
-      enabled[checklist.name] = {
-        for (final i in entry.enabled)
-          if (i >= 0 &&
-              i < checklist.items.length &&
-              checklist.items[i].type == ChecklistItemType.option)
-            i,
-      };
       cursor[checklist.name] = entry.cursor.clamp(0, checklist.items.length);
     }
     return ChecklistProgress.marks(
@@ -274,9 +269,28 @@ class ChecklistProgressRepositoryImpl implements ChecklistProgressRepository {
       autoChecked: auto,
       disagreed: disagreed,
       skipped: skipped,
-      enabled: enabled,
+      switches: _restorableSwitches(saved, document),
       cursor: cursor,
     );
+  }
+
+  /// The saved switch positions that still mean something: the switch is
+  /// defined in the document and the position differs from its default.
+  Map<String, bool> _restorableSwitches(
+    StoredProgress saved,
+    ChecklistDocument document,
+  ) {
+    final defaults = <String, bool>{
+      for (final checklist in document.checklists)
+        for (final item in checklist.items)
+          if (item.switchDef case final def?) def.id: def.defaultOn,
+    };
+    return {
+      for (final entry in saved.switches.entries)
+        if (defaults.containsKey(entry.key) &&
+            defaults[entry.key] != entry.value)
+          entry.key: entry.value,
+    };
   }
 
   StoredProgress _snapshot() {
@@ -288,20 +302,13 @@ class ChecklistProgressRepositoryImpl implements ChecklistProgressRepository {
         final auto = _current.autoChecked[checklist.name] ?? const <int>{};
         final disagreed = _current.disagreed[checklist.name] ?? const <int>{};
         final skipped = _current.skipped[checklist.name] ?? const <int>{};
-        final enabled = _current.enabled[checklist.name] ?? const <int>{};
         final cursor = _current.cursorOf(checklist.name);
-        if (checked.isEmpty &&
-            skipped.isEmpty &&
-            enabled.isEmpty &&
-            cursor == 0) {
-          continue;
-        }
+        if (checked.isEmpty && skipped.isEmpty && cursor == 0) continue;
         marks[checklist.name] = StoredChecklistProgress(
           checked: ([...checked]..sort()),
           autoChecked: ([...auto]..sort()),
           disagreed: ([...disagreed]..sort()),
           skipped: ([...skipped]..sort()),
-          enabled: ([...enabled]..sort()),
           cursor: cursor,
           fingerprint: fingerprintOf(checklist),
         );
@@ -311,6 +318,7 @@ class ChecklistProgressRepositoryImpl implements ChecklistProgressRepository {
       lastViewed: _lastViewed,
       runId: _runId,
       checklists: marks,
+      switches: _current.switches,
     );
   }
 

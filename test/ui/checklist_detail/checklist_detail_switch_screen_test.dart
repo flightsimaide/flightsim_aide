@@ -15,18 +15,20 @@ import 'package:go_router/go_router.dart';
 
 import '../../../testing/fakes/repositories/fake_checklist_repository.dart';
 
-// AC-54: a switch block's items count only while its switch is on; the total
-// changes with the switch; items of an off switch are greyed out and cannot
-// be ticked
+// AC-54: the items of the branch a switch hides are not shown and not
+// counted; the total changes with the switch; the switch row is an item
 
-// Rows: 0 Before, 1 Use GPU (switch), 2 GPU, 3 GPU power, 4 After.
+// Rows: 0 Before, 1 Use GPU (switch), 2 GPU and 3 GPU power (ON branch),
+// 4 Unplug (OFF branch), 5 After.
 const _text = '''
 sw_checklist:Prepare
 sw_item:Before|ON
-sw_enable_start:Use GPU
+sw_switch:Use GPU|gpu|OFF
 sw_item:GPU|CONNECT
 sw_item:GPU power|ON
-sw_enable_end
+sw_else
+sw_item:Unplug|CHECK
+sw_end
 sw_item:After|ON
 ''';
 
@@ -62,55 +64,65 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  ChecklistItemTile tile(WidgetTester tester, int row) =>
-      tester.widget<ChecklistItemTile>(find.byType(ChecklistItemTile).at(row));
+  List<String> labels(WidgetTester tester) => [
+    for (final t in tester.widgetList<ChecklistItemTile>(
+      find.byType(ChecklistItemTile),
+    ))
+      t.item.label,
+  ];
 
-  testWidgets('the block starts off: greyed rows, total 0/3', (tester) async {
+  testWidgets('the switch starts off: the OFF branch shows, total 0/4', (
+    tester,
+  ) async {
     await pump(tester);
-    expect(find.text('0/3'), findsOneWidget);
+    expect(find.text('0/4'), findsOneWidget);
+    expect(labels(tester), ['Before', 'Use GPU', 'Unplug', 'After']);
+    expect(find.text('GPU power'), findsNothing);
     expect(
-      [for (var i = 0; i < 5; i++) tile(tester, i).enabled],
-      [true, true, false, false, true],
+      find.byWidgetPredicate((w) => w is Opacity && w.opacity == 0.38),
+      findsNothing,
+      reason: 'hidden, not greyed',
     );
-    expect(tile(tester, 1).optionOn, isFalse);
+    expect(tester.widget<Switch>(find.byKey(optionSwitchKey)).value, isFalse);
   });
 
-  testWidgets('tapping a greyed row ticks nothing', (tester) async {
-    await pump(tester);
-    await tester.tap(find.text('GPU power'), warnIfMissed: false);
-    await tester.pump();
-    expect(progress.current.checked, isEmpty);
-    expect(find.text('0/3'), findsOneWidget);
-  });
-
-  testWidgets('the switch enables the block and the total follows', (
+  testWidgets('the switch swaps the branches and the total follows', (
     tester,
   ) async {
     await pump(tester);
     await tester.tap(find.byKey(optionSwitchKey));
     await tester.pumpAndSettle();
     expect(find.text('0/5'), findsOneWidget);
-    expect([
-      for (var i = 0; i < 5; i++) tile(tester, i).enabled,
-    ], everyElement(isTrue));
+    expect(labels(tester), ['Before', 'Use GPU', 'GPU', 'GPU power', 'After']);
     await tester.tap(find.text('GPU power'));
     await tester.pump();
     expect(find.text('1/5'), findsOneWidget);
     // Off again: the tick of its item is gone and the total drops.
     await tester.tap(find.byKey(optionSwitchKey));
     await tester.pumpAndSettle();
-    expect(find.text('0/3'), findsOneWidget);
+    expect(find.text('0/4'), findsOneWidget);
     expect(progress.current.checked['Prepare'] ?? const <int>{}, isEmpty);
   });
 
-  testWidgets('the Check button passes over the greyed rows', (tester) async {
+  testWidgets('tapping the switch row ticks it and does not turn it on', (
+    tester,
+  ) async {
     await pump(tester);
-    for (var i = 0; i < 3; i++) {
+    await tester.tap(find.text('Use GPU'));
+    await tester.pump();
+    expect(progress.current.checked['Prepare'], {1});
+    expect(tester.widget<Switch>(find.byKey(optionSwitchKey)).value, isFalse);
+    expect(find.text('1/4'), findsOneWidget);
+  });
+
+  testWidgets('the Check button passes over the hidden rows', (tester) async {
+    await pump(tester);
+    for (var i = 0; i < 4; i++) {
       await tester.tap(find.text('Check'));
       await tester.pump();
     }
-    // 0, the switch row (an item), then past the greyed rows to 4.
-    expect(progress.current.checked['Prepare'], {0, 1, 4});
+    // 0, the switch row (an item), 4 (the OFF branch), then 5.
+    expect(progress.current.checked['Prepare'], {0, 1, 4, 5});
     expect(find.text('Complete'), findsWidgets);
   });
 }

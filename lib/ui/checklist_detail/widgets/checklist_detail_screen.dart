@@ -564,29 +564,30 @@ class _LoadedBodyState extends State<_LoadedBody> {
             // row a context, so the pointer item far below can be scrolled to.
             scrollCacheExtent: const ScrollCacheExtent.pixels(100000),
             children: [
+              // A row of the branch a switch hides is not built at all (D-82).
               for (var i = 0; i < state.rows.length; i++)
-                ChecklistItemTile(
-                  key: _keys.putIfAbsent(i, GlobalKey.new),
-                  item: state.rows[i].item,
-                  checked: state.rows[i].checked,
-                  autoChecked: state.rows[i].autoChecked,
-                  disagreed: state.rows[i].disagreed,
-                  skipped: state.rows[i].skipped,
-                  autoOn: state.auto,
-                  enabled: state.rows[i].enabled,
-                  optionOn: state.rows[i].optionOn,
-                  colours: state.colours,
-                  onTap: () {
-                    _anchor = i;
-                    _acted = true;
-                    cubit.toggle(state.rows[i].index);
-                  },
-                  onSwitch: () {
-                    _anchor = i;
-                    _acted = true;
-                    cubit.toggleOption(state.rows[i].index);
-                  },
-                ),
+                if (state.rows[i].enabled)
+                  ChecklistItemTile(
+                    key: _keys.putIfAbsent(i, GlobalKey.new),
+                    item: state.rows[i].item,
+                    checked: state.rows[i].checked,
+                    autoChecked: state.rows[i].autoChecked,
+                    disagreed: state.rows[i].disagreed,
+                    skipped: state.rows[i].skipped,
+                    autoOn: state.auto,
+                    optionOn: state.rows[i].optionOn,
+                    colours: state.colours,
+                    onTap: () {
+                      _anchor = i;
+                      _acted = true;
+                      cubit.toggle(state.rows[i].index);
+                    },
+                    onSwitch: () {
+                      _anchor = i;
+                      _acted = true;
+                      cubit.toggleOption(state.rows[i].index);
+                    },
+                  ),
               if (state.checklists.length > 1)
                 _ChecklistButtons(
                   state: state,

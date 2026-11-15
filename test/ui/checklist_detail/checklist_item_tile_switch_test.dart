@@ -1,27 +1,27 @@
 import 'package:flightsim_aide/domain/models/checklist/checklist_item.dart';
+import 'package:flightsim_aide/domain/models/checklist/switch_gate.dart';
 import 'package:flightsim_aide/ui/checklist_detail/widgets/checklist_item_tile.dart';
 import 'package:flightsim_aide/ui/core/themes/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-// Switch blocks (D-82): the switch row and the greyed-out rows.
+// Switches (D-82): the switch row.
 
-const _switchRow = ChecklistItem(ChecklistItemType.option, 'Use GPU');
-const _check = ChecklistItem(
-  ChecklistItemType.check,
-  'GPU power',
-  'ON',
+const _switchRow = ChecklistItem(
+  ChecklistItemType.option,
+  'Use GPU',
+  '',
   [],
   [],
   null,
   ChecklistJustify.center,
-  1,
+  null,
+  SwitchDef('gpu'),
 );
 
 Future<void> _pump(
   WidgetTester tester,
   ChecklistItem item, {
-  bool enabled = true,
   bool optionOn = false,
   bool autoOn = false,
   bool checked = false,
@@ -38,7 +38,6 @@ Future<void> _pump(
           checked: checked,
           onTap: onTap ?? () {},
           onSwitch: onSwitch,
-          enabled: enabled,
           optionOn: optionOn,
           autoOn: autoOn,
         ),
@@ -140,74 +139,5 @@ void main() {
         expect(tester.takeException(), isNull);
       });
     }
-  });
-
-  group('disabled rows', () {
-    testWidgets('are greyed at the Material 3 disabled opacity', (
-      tester,
-    ) async {
-      await _pump(tester, _check, enabled: false);
-      final opacity = tester.widget<Opacity>(
-        find.descendant(
-          of: find.byType(ChecklistItemTile),
-          matching: find.byType(Opacity),
-        ),
-      );
-      expect(opacity.opacity, ChecklistItemTile.disabledOpacity);
-      await _pump(tester, _check);
-      expect(
-        find.descendant(
-          of: find.byType(ChecklistItemTile),
-          matching: find.byType(Opacity),
-        ),
-        findsNothing,
-      );
-    });
-
-    testWidgets('cannot be tapped', (tester) async {
-      var taps = 0;
-      await _pump(tester, _check, enabled: false, onTap: () => taps++);
-      await tester.tap(find.text('GPU power'), warnIfMissed: false);
-      expect(taps, 0);
-    });
-
-    testWidgets('are read as disabled', (tester) async {
-      final handle = tester.ensureSemantics();
-      await _pump(tester, _check, enabled: false);
-      expect(
-        find.bySemanticsLabel(RegExp('GPU power.*disabled')),
-        findsOneWidget,
-      );
-      handle.dispose();
-    });
-
-    testWidgets('never show the manual item pill', (tester) async {
-      await _pump(tester, _check, enabled: false, autoOn: true);
-      expect(find.text('manual item'), findsNothing);
-      await _pump(tester, _check, autoOn: true);
-      expect(find.text('manual item'), findsOneWidget);
-    });
-
-    testWidgets('notes, headings and details are greyed too', (tester) async {
-      for (final type in [
-        ChecklistItemType.note,
-        ChecklistItemType.heading,
-        ChecklistItemType.details,
-      ]) {
-        await _pump(tester, ChecklistItem(type, 'Text'), enabled: false);
-        expect(
-          tester
-              .widget<Opacity>(
-                find.descendant(
-                  of: find.byType(ChecklistItemTile),
-                  matching: find.byType(Opacity),
-                ),
-              )
-              .opacity,
-          ChecklistItemTile.disabledOpacity,
-          reason: '$type',
-        );
-      }
-    });
   });
 }

@@ -39,8 +39,8 @@ class ChecklistDetailRow extends Equatable {
   /// Whether the user skipped it (amber marker). Never also [checked].
   final bool skipped;
 
-  /// Whether the item is enabled: it is in no switch block, or its switch is
-  /// on (D-82). A disabled row is greyed out and cannot be ticked.
+  /// Whether the item is shown: it is in no switch block, or its switch is in
+  /// the position of its branch (D-82). A row that is not enabled is hidden.
   final bool enabled;
 
   /// For a switch row: whether the switch is on. False for every other row.
