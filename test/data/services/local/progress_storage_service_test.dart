@@ -12,6 +12,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('storage format 2', storageFormat2Tests);
+  group('switch positions', switchStorageTests);
 
   late Directory dir;
   late FileProgressStorageService storage;
@@ -309,6 +310,81 @@ void storageFormat2Tests() {
 
   test('a corrupt file is no saved progress', () async {
     file().writeAsStringSync('{"version":2,"check');
+    expect(await storage.read(path), isNull);
+  });
+}
+
+void switchStorageTests() {
+  late Directory dir;
+  late FileProgressStorageService storage;
+  const path = 'Aircraft/X/X.acf';
+
+  setUp(() {
+    dir = Directory.systemTemp.createTempSync('progress_switch_test');
+    storage = FileProgressStorageService(dir);
+  });
+  tearDown(() => dir.deleteSync(recursive: true));
+
+  test('the switch positions round trip', () async {
+    const data = StoredProgress(
+      runId: 'r',
+      checklists: {
+        'A': StoredChecklistProgress(
+          checked: [2],
+          enabled: [1, 7],
+          fingerprint: 'f-3',
+        ),
+      },
+    );
+    expect((await storage.write(path, data)).isOk, isTrue);
+    expect(await storage.read(path), data);
+  });
+
+  test('a file without the key reads as every switch off', () async {
+    final file = File(
+      '${dir.path}${Platform.pathSeparator}${aircraftFileName(path)}',
+    );
+    file.writeAsStringSync(
+      jsonEncode({
+        'version': 4,
+        'aircraftPath': path,
+        'lastViewed': null,
+        'runId': 'r',
+        'checklists': {
+          'A': {
+            'checked': [0],
+            'autoChecked': [],
+            'disagreed': [],
+            'skipped': [],
+            'cursor': 0,
+            'fingerprint': 'f-1',
+          },
+        },
+      }),
+    );
+    final read = await storage.read(path);
+    expect(read!.checklists['A']!.enabled, isEmpty);
+    expect(read.checklists['A']!.checked, [0]);
+  });
+
+  test('a damaged switch list makes the file a miss', () async {
+    final file = File(
+      '${dir.path}${Platform.pathSeparator}${aircraftFileName(path)}',
+    );
+    file.writeAsStringSync(
+      jsonEncode({
+        'version': 4,
+        'aircraftPath': path,
+        'runId': 'r',
+        'checklists': {
+          'A': {
+            'checked': [0],
+            'enabled': 'yes',
+            'fingerprint': 'f-1',
+          },
+        },
+      }),
+    );
     expect(await storage.read(path), isNull);
   });
 }

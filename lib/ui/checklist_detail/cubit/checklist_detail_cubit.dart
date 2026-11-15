@@ -187,6 +187,8 @@ class ChecklistDetailCubit extends Cubit<ChecklistDetailState> {
       return;
     }
     if (checklist.items[index].type != ChecklistItemType.check) return;
+    // An item of a switch that is off cannot be ticked (D-82).
+    if (!_progressRepository.current.isEnabled(checklist, index)) return;
     final ticking = !_progressRepository.current.isChecked(
       _checklistName,
       index,
@@ -211,6 +213,25 @@ class ChecklistDetailCubit extends Cubit<ChecklistDetailState> {
         ),
       );
     }
+  }
+
+  /// Flips the switch row [index] (`sw_enable_start`, D-82). Turning it off
+  /// clears the marks of the items in its block; either way their auto-check
+  /// memory starts again, and turning it on lets auto-check look at them at
+  /// once. Anything but a switch row is ignored.
+  void toggleOption(int index) {
+    final checklist = _find();
+    if (checklist == null || index < 0 || index >= checklist.items.length) {
+      return;
+    }
+    if (checklist.items[index].type != ChecklistItemType.option) return;
+    final on = !_progressRepository.current.isOptionOn(_checklistName, index);
+    _autoCheck.resetItems(_checklistName, [
+      for (var i = 0; i < checklist.items.length; i++)
+        if (checklist.items[i].gate == index) i,
+    ]);
+    _progressRepository.setOption(checklist, index, on: on);
+    if (on && _auto) _evaluate();
   }
 
   /// Backs out of the tick that gave [warning]: the item is open again, as if
@@ -267,6 +288,7 @@ class ChecklistDetailCubit extends Cubit<ChecklistDetailState> {
       i++
     ) {
       if (checklist.items[i].type == ChecklistItemType.check &&
+          progress.isEnabled(checklist, i) &&
           !progress.isChecked(_checklistName, i) &&
           !progress.isSkipped(_checklistName, i)) {
         return i;
@@ -368,6 +390,10 @@ class ChecklistDetailCubit extends Cubit<ChecklistDetailState> {
               skipped:
                   checklist.items[i].type == ChecklistItemType.check &&
                   progress.isSkipped(_checklistName, i),
+              enabled: progress.isEnabled(checklist, i),
+              optionOn:
+                  checklist.items[i].type == ChecklistItemType.option &&
+                  progress.isOptionOn(_checklistName, i),
             ),
         ],
         done: counts.done,
@@ -386,7 +412,7 @@ class ChecklistDetailCubit extends Cubit<ChecklistDetailState> {
         continueTo: continueTo == null
             ? null
             : _nextChecklist(document, continueTo),
-        stayManual: _stayManual(checklist, unavailable),
+        stayManual: _stayManual(checklist, unavailable, progress),
         auto: _auto,
         resets: _resets,
         pointer: _pointer(checklist, progress),
@@ -414,13 +440,20 @@ class ChecklistDetailCubit extends Cubit<ChecklistDetailState> {
     return null;
   }
 
-  /// Check items with a condition that needs a value the sim cannot give.
-  int _stayManual(Checklist checklist, Set<Dataref> unavailable) {
+  /// Enabled check items with a condition that needs a value the sim cannot
+  /// give.
+  int _stayManual(
+    Checklist checklist,
+    Set<Dataref> unavailable,
+    ChecklistProgress progress,
+  ) {
     if (unavailable.isEmpty) return 0;
     var count = 0;
-    for (final item in checklist.items) {
+    for (var i = 0; i < checklist.items.length; i++) {
+      final item = checklist.items[i];
       final needs = item.condition?.signals ?? const <Dataref>[];
       if (item.type == ChecklistItemType.check &&
+          progress.isEnabled(checklist, i) &&
           needs.any(unavailable.contains)) {
         count++;
       }

@@ -1,5 +1,6 @@
 import '../../../domain/models/aircraft/aircraft_identity.dart';
 import '../../../domain/models/checklist/attach_outcome.dart';
+import '../../../domain/models/checklist/checklist.dart';
 import '../../../domain/models/checklist/checklist_document.dart';
 import '../../../domain/models/checklist/checklist_progress.dart';
 import '../../../utils/app_exception.dart';
@@ -29,6 +30,11 @@ abstract class ChecklistProgressRepository {
   /// Marks item [itemIndex] of [checklistName] as skipped (task 0.24). The
   /// cursor moves on past it. A checked item is left alone.
   void skip(String checklistName, int itemIndex);
+
+  /// Turns the switch row [itemIndex] of [checklist] on or off (D-82). Turning
+  /// it off clears the marks of its items. Does nothing when the row is not a
+  /// switch or already has that position.
+  void setOption(Checklist checklist, int itemIndex, {required bool on});
 
   /// Checks [itemIndexes] of [checklistName] because the sim agrees and moves
   /// the cursor forward to [cursor]. It skips items already checked and items

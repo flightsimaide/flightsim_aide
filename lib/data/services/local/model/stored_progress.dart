@@ -12,6 +12,7 @@ class StoredChecklistProgress extends Equatable {
     this.autoChecked = const [],
     this.disagreed = const [],
     this.skipped = const [],
+    this.enabled = const [],
     this.cursor = 0,
   });
 
@@ -31,6 +32,10 @@ class StoredChecklistProgress extends Equatable {
   /// The item indexes the user skipped, sorted ascending.
   final List<int> skipped;
 
+  /// The switch rows (`sw_enable_start`) that are on, sorted ascending. Empty
+  /// when absent: every switch is off.
+  final List<int> enabled;
+
   /// Where auto-check looks next (0 is the top).
   final int cursor;
 
@@ -41,6 +46,7 @@ class StoredChecklistProgress extends Equatable {
     autoChecked,
     disagreed,
     skipped,
+    enabled,
     cursor,
   ];
 }

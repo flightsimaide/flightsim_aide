@@ -90,7 +90,15 @@ class FileProgressStorageService implements ProgressStorageService {
       // Older files may hold 'manuallyUnchecked'; it is ignored.
       final disagreed = _indexes(value['disagreed']);
       final skipped = _indexes(value['skipped']);
-      if (auto == null || disagreed == null || skipped == null) return null;
+      // Added with the switch blocks (D-82); absent in older files of this
+      // version, which then read as every switch off.
+      final enabled = _indexes(value['enabled']);
+      if (auto == null ||
+          disagreed == null ||
+          skipped == null ||
+          enabled == null) {
+        return null;
+      }
       // A damaged cursor is not worth losing the marks for: back to the top.
       final cursor = value['cursor'];
       checklists[entry.key] = StoredChecklistProgress(
@@ -99,6 +107,7 @@ class FileProgressStorageService implements ProgressStorageService {
         autoChecked: auto,
         disagreed: disagreed,
         skipped: skipped,
+        enabled: enabled,
         cursor: cursor is int && cursor > 0 ? cursor : 0,
       );
     }
@@ -137,6 +146,7 @@ class FileProgressStorageService implements ProgressStorageService {
                 'autoChecked': ([...e.value.autoChecked]..sort()),
                 'disagreed': ([...e.value.disagreed]..sort()),
                 'skipped': ([...e.value.skipped]..sort()),
+                'enabled': ([...e.value.enabled]..sort()),
                 'cursor': e.value.cursor,
                 'fingerprint': e.value.fingerprint,
               },

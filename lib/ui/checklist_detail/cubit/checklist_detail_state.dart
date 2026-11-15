@@ -15,6 +15,8 @@ class ChecklistDetailRow extends Equatable {
     this.autoChecked = false,
     this.disagreed = false,
     this.skipped = false,
+    this.enabled = true,
+    this.optionOn = false,
   });
 
   /// Position of [item] in the checklist.
@@ -37,6 +39,13 @@ class ChecklistDetailRow extends Equatable {
   /// Whether the user skipped it (amber marker). Never also [checked].
   final bool skipped;
 
+  /// Whether the item is enabled: it is in no switch block, or its switch is
+  /// on (D-82). A disabled row is greyed out and cannot be ticked.
+  final bool enabled;
+
+  /// For a switch row: whether the switch is on. False for every other row.
+  final bool optionOn;
+
   @override
   List<Object?> get props => [
     index,
@@ -45,6 +54,8 @@ class ChecklistDetailRow extends Equatable {
     autoChecked,
     disagreed,
     skipped,
+    enabled,
+    optionOn,
   ];
 }
 

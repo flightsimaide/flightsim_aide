@@ -58,6 +58,15 @@ class EvaluateItemConditionsUseCase {
   void resetChecklist(String name) =>
       _states.removeWhere((key, _) => key.startsWith('$name\u0000'));
 
+  /// Forgets the memory of the items [indexes] of checklist [name]: their
+  /// baselines start again when they next become the pointer item. Used when
+  /// a switch block is turned off or on (D-82).
+  void resetItems(String name, Iterable<int> indexes) {
+    for (final index in indexes) {
+      _states.remove('$name\u0000$index');
+    }
+  }
+
   String _key(Checklist checklist, int index) =>
       '${checklist.name}\u0000$index';
 
@@ -78,6 +87,7 @@ class EvaluateItemConditionsUseCase {
     while (i < checklist.items.length) {
       final ChecklistItem item = checklist.items[i];
       if (item.type != ChecklistItemType.check ||
+          !progress.isEnabled(checklist, i) ||
           progress.isChecked(checklist.name, i) ||
           progress.isSkipped(checklist.name, i)) {
         i++;
@@ -99,7 +109,10 @@ class EvaluateItemConditionsUseCase {
     var total = 0;
     var done = 0;
     for (var k = 0; k < checklist.items.length; k++) {
-      if (checklist.items[k].type != ChecklistItemType.check) continue;
+      if (checklist.items[k].type != ChecklistItemType.check ||
+          !progress.isEnabled(checklist, k)) {
+        continue;
+      }
       total++;
       if (checked.contains(k) || progress.isSkipped(checklist.name, k)) done++;
     }

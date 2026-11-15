@@ -2,6 +2,7 @@ import 'dart:async';
 
 import '../../../domain/models/aircraft/aircraft_identity.dart';
 import '../../../domain/models/checklist/attach_outcome.dart';
+import '../../../domain/models/checklist/checklist.dart';
 import '../../../domain/models/checklist/checklist_document.dart';
 import '../../../domain/models/checklist/checklist_fingerprint.dart';
 import '../../../domain/models/checklist/checklist_item.dart';
@@ -66,6 +67,14 @@ class ChecklistProgressRepositoryImpl implements ChecklistProgressRepository {
   @override
   void skip(String checklistName, int itemIndex) {
     final next = _current.skipping(checklistName, itemIndex);
+    if (identical(next, _current)) return;
+    _set(next);
+    _persist();
+  }
+
+  @override
+  void setOption(Checklist checklist, int itemIndex, {required bool on}) {
+    final next = _current.optionSet(checklist, itemIndex, on: on);
     if (identical(next, _current)) return;
     _set(next);
     _persist();
@@ -230,6 +239,7 @@ class ChecklistProgressRepositoryImpl implements ChecklistProgressRepository {
     final auto = <String, Set<int>>{};
     final disagreed = <String, Set<int>>{};
     final skipped = <String, Set<int>>{};
+    final enabled = <String, Set<int>>{};
     final cursor = <String, int>{};
     for (final checklist in document.checklists) {
       final entry = saved.checklists[checklist.name];
@@ -249,6 +259,14 @@ class ChecklistProgressRepositoryImpl implements ChecklistProgressRepository {
       auto[checklist.name] = valid(entry.autoChecked).intersection(checked);
       disagreed[checklist.name] = valid(entry.disagreed).intersection(checked);
       skipped[checklist.name] = valid(entry.skipped).difference(checked);
+      // A saved switch counts only where the row is still a switch.
+      enabled[checklist.name] = {
+        for (final i in entry.enabled)
+          if (i >= 0 &&
+              i < checklist.items.length &&
+              checklist.items[i].type == ChecklistItemType.option)
+            i,
+      };
       cursor[checklist.name] = entry.cursor.clamp(0, checklist.items.length);
     }
     return ChecklistProgress.marks(
@@ -256,6 +274,7 @@ class ChecklistProgressRepositoryImpl implements ChecklistProgressRepository {
       autoChecked: auto,
       disagreed: disagreed,
       skipped: skipped,
+      enabled: enabled,
       cursor: cursor,
     );
   }
@@ -269,8 +288,12 @@ class ChecklistProgressRepositoryImpl implements ChecklistProgressRepository {
         final auto = _current.autoChecked[checklist.name] ?? const <int>{};
         final disagreed = _current.disagreed[checklist.name] ?? const <int>{};
         final skipped = _current.skipped[checklist.name] ?? const <int>{};
+        final enabled = _current.enabled[checklist.name] ?? const <int>{};
         final cursor = _current.cursorOf(checklist.name);
-        if (checked.isEmpty && skipped.isEmpty && cursor == 0) {
+        if (checked.isEmpty &&
+            skipped.isEmpty &&
+            enabled.isEmpty &&
+            cursor == 0) {
           continue;
         }
         marks[checklist.name] = StoredChecklistProgress(
@@ -278,6 +301,7 @@ class ChecklistProgressRepositoryImpl implements ChecklistProgressRepository {
           autoChecked: ([...auto]..sort()),
           disagreed: ([...disagreed]..sort()),
           skipped: ([...skipped]..sort()),
+          enabled: ([...enabled]..sort()),
           cursor: cursor,
           fingerprint: fingerprintOf(checklist),
         );

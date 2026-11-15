@@ -18,6 +18,10 @@ import 'checklist_item.dart';
 /// backs the cursor up and, in auto mode, switches the checklist to manual.
 /// (The former `manuallyUnchecked` set is gone; older saved files that have it
 /// still read, the field is ignored.)
+///
+/// A switch row (`sw_enable_start`, D-82) is on or off: [enabled] holds the
+/// switch rows that are on. An item with a `gate` counts, can be checked and
+/// is passed over by the pointer only while its switch is on.
 class ChecklistProgress extends Equatable {
   /// Creates progress from [checked]; the maps and their sets are copied.
   ///
@@ -36,7 +40,9 @@ class ChecklistProgress extends Equatable {
     Map<String, Set<int>> disagreed = const {},
     Map<String, int> cursor = const {},
     Map<String, Set<int>> skipped = const {},
+    Map<String, Set<int>> enabled = const {},
   }) : checked = _frozen(checked),
+       enabled = _frozen(enabled),
        autoChecked = _frozen(autoChecked),
        disagreed = _frozen(_onlyChecked(disagreed, checked)),
        skipped = _frozen(_notChecked(skipped, checked)),
@@ -82,6 +88,10 @@ class ChecklistProgress extends Equatable {
   /// The indexes the user skipped (never also in [checked]).
   final Map<String, Set<int>> skipped;
 
+  /// The switch rows that are on, per checklist name (D-82). A switch is off
+  /// unless it is in here, so a new run starts with every block disabled.
+  final Map<String, Set<int>> enabled;
+
   /// Where auto-check looks next, per checklist name. A missing entry is the
   /// top. The user's ticks move it, forward or back; auto-check only moves it
   /// forward (D-71).
@@ -97,6 +107,68 @@ class ChecklistProgress extends Equatable {
   /// Whether item [index] of [name] was checked by the app, not by hand.
   bool isAutoChecked(String name, int index) =>
       autoChecked[name]?.contains(index) ?? false;
+
+  /// Whether the switch row [index] of [name] is on.
+  bool isOptionOn(String name, int index) =>
+      enabled[name]?.contains(index) ?? false;
+
+  /// Whether item [index] of [checklist] is enabled: it is in no switch block,
+  /// or the switch of its block is on. A disabled item is not counted and is
+  /// passed over by auto-check, the pointer, Check and Skip.
+  bool isEnabled(Checklist checklist, int index) {
+    final gate = checklist.items[index].gate;
+    return gate == null || isOptionOn(checklist.name, gate);
+  }
+
+  /// Returns a new progress with the switch row [index] of [checklist] turned
+  /// [on] or off (D-82). Turning it off clears the checks, auto marks, red
+  /// marks and skips of its items. Either way the cursor goes back to the
+  /// switch row if it was past it, so the items of the block are not behind
+  /// the cursor when they are enabled again. Nothing changes when [index] is
+  /// not a switch row or already has that position.
+  ChecklistProgress optionSet(
+    Checklist checklist,
+    int index, {
+    required bool on,
+  }) {
+    final name = checklist.name;
+    if (index < 0 ||
+        index >= checklist.items.length ||
+        checklist.items[index].type != ChecklistItemType.option ||
+        isOptionOn(name, index) == on) {
+      return this;
+    }
+    final inBlock = <int>{
+      for (var i = 0; i < checklist.items.length; i++)
+        if (checklist.items[i].gate == index) i,
+    };
+    final next = on
+        ? {...?enabled[name], index}
+        : ({...?enabled[name]}..remove(index));
+    return ChecklistProgress.marks(
+      checked: {
+        ...checked,
+        name: {...?checked[name]}..removeAll(on ? const {} : inBlock),
+      },
+      autoChecked: {
+        ...autoChecked,
+        name: {...?autoChecked[name]}..removeAll(on ? const {} : inBlock),
+      },
+      disagreed: {
+        ...disagreed,
+        name: {...?disagreed[name]}..removeAll(on ? const {} : inBlock),
+      },
+      skipped: {
+        ...skipped,
+        name: {...?skipped[name]}..removeAll(on ? const {} : inBlock),
+      },
+      enabled: {...enabled, name: next},
+      cursor: {
+        ...cursor,
+        name: cursorOf(name) > index ? index : cursorOf(name),
+      },
+    );
+  }
 
   /// Whether item [index] of [name] was skipped.
   bool isSkipped(String name, int index) =>
@@ -224,23 +296,27 @@ class ChecklistProgress extends Equatable {
     autoChecked: {...autoChecked, name: auto},
     disagreed: {...this.disagreed, name: disagreed},
     skipped: {...this.skipped, name: skipped},
+    enabled: enabled,
     cursor: {...this.cursor, name: cursor},
   );
 
   /// Returns a new progress with checklist [name] cleared: its marks, its
   /// auto-checked items, its disagreed marks and its cursor (back to the top).
+  /// The switch positions stay (D-82): they are a choice about the flight.
   ChecklistProgress reset(String name) => ChecklistProgress.marks(
     checked: {...checked}..remove(name),
     autoChecked: {...autoChecked}..remove(name),
     disagreed: {...disagreed}..remove(name),
     skipped: {...skipped}..remove(name),
+    enabled: enabled,
     cursor: {...cursor}..remove(name),
   );
 
-  /// Returns a new progress with every checklist cleared.
+  /// Returns a new progress with every checklist cleared, switches included.
   ChecklistProgress resetAll() => ChecklistProgress();
 
-  /// Checked, skipped and total counts for [checklist]; notes are not counted.
+  /// Checked, skipped and total counts for [checklist]; notes, switch rows and
+  /// disabled items are not counted.
   ({int done, int total, int skipped}) countsFor(Checklist checklist) {
     final items = checklist.items;
     final marked = checked[checklist.name] ?? const <int>{};
@@ -249,7 +325,10 @@ class ChecklistProgress extends Equatable {
     var skippedCount = 0;
     var total = 0;
     for (var i = 0; i < items.length; i++) {
-      if (items[i].type != ChecklistItemType.check) continue;
+      if (items[i].type != ChecklistItemType.check ||
+          !isEnabled(checklist, i)) {
+        continue;
+      }
       total++;
       if (marked.contains(i)) {
         done++;
@@ -266,6 +345,7 @@ class ChecklistProgress extends Equatable {
     var count = 0;
     for (var i = 0; i < items.length; i++) {
       if (items[i].type == ChecklistItemType.check &&
+          isEnabled(checklist, i) &&
           isChecked(checklist.name, i) &&
           isDisagreed(checklist.name, i)) {
         count++;
@@ -282,5 +362,12 @@ class ChecklistProgress extends Equatable {
   }
 
   @override
-  List<Object?> get props => [checked, autoChecked, disagreed, skipped, cursor];
+  List<Object?> get props => [
+    checked,
+    autoChecked,
+    disagreed,
+    skipped,
+    enabled,
+    cursor,
+  ];
 }
