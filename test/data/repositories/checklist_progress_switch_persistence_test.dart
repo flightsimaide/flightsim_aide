@@ -76,7 +76,7 @@ void main() {
     expect(outcome, isA<AttachRestored>());
     expect(repo.current.isOptionOn('Start', 1), isTrue);
     expect(repo.current.isChecked('Start', 2), isTrue);
-    expect(repo.current.countsFor(checklist).total, 4);
+    expect(repo.current.countsFor(checklist).total, 5);
   });
 
   test('a saved file without switches restores them all off', () async {
@@ -92,7 +92,7 @@ void main() {
     );
     await attach();
     expect(repo.current.isOptionOn('Start', 1), isFalse);
-    expect(repo.current.countsFor(checklist).total, 2);
+    expect(repo.current.countsFor(checklist).total, 3);
   });
 
   test('a saved switch on a row that is not a switch is ignored', () async {

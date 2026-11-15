@@ -315,8 +315,8 @@ class ChecklistProgress extends Equatable {
   /// Returns a new progress with every checklist cleared, switches included.
   ChecklistProgress resetAll() => ChecklistProgress();
 
-  /// Checked, skipped and total counts for [checklist]; notes, switch rows and
-  /// disabled items are not counted.
+  /// Checked, skipped and total counts for [checklist]; check items and switch
+  /// rows count, notes and disabled items do not.
   ({int done, int total, int skipped}) countsFor(Checklist checklist) {
     final items = checklist.items;
     final marked = checked[checklist.name] ?? const <int>{};
@@ -325,10 +325,7 @@ class ChecklistProgress extends Equatable {
     var skippedCount = 0;
     var total = 0;
     for (var i = 0; i < items.length; i++) {
-      if (items[i].type != ChecklistItemType.check ||
-          !isEnabled(checklist, i)) {
-        continue;
-      }
+      if (!items[i].isCheckable || !isEnabled(checklist, i)) continue;
       total++;
       if (marked.contains(i)) {
         done++;

@@ -792,7 +792,7 @@ Tags: **[A]** automated, **[SIM]** needs X-Plane and/or devices, **[retired]** n
 29. **AC-29 [A]** Stream contract: the handshake, subscribe, `unknown_name`, `limit`, `unsupported`, heartbeat, disconnect on close and the client cap give the same answers from the Dart fake, `core_test_server` and (SIM) the real plugin, from the shared cases.
 30. **AC-30 [SIM]** The on-ground value reaches the app through the real plugin on XP12: 1 parked, 0 airborne, and the app's restore rule uses it.
 
-**Live data and auto-check (AC-31 to AC-53)**
+**Live data and auto-check (AC-31 to AC-54)**
 
 31. **AC-31 [A]** Grammar: every fixture checklist in `testing/fixtures/conditions/` parses to the conditions its expected-results file describes, and every malformed fixture produces the documented warning and leaves the item manual.
 32. **AC-32 [A]** Evaluator: for every fixture values file, the set of met items equals the expected-results file, including tolerance forms, arrays, `&&`, `||` and grouping.
@@ -817,6 +817,7 @@ Tags: **[A]** automated, **[SIM]** needs X-Plane and/or devices, **[retired]** n
 51. **AC-51 [A]** Architecture gates: no `dart:io` socket or `package:http` use outside `data/services/`; no stream, socket or throttle code in any widget; `domain/` imports only Dart core and `equatable`.
 52. **AC-52 [A]** `Reference/GRAMMAR.md` section 8 has no rule without a status and evidence. *(The earlier part of this criterion, that early experiment write-ups exist with measured numbers, was retired when the project moved to its public repository: the write-ups are not published.)*
 53. **AC-53 [A]** Plugin health (no regression): loads on XP12 with a clean `Log.txt`, exits cleanly, coexists with the real XChecklist plugin; macOS and Linux still compile in CI.
+54. **AC-54 [A + SIM]** Switch blocks (D-82, `GRAMMAR.md` section 5b): a checklist with `sw_enable_start:Label` ... `sw_enable_end` shows a switch row with a check circle (counted, skippable, auto-check stops at it until the pilot ticks it; its tick and its switch are separate); with the switch off (the start) the items of the block are greyed out, cannot be ticked, and are not counted, passed over by Check, Skip and auto-check, and not part of completion; turning the switch on enables them and raises the total; turning it off clears their ticks; Reset keeps the switch; the position is saved with the progress.
 
 ### 17. Risks
 

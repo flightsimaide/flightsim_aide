@@ -86,7 +86,7 @@ class EvaluateItemConditionsUseCase {
     if (i < 0) i = 0;
     while (i < checklist.items.length) {
       final ChecklistItem item = checklist.items[i];
-      if (item.type != ChecklistItemType.check ||
+      if (!item.isCheckable ||
           !progress.isEnabled(checklist, i) ||
           progress.isChecked(checklist.name, i) ||
           progress.isSkipped(checklist.name, i)) {
@@ -109,7 +109,7 @@ class EvaluateItemConditionsUseCase {
     var total = 0;
     var done = 0;
     for (var k = 0; k < checklist.items.length; k++) {
-      if (checklist.items[k].type != ChecklistItemType.check ||
+      if (!checklist.items[k].isCheckable ||
           !progress.isEnabled(checklist, k)) {
         continue;
       }

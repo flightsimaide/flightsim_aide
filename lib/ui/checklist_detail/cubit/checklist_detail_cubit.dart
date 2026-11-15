@@ -186,7 +186,7 @@ class ChecklistDetailCubit extends Cubit<ChecklistDetailState> {
     if (checklist == null || index < 0 || index >= checklist.items.length) {
       return;
     }
-    if (checklist.items[index].type != ChecklistItemType.check) return;
+    if (!checklist.items[index].isCheckable) return;
     // An item of a switch that is off cannot be ticked (D-82).
     if (!_progressRepository.current.isEnabled(checklist, index)) return;
     final ticking = !_progressRepository.current.isChecked(
@@ -287,7 +287,7 @@ class ChecklistDetailCubit extends Cubit<ChecklistDetailState> {
       i < checklist.items.length;
       i++
     ) {
-      if (checklist.items[i].type == ChecklistItemType.check &&
+      if (checklist.items[i].isCheckable &&
           progress.isEnabled(checklist, i) &&
           !progress.isChecked(_checklistName, i) &&
           !progress.isSkipped(_checklistName, i)) {
@@ -379,16 +379,16 @@ class ChecklistDetailCubit extends Cubit<ChecklistDetailState> {
               index: i,
               item: checklist.items[i],
               checked:
-                  checklist.items[i].type == ChecklistItemType.check &&
+                  checklist.items[i].isCheckable &&
                   progress.isChecked(_checklistName, i),
               autoChecked:
-                  checklist.items[i].type == ChecklistItemType.check &&
+                  checklist.items[i].isCheckable &&
                   progress.isAutoChecked(_checklistName, i),
               disagreed:
-                  checklist.items[i].type == ChecklistItemType.check &&
+                  checklist.items[i].isCheckable &&
                   progress.isDisagreed(_checklistName, i),
               skipped:
-                  checklist.items[i].type == ChecklistItemType.check &&
+                  checklist.items[i].isCheckable &&
                   progress.isSkipped(_checklistName, i),
               enabled: progress.isEnabled(checklist, i),
               optionOn:

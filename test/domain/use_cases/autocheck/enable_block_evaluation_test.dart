@@ -34,15 +34,28 @@ void main() {
   AutoCheckResult run(ChecklistProgress progress) =>
       useCase.evaluate(checklist: list, values: values, progress: progress);
 
-  test('items of a switch that is off are passed over', () {
+  test('auto stops at the switch row until the pilot ticks it', () {
     final result = run(ChecklistProgress());
-    expect(result.toCheck, {0, 4});
+    expect(result.toCheck, {0});
+    expect(result.cursor, 1);
+    final on = run(ChecklistProgress().optionSet(list, 1, on: true));
+    expect(on.toCheck, {0}, reason: 'on or off, it waits for the tick');
+  });
+
+  test('items of a switch that is off are passed over once it is ticked', () {
+    final result = run(ChecklistProgress().toggled('A', 1));
+    expect(result.toCheck, {4});
     expect(result.itemResults.keys, isNot(contains(2)));
   });
 
   test('items of a switch that is on are evaluated in order', () {
-    final result = run(ChecklistProgress().optionSet(list, 1, on: true));
-    expect(result.toCheck, {0, 2, 3, 4});
+    final result = run(
+      ChecklistProgress()
+          .toggled('A', 0)
+          .toggled('A', 1)
+          .optionSet(list, 1, on: true),
+    );
+    expect(result.toCheck, {2, 3, 4});
   });
 
   test('auto waits on an enabled item that is not met', () {
@@ -55,13 +68,19 @@ void main() {
     final result = useCase.evaluate(
       checklist: list,
       values: off,
-      progress: ChecklistProgress().optionSet(list, 1, on: true),
+      progress: ChecklistProgress()
+          .toggled('A', 1)
+          .optionSet(list, 1, on: true),
     );
-    expect(result.toCheck, {0});
+    expect(result.toCheck, isEmpty);
+    expect(result.itemResults[2], Tri.notMet);
   });
 
   test('the checklist is complete when the enabled items are done', () {
-    final progress = ChecklistProgress().toggled('A', 0).toggled('A', 4);
+    final progress = ChecklistProgress()
+        .toggled('A', 0)
+        .toggled('A', 1)
+        .toggled('A', 4);
     final result = useCase.evaluate(
       checklist: list,
       values: values,

@@ -573,11 +573,18 @@ class _LoadedBodyState extends State<_LoadedBody> {
                   disagreed: state.rows[i].disagreed,
                   skipped: state.rows[i].skipped,
                   autoOn: state.auto,
+                  enabled: state.rows[i].enabled,
+                  optionOn: state.rows[i].optionOn,
                   colours: state.colours,
                   onTap: () {
                     _anchor = i;
                     _acted = true;
                     cubit.toggle(state.rows[i].index);
+                  },
+                  onSwitch: () {
+                    _anchor = i;
+                    _acted = true;
+                    cubit.toggleOption(state.rows[i].index);
                   },
                 ),
               if (state.checklists.length > 1)

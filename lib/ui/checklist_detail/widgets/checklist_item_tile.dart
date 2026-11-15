@@ -7,6 +7,9 @@ import '../../core/themes/status_colors.dart';
 import '../../core/widgets/status_pill.dart';
 import 'run_colours.dart';
 
+/// Finds the switch of a switch row, for tests.
+const optionSwitchKey = ValueKey<String>('option-switch');
+
 /// Finds the red marker of a row ticked against the aircraft, for tests.
 const disagreedMarkerKey = ValueKey<String>('disagreed-marker');
 
@@ -14,8 +17,8 @@ const disagreedMarkerKey = ValueKey<String>('disagreed-marker');
 class ChecklistItemTile extends StatelessWidget {
   /// Creates a tile for [item].
   ///
-  /// [onTap] is used by check rows only. [colours] is the document palette
-  /// used for coloured text.
+  /// [onTap] ticks a check row or a switch row; [onSwitch] flips the switch. [colours] is the
+  /// document palette used for coloured text.
   const ChecklistItemTile({
     required this.item,
     required this.checked,
@@ -25,6 +28,9 @@ class ChecklistItemTile extends StatelessWidget {
     this.autoChecked = false,
     this.disagreed = false,
     this.autoOn = false,
+    this.enabled = true,
+    this.optionOn = false,
+    this.onSwitch,
     super.key,
   });
 
@@ -34,7 +40,8 @@ class ChecklistItemTile extends StatelessWidget {
   /// Whether a check row is checked.
   final bool checked;
 
-  /// Called when a check row is tapped.
+  /// Called when a check row or a switch row is tapped to tick it (a disabled
+  /// row is not tappable and never calls it).
   final VoidCallback onTap;
 
   /// The document's colour palette, keyed by name.
@@ -58,16 +65,31 @@ class ChecklistItemTile extends StatelessWidget {
   /// it is the one the pilot must do by hand while auto runs.
   final bool autoOn;
 
+  /// Whether the row is enabled (D-82): it is in no switch block, or its
+  /// switch is on. A disabled row is greyed out at the standard Material 3
+  /// disabled opacity, cannot be tapped and is read as "disabled".
+  final bool enabled;
+
+  /// For a switch row: whether the switch is on.
+  final bool optionOn;
+
+  /// For a switch row: called when its switch is flipped. [onTap] ticks the
+  /// row, as for a manual item.
+  final VoidCallback? onSwitch;
+
+  /// Opacity of a disabled row (Material 3).
+  static const double disabledOpacity = 0.38;
+
   @override
   Widget build(BuildContext context) {
-    return switch (item.type) {
+    final tile = switch (item.type) {
       ChecklistItemType.note => _note(context),
       ChecklistItemType.heading => _heading(context),
       ChecklistItemType.details => _details(context),
-      // The switch row is built in the UI step; until then it reads as a note.
-      ChecklistItemType.option => _note(context),
-      ChecklistItemType.check => _check(context),
+      ChecklistItemType.option || ChecklistItemType.check => _check(context),
     };
+    if (enabled) return tile;
+    return Opacity(opacity: disabledOpacity, child: tile);
   }
 
   Widget _text(
@@ -195,8 +217,10 @@ class ChecklistItemTile extends StatelessWidget {
     // While auto is on, an open check row with no condition can never be
     // ticked by auto: a "manual item" pill marks it. The row keeps the normal
     // fill so it still reads as one block with the details line under it.
+    final isOption = item.type == ChecklistItemType.option;
     final manual =
         autoOn &&
+        enabled &&
         item.condition == null &&
         !checked &&
         !skipped &&
@@ -215,6 +239,7 @@ class ChecklistItemTile extends StatelessWidget {
               : Colors.white);
     final style = theme.textTheme.bodyLarge?.copyWith(
       color: statusBackground == null ? null : foreground,
+      fontWeight: isOption ? FontWeight.bold : null,
     );
     final resultStyle = style?.copyWith(
       color: statusBackground == null ? scheme.onSurfaceVariant : foreground,
@@ -233,16 +258,18 @@ class ChecklistItemTile extends StatelessWidget {
           ? 'skipped'
           : 'unchecked',
       if (manual) 'manual item',
+      if (isOption) 'switch ${optionOn ? 'on' : 'off'}',
+      if (!enabled) 'disabled, turn on its switch to use it',
     ].join(', ');
     return Semantics(
       container: true,
       excludeSemantics: true,
       label: spoken,
-      onTap: onTap,
+      onTap: enabled ? onTap : null,
       child: Material(
         color: tint,
         child: InkWell(
-          onTap: onTap,
+          onTap: enabled ? onTap : null,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -276,7 +303,14 @@ class ChecklistItemTile extends StatelessWidget {
                         Expanded(
                           child: _text(context, style, true, background: tint),
                         ),
-                        if (item.result.isNotEmpty) ...[
+                        if (isOption) ...[
+                          const SizedBox(width: 12),
+                          Switch(
+                            key: optionSwitchKey,
+                            value: optionOn,
+                            onChanged: (_) => onSwitch?.call(),
+                          ),
+                        ] else if (item.result.isNotEmpty) ...[
                           const SizedBox(width: 12),
                           // At most 45% of the row, so a long label still wraps.
                           ConstrainedBox(

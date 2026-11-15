@@ -250,7 +250,7 @@ class ChecklistProgressRepositoryImpl implements ChecklistProgressRepository {
         for (final i in indexes)
           if (i >= 0 &&
               i < checklist.items.length &&
-              checklist.items[i].type == ChecklistItemType.check)
+              checklist.items[i].isCheckable)
             i,
       };
       final checked = valid(entry.checked);

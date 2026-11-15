@@ -26,25 +26,49 @@ void main() {
     expect(progress.isOptionOn('A', 1), isFalse);
     expect(progress.isEnabled(list, 0), isTrue);
     expect(progress.isEnabled(list, 2), isFalse);
-    expect(progress.countsFor(list), (done: 0, total: 2, skipped: 0));
+    expect(progress.countsFor(list), (done: 0, total: 3, skipped: 0));
   });
 
   test('turning a switch on adds its items to the total', () {
     final progress = ChecklistProgress().optionSet(list, 1, on: true);
     expect(progress.isOptionOn('A', 1), isTrue);
     expect(progress.isEnabled(list, 3), isTrue);
-    expect(progress.countsFor(list), (done: 0, total: 4, skipped: 0));
+    expect(progress.countsFor(list), (done: 0, total: 5, skipped: 0));
   });
 
-  test('the switch row itself is never counted or enabled by a gate', () {
+  test('the switch row itself is always counted and never gated', () {
     final progress = ChecklistProgress();
     expect(progress.isEnabled(list, 1), isTrue, reason: 'it has no gate');
-    expect(progress.countsFor(list).total, 2);
+    expect(progress.countsFor(list).total, 3);
+    final ticked = progress.toggled('A', 1);
+    expect(ticked.countsFor(list), (done: 1, total: 3, skipped: 0));
+    final skipped = progress.skipping('A', 1);
+    expect(skipped.countsFor(list), (done: 0, total: 3, skipped: 1));
+  });
+
+  test('the tick of the switch row is independent of the switch', () {
+    var progress = ChecklistProgress().toggled('A', 1);
+    expect(progress.isOptionOn('A', 1), isFalse, reason: 'ticking is not on');
+    progress = progress
+        .optionSet(list, 1, on: true)
+        .optionSet(list, 1, on: false);
+    expect(progress.isChecked('A', 1), isTrue, reason: 'off keeps the tick');
+    progress = progress.toggled('A', 1);
+    expect(progress.isChecked('A', 1), isFalse);
+    expect(progress.isOptionOn('A', 1), isFalse);
   });
 
   test('completion follows the enabled items only', () {
-    var progress = ChecklistProgress().toggled('A', 0).toggled('A', 4);
+    var progress = ChecklistProgress()
+        .toggled('A', 0)
+        .toggled('A', 1)
+        .toggled('A', 4);
     expect(progress.isComplete(list), isTrue, reason: 'GPU items are off');
+    expect(
+      progress.toggled('A', 1).isComplete(list),
+      isFalse,
+      reason: 'the switch row is an item',
+    );
     progress = progress.optionSet(list, 1, on: true);
     expect(progress.isComplete(list), isFalse);
     progress = progress.toggled('A', 2).toggled('A', 3);

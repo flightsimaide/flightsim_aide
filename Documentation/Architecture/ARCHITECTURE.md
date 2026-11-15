@@ -268,7 +268,7 @@ plugin/                                     # companion X-Plane plugin: C++ (XPL
 ### `domain`
 - Immutable models: `Checklist`, `ChecklistItem`, `ChecklistDocument`, `ChecklistProgress`.
 - Colour and flow data live in the same models: items carry ordered colour runs (colour names only, no Flutter `Color`), the document carries the `sw_define_colour` palette, and each checklist carries its `sw_continue` links (an ordered list). File order is not flight order; a pure helper follows the continue links to give the sequence.
-- `ChecklistProgress` owns the check-state rules (toggle, reset, counts, completion). Both manual taps and auto-check update the same model, so there is one set of rules.
+- `ChecklistProgress` owns the check-state rules (toggle, reset, counts, completion). Both manual taps and auto-check update the same model, so there is one set of rules. A switch block (`sw_enable_start` / `sw_enable_end`, D-82) is a switch row with the items of its block pointing at it through `ChecklistItem.gate`; `ChecklistProgress` keeps which switches are on and counts the switch rows and the enabled items (`ChecklistItem.isCheckable`); auto-check stops at a switch row like at a manual item.
 - Use cases appear only when logic combines several data sources. The first real one is auto-check, which combines the checklist, the live X-Plane values and the current progress.
 - No Flutter, Bloc, or `dart:io` imports.
 

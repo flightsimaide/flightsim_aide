@@ -81,20 +81,20 @@ void main() {
     await pumpEventQueue();
   }
 
-  test('a new checklist has the block off: rows are disabled, total is 2', () {
+  test('a new checklist has the block off: rows are disabled, total is 3', () {
     final rows = loaded().rows;
     expect(rows.map((r) => r.enabled), [true, true, false, false, true]);
     expect(rows[1].optionOn, isFalse);
-    expect(loaded().total, 2);
+    expect(loaded().total, 3);
   });
 
   test('turning the switch on enables the rows and raises the total', () async {
     await flip(1);
     expect(loaded().rows[1].optionOn, isTrue);
     expect(loaded().rows.map((r) => r.enabled), everyElement(isTrue));
-    expect(loaded().total, 4);
+    expect(loaded().total, 5);
     await flip(1);
-    expect(loaded().total, 2);
+    expect(loaded().total, 3);
   });
 
   test('a disabled item cannot be ticked', () async {
@@ -108,7 +108,7 @@ void main() {
     await flip(2);
     await flip(99);
     expect(loaded().rows[1].optionOn, isFalse);
-    expect(loaded().total, 2);
+    expect(loaded().total, 3);
   });
 
   test('turning the switch off clears the ticks of its items', () async {
@@ -125,6 +125,7 @@ void main() {
     'the checklist is complete without the block when the switch is off',
     () async {
       await tap(0);
+      await tap(1);
       await tap(4);
       expect(loaded().isComplete, isTrue);
       await flip(1);
@@ -134,6 +135,8 @@ void main() {
 
   test('Check and Skip pass over the disabled items', () async {
     await tap(0);
+    expect(loaded().pointer, 1, reason: 'the switch row is an item');
+    await tap(1);
     expect(loaded().pointer, 4, reason: 'the GPU items are off');
     cubit.skipNext();
     await pumpEventQueue();
@@ -141,22 +144,51 @@ void main() {
     expect(loaded().rows[2].skipped, isFalse);
   });
 
-  test('auto ticks around a block that is off', () async {
+  test('auto stops at the switch row and never ticks it', () async {
     setValues({'a/before': 1, 'a/gpu': 1, 'a/power': 1, 'a/after': 1});
     await tick();
     expect(
-      [checked(0), checked(2), checked(3), checked(4)],
-      [true, false, false, true],
+      [checked(0), checked(1), checked(2), checked(3), checked(4)],
+      [true, false, false, false, false],
     );
+    expect(loaded().pointer, 1);
+    await flip(1);
+    await tick();
+    expect(checked(1), isFalse, reason: 'turning it on is not ticking it');
+    expect(checked(2), isFalse);
+  });
+
+  test(
+    'auto ticks around a block that is off once the switch is ticked',
+    () async {
+      setValues({'a/before': 1, 'a/gpu': 1, 'a/power': 1, 'a/after': 1});
+      await tick();
+      await tap(1);
+      await tick();
+      expect(
+        [checked(0), checked(1), checked(2), checked(3), checked(4)],
+        [true, true, false, false, true],
+      );
+    },
+  );
+
+  test('skipping the switch row passes it and leaves the block off', () async {
+    await tap(0);
+    cubit.skipNext();
+    await pumpEventQueue();
+    expect(loaded().rows[1].skipped, isTrue);
+    expect(loaded().rows[1].optionOn, isFalse);
+    expect(loaded().pointer, 4);
   });
 
   test('turning the switch on lets auto tick the block at once', () async {
     setValues({'a/before': 1, 'a/gpu': 1, 'a/power': 1, 'a/after': 1});
     await tick();
+    await tap(1);
     await flip(1);
     await tick();
     expect([checked(2), checked(3)], [true, true]);
-    expect(loaded().done, 4);
+    expect(loaded().done, 5);
   });
 
   test('Reset clears the ticks and keeps the switch on', () async {
@@ -166,6 +198,6 @@ void main() {
     await pumpEventQueue();
     expect(loaded().rows[1].optionOn, isTrue);
     expect(checked(2), isFalse);
-    expect(loaded().total, 4);
+    expect(loaded().total, 5);
   });
 }

@@ -22,7 +22,9 @@ enum ChecklistItemType {
 
   /// A switch row (`sw_enable_start`): the pilot turns the items of its block
   /// on or off (`GRAMMAR.md` section 5b). Last, so the fingerprint indexes of
-  /// the older kinds do not change. It is not checked off and not counted.
+  /// the older kinds do not change. It is checked off, skipped and counted
+  /// like a manual item (auto-check stops at it until the pilot ticks it), and
+  /// it also holds the switch.
   option,
 }
 
@@ -87,6 +89,11 @@ class ChecklistItem extends Equatable {
   /// no block. The item counts only while that switch is on. Worked out by the
   /// parser; it is not part of the file syntax.
   final int? gate;
+
+  /// Whether the pilot can tick or skip this line and it is counted: a check
+  /// item or a switch row.
+  bool get isCheckable =>
+      type == ChecklistItemType.check || type == ChecklistItemType.option;
 
   /// [labelRuns], or one default-colour run holding [label] if there are none.
   List<ColourRun> get labelParts => _parts(label, labelRuns);

@@ -406,6 +406,21 @@ Pass line: all four hold.
 
 Result: PASS | 2026-11-05 | Windows 11 desktop | X-Plane 12.4.4, plugin 0.2.0 | Loads clean: `flightsim_aide: started, version 0.2.0` and `listening on port 18086`, and no flightsim_aide error, fail or warning line in the whole session. Exits clean: after File > Exit, `Log.txt` ends with `flightsim_aide: server stopped`, `Unloading plugin FlightSim Aide 0.2.0`, `flightsim_aide: stopped`, `Clean exit from threads` and `X-Plane has shut down`. Coexists with the real XChecklist 1.52, loaded in the same session through the 8.6 parity run. CI run 42022932150 was green on Windows, macOS and Linux (task 4.11). Known: with XChecklist enabled, a 140-item single checklist crashed X-Plane (see AC-45); not proven to be XChecklist.
 
+## AC-54
+
+**Steps (switch block).** Aircraft with a checklist that has a block, for example the Thranda PC-12 with `sw_enable_start:Using GPU` in Before start.
+1. Open the checklist with Auto on. The `Using GPU` row has a check circle at the left, a `manual item` pill and a switch that is off; auto-check stops there and does not tick it or pass it; the items under it are greyed out and the count (`n/N`) includes the row but not them. the items under it are greyed out and the count (`n/N`) does not include them.
+2. Tap a greyed item: nothing ticks. Press Check until the greyed items would be next: it passes over them.
+3. Turn the switch on: the items are enabled and the total goes up. Tick one (or let auto tick it).
+4. Turn the switch off: the tick of those items is gone and the total goes down.
+5. Turn it on, press Reset and confirm: the ticks clear, the switch stays on.
+6. With the switch row open, press Skip: the row is skipped (amber) and the pointer moves past the block. Tap an item below the block: the pointer follows. Tick the row by hand: auto carries on.
+7. Close the app and open it again (same X-Plane run): the switch position is as it was when some item was ticked.
+
+Pass line: all seven hold, in the dark and the light theme.
+
+Result: NOT RUN | 2026-11-14 | Needs the owner at the PC with the Thranda PC-12 checklist copied to X-Plane (the `Using GPU` blocks are in the local example file).
+
 ## Plugin runs on the simulator (SIM)
 
 Results for the plugin shell in X-Plane 12.4.1 (`sim.version` 12441), Windows, layout A (`plugins/flightsim_aide/64/win.xpl`), 2026-10-24. An early experiment plugin was also loaded.
