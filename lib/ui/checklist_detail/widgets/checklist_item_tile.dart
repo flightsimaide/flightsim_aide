@@ -64,6 +64,8 @@ class ChecklistItemTile extends StatelessWidget {
       ChecklistItemType.note => _note(context),
       ChecklistItemType.heading => _heading(context),
       ChecklistItemType.details => _details(context),
+      // The switch row is built in the UI step; until then it reads as a note.
+      ChecklistItemType.option => _note(context),
       ChecklistItemType.check => _check(context),
     };
   }

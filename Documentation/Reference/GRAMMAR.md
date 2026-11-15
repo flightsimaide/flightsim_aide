@@ -41,7 +41,7 @@ The keyword is the text before the first `:`, trimmed.
 | # | Rule | Status | Evidence |
 |---|---|---|---|
 | K1 | Keywords are matched ignoring case (`SW_ITEM` works). | **Assumed** | 0.6: the real plugin is case sensitive and rejects `SW_ITEM`; no upper-case keyword appears in any real file. Tolerance is kept deliberately |
-| K2 | Parsed: `sw_checklist`, `sw_item`, `sw_item_c`, `sw_itemvoid`, `sw_itemvoid_c`, `sw_iteminfo`, `sw_remark`, and the app's own extensions `sw_item_heading`, `sw_item_heading_c`, `sw_item_details`, `sw_item_details_c` (section 5a). | **Confirmed** | 0.5 census |
+| K2 | Parsed: `sw_checklist`, `sw_item`, `sw_item_c`, `sw_itemvoid`, `sw_itemvoid_c`, `sw_iteminfo`, `sw_remark`, and the app's own extensions `sw_item_heading`, `sw_item_heading_c`, `sw_item_details`, `sw_item_details_c` (section 5a), and `sw_enable_start`, `sw_enable_end` (section 5b). | **Confirmed** | 0.5 census |
 | K3 | Valid but ignored with **no warning**: `sw_rcolsize` only. | **Confirmed** | 0.5: 81 lines |
 | K5 | Parsed into the model: `sw_define_colour` (section 6), `sw_continue` (section 7). | **Confirmed** | 0.5: 201 and 395 lines |
 | K6 | `sw_show` is **ignored like a comment**: the line is skipped with no warning and no effect (D-70). It does not end a checklist and does not affect a bare `sw_continue` look-ahead. | **Confirmed** (keyword); the decision is the user's | 0.5: 50 lines, dataref conditions |
@@ -90,6 +90,28 @@ These four keywords are not in XChecklist; the real plugin does not know them, s
 | E2 | An empty heading is skipped with the warning `Line N: heading has no text`. | **Design** | same |
 | E3 | `sw_item_details:Text` and `sw_item_details_c` create a **details** line: the whole value is the text (colons and bars included), shown under the item above it, indented to start under that item's label, on a darker band, in a dimmer colour. It is not checkable, has no condition, and keeps its place in file order. An empty text is skipped with `Line N: details has no text`. | **Design** (user request) | same |
 | E4 | A heading or details line is a non-check item, so it is skipped by auto-check, the pointer and the Check, Skip and Reset buttons, like a note. It counts in the item list and in the fingerprint (type indexes 2 and 3). | **Design** | |
+
+## 5b. App extension: switch blocks
+
+`sw_enable_start` and `sw_enable_end` are not in XChecklist. They let the pilot turn a group of items on or off, for example the items that only apply when a ground power unit is used. A file that uses them is for this app only; the real plugin is expected to warn about the unknown keywords and show every item (not run, see the status column).
+
+```
+sw_enable_start:Use GPU
+sw_item:GPU|CONNECT
+sw_item:GPU power|ON
+sw_enable_end
+```
+
+| # | Rule | Status | Evidence |
+|---|---|---|---|
+| G1 | `sw_enable_start:Label` creates a **switch row** (item type `option`) with the label. It has no result and no condition and is not checked off. The text after the label is not used: a `:` or `\|` after it gives the warning `Line N: sw_enable_start takes a label only; the rest is ignored`. A condition on this line is a possible later extension. | **Design** (user request) | `enable_block_parser_test.dart` |
+| G2 | `sw_enable_end` closes the block and creates no item. It may be written with or without a trailing `:`. Keywords ignore case (K1). | **Design** | same |
+| G3 | Every item between the two lines (check items, notes, headings and details lines) belongs to the block: the parser sets its `gate` to the index of the switch row in the checklist's items. `gate` is internal to the model and is not part of the file syntax. Items outside any block have no gate. A block lies inside one checklist; there may be any number of blocks in a checklist. | **Design** | same |
+| G4 | An item whose switch is **off** is disabled: it is not counted in the total or in the checked count, it cannot be checked or skipped, and auto-check, the pointer, Check and Skip pass over it. The switch row itself is never counted. So the total of a checklist changes when a switch moves. The rules for the switch position, its saving and the display are in `DECISIONS.md` (D-82); the parser only builds the model. | **Design** | D-82 |
+| G5 | A block cannot nest. A second `sw_enable_start` inside a block is ignored with `Line N: sw_enable_start inside another block; ignored`; the outer block carries on. A block still open at the next `sw_checklist` or at the end of the file is closed there, with `Line N: sw_enable_start has no sw_enable_end; closed at the end of the checklist` (N is the line of the start). | **Design** | same |
+| G6 | `sw_enable_end` with no open block warns `Line N: sw_enable_end without sw_enable_start` and does nothing. | **Design** | same |
+| G7 | A start with no label (`sw_enable_start:` or the bare keyword) is skipped with `Line N: sw_enable_start has no label; ignored`; the items below it are not gated. Either line before any checklist gives `Line N: item before any checklist`. | **Design** | same |
+| G8 | A `sw_continue` followed by `sw_enable_start` counts as followed by an item (F3). | **Design** | same |
 
 ## 6. Colour markers
 

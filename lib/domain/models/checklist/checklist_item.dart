@@ -19,6 +19,11 @@ enum ChecklistItemType {
   /// A line of text under the item above it (`sw_item_details`): indented,
   /// on a darker band, not checkable.
   details,
+
+  /// A switch row (`sw_enable_start`): the pilot turns the items of its block
+  /// on or off (`GRAMMAR.md` section 5b). Last, so the fingerprint indexes of
+  /// the older kinds do not change. It is not checked off and not counted.
+  option,
 }
 
 /// How a heading's text is aligned.
@@ -47,6 +52,7 @@ class ChecklistItem extends Equatable {
     this.resultRuns = const [],
     this.condition,
     this.justify = ChecklistJustify.center,
+    this.gate,
   ]);
 
   /// Whether this is a check item or a note.
@@ -76,6 +82,12 @@ class ChecklistItem extends Equatable {
   /// The text alignment of a heading; centre for every other kind (unused).
   final ChecklistJustify justify;
 
+  /// The index, in the checklist's items, of the switch row
+  /// (`sw_enable_start`) whose block holds this item, or null for an item in
+  /// no block. The item counts only while that switch is on. Worked out by the
+  /// parser; it is not part of the file syntax.
+  final int? gate;
+
   /// [labelRuns], or one default-colour run holding [label] if there are none.
   List<ColourRun> get labelParts => _parts(label, labelRuns);
 
@@ -96,5 +108,6 @@ class ChecklistItem extends Equatable {
     resultRuns,
     condition,
     justify,
+    gate,
   ];
 }

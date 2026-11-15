@@ -27,6 +27,9 @@ class AircraftWorkflowParser {
     final continueLists = <List<_PendingContinue>>[];
     List<_PendingContinue>? currentContinues;
     var untitledCount = 0;
+    // The switch row of the open `sw_enable_start` block, if any (section 5b).
+    int? openGate;
+    int openGateLine = 0;
 
     // `sw_continue` belongs to the open checklist (`GRAMMAR.md` F1, F2). The
     // name is the text before the next `:`; a condition after it is dropped.
@@ -60,6 +63,69 @@ class AircraftWorkflowParser {
       open.add(pending);
     }
 
+    // An `sw_enable_start` block ends at `sw_enable_end`; one still open when
+    // its checklist or the file ends is closed there, with a warning (G5).
+    void closeOpenGate() {
+      if (openGate != null) {
+        warnings.add(
+          'Line $openGateLine: sw_enable_start has no sw_enable_end; '
+          'closed at the end of the checklist',
+        );
+        openGate = null;
+      }
+    }
+
+    void startGate(int number, String value) {
+      final items = currentItems;
+      if (items == null) {
+        warnings.add('Line $number: item before any checklist');
+        return;
+      }
+      if (openGate != null) {
+        warnings.add(
+          'Line $number: sw_enable_start inside another block; ignored',
+        );
+        return;
+      }
+      for (final name in colourNamesIn(value)) {
+        markerUses.add((line: number, name: name));
+      }
+      final colon = value.indexOf(':');
+      if (colon >= 0 || value.contains('|')) {
+        warnings.add(
+          'Line $number: sw_enable_start takes a label only; the rest is '
+          'ignored',
+        );
+      }
+      final bar = value.indexOf('|');
+      final cut = [
+        colon,
+        bar,
+      ].where((i) => i >= 0).fold<int>(value.length, (a, b) => a < b ? a : b);
+      final item = _buildItem(
+        ChecklistItemType.option,
+        value.substring(0, cut),
+        '',
+      );
+      if (item.label.isEmpty) {
+        warnings.add('Line $number: sw_enable_start has no label; ignored');
+        return;
+      }
+      openGate = items.length;
+      openGateLine = number;
+      items.add(item);
+    }
+
+    void endGate(int number) {
+      if (currentItems == null) {
+        warnings.add('Line $number: item before any checklist');
+      } else if (openGate == null) {
+        warnings.add('Line $number: sw_enable_end without sw_enable_start');
+      } else {
+        openGate = null;
+      }
+    }
+
     for (var index = 0; index < lines.length; index++) {
       final line = lines[index];
       final kv = splitKeywordValue(line.text);
@@ -71,6 +137,10 @@ class AircraftWorkflowParser {
           addContinue(index, '');
         } else if (bare == 'sw_show') {
           // sw_show is ignored like a comment (D-70).
+        } else if (bare == 'sw_enable_end') {
+          endGate(line.number);
+        } else if (bare == 'sw_enable_start') {
+          startGate(line.number, '');
         } else if (!_ignoredKeywords.contains(bare)) {
           // Ignored keywords may appear bare, e.g. `sw_rcolsize` (K3).
           warnings.add('Line ${line.number}: unrecognized line');
@@ -80,6 +150,10 @@ class AircraftWorkflowParser {
         // comment, with no warning and no effect (K6, D-70).
       } else if (kv.keyword == 'sw_continue') {
         addContinue(index, kv.value);
+      } else if (kv.keyword == 'sw_enable_start') {
+        startGate(line.number, kv.value);
+      } else if (kv.keyword == 'sw_enable_end') {
+        endGate(line.number);
       } else if (kv.keyword == 'sw_define_colour') {
         final definition = parseColourDefinition(kv.value);
         if (definition == null) {
@@ -101,6 +175,7 @@ class AircraftWorkflowParser {
           }
         }
       } else if (kv.keyword == 'sw_checklist') {
+        closeOpenGate();
         var checklist = _parseChecklistHeader(kv.value);
         if (checklist.name.isEmpty) {
           untitledCount++;
@@ -179,13 +254,15 @@ class AircraftWorkflowParser {
               item.result.isEmpty) {
             warnings.add('Line ${line.number}: empty note');
           } else {
-            currentItems.add(item);
+            final gate = openGate;
+            currentItems.add(gate == null ? item : _withGate(item, gate));
           }
         }
       } else if (!_ignoredKeywords.contains(kv.keyword)) {
         warnings.add('Line ${line.number}: unknown keyword "${kv.keyword}"');
       }
     }
+    closeOpenGate();
     for (final use in markerUses) {
       if (!colours.containsKey(use.name)) {
         warnings.add('Line ${use.line}: unknown colour "${use.name}"');
@@ -250,7 +327,19 @@ class AircraftWorkflowParser {
         item.resultRuns,
         condition,
         item.justify,
+        item.gate,
       );
+
+  ChecklistItem _withGate(ChecklistItem item, int gate) => ChecklistItem(
+    item.type,
+    item.label,
+    item.result,
+    item.labelRuns,
+    item.resultRuns,
+    item.condition,
+    item.justify,
+    gate,
+  );
 
   /// The condition text of a check or info line: after the first `:` that
   /// follows the label and the optional `|result` (`GRAMMAR.md` W1).
@@ -398,7 +487,8 @@ bool _isShowLine(String text) {
   if (kv?.keyword == 'sw_checklist') {
     return (kind: _Follow.checklist, headerLine: lines[next].number);
   }
-  if (kv != null && _itemKeywords.contains(kv.keyword)) {
+  if (kv != null &&
+      (_itemKeywords.contains(kv.keyword) || kv.keyword == 'sw_enable_start')) {
     return (kind: _Follow.item, headerLine: null);
   }
   return (kind: _Follow.other, headerLine: null);
