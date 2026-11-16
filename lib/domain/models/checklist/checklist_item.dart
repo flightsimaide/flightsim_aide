@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 
 import '../flight_sim/item_condition.dart';
+import 'calculate_line.dart';
 import 'colour_run.dart';
 import 'switch_gate.dart';
 
@@ -57,6 +58,7 @@ class ChecklistItem extends Equatable {
     this.justify = ChecklistJustify.center,
     this.gate,
     this.switchDef,
+    this.calculations = const [],
   ]);
 
   /// Whether this is a check item or a note.
@@ -95,6 +97,10 @@ class ChecklistItem extends Equatable {
   /// For a switch row: the switch it turns; null for every other line.
   final SwitchDef? switchDef;
 
+  /// The `sw_calculate` lines under this item, in file order; only check
+  /// items carry them (`GRAMMAR.md` section 5c).
+  final List<CalculateLine> calculations;
+
   /// Whether the pilot can tick or skip this line and it is counted: a check
   /// item or a switch row.
   bool get isCheckable =>
@@ -122,5 +128,6 @@ class ChecklistItem extends Equatable {
     justify,
     gate,
     switchDef,
+    calculations,
   ];
 }

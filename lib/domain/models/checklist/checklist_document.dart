@@ -2,6 +2,7 @@ import 'package:equatable/equatable.dart';
 
 import 'checklist.dart';
 import 'checklist_colour.dart';
+import 'lookup_table.dart';
 
 /// The result of parsing one checklist file: its checklists and any warnings.
 class ChecklistDocument extends Equatable {
@@ -11,10 +12,12 @@ class ChecklistDocument extends Equatable {
     required List<Checklist> checklists,
     required List<String> warnings,
     Map<String, ChecklistColour> colours = const {},
+    Map<String, LookupTable> tables = const {},
     this.sourceName = '',
   }) : checklists = List.unmodifiable(checklists),
        warnings = List.unmodifiable(warnings),
-       colours = Map.unmodifiable(colours);
+       colours = Map.unmodifiable(colours),
+       tables = Map.unmodifiable(tables);
 
   /// The parsed checklists, in file order.
   final List<Checklist> checklists;
@@ -25,6 +28,9 @@ class ChecklistDocument extends Equatable {
   /// Colours defined by `sw_define_colour`, keyed by name.
   final Map<String, ChecklistColour> colours;
 
+  /// Lookup tables defined by `sw_table`, keyed by name; never shown.
+  final Map<String, LookupTable> tables;
+
   /// File name shown to the user, empty if unknown.
   final String sourceName;
 
@@ -33,9 +39,16 @@ class ChecklistDocument extends Equatable {
     checklists: checklists,
     warnings: warnings,
     colours: colours,
+    tables: tables,
     sourceName: sourceName ?? this.sourceName,
   );
 
   @override
-  List<Object?> get props => [checklists, warnings, colours, sourceName];
+  List<Object?> get props => [
+    checklists,
+    warnings,
+    colours,
+    tables,
+    sourceName,
+  ];
 }

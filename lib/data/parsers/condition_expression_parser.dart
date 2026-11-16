@@ -18,6 +18,20 @@ class ConditionParseResult {
   bool get failed => reason != null;
 }
 
+/// What [ConditionExpressionParser.parseValue] found.
+class ValueParseResult {
+  const ValueParseResult._(this.value, this.reason);
+
+  /// The parsed expression, or null when the text is malformed.
+  final ValueExpr? value;
+
+  /// Why the text could not be parsed, or null.
+  final String? reason;
+
+  /// Whether the text was malformed.
+  bool get failed => value == null;
+}
+
 class _ParseError implements Exception {
   _ParseError(this.reason);
   final String reason;
@@ -41,6 +55,36 @@ class ConditionExpressionParser {
       return ConditionParseResult._(null, e.reason);
     } on Object {
       return const ConditionParseResult._(null, 'unreadable condition');
+    }
+  }
+
+  /// Parses [text] as one arithmetic expression (`GRAMMAR.md` section 8.4):
+  /// a number, `{dataref}`, the operators, parentheses and the functions. A
+  /// bare dataref name (`sim/foo` or `sim/foo[2]`) is also read, as that
+  /// dataref. Used for the input columns of `sw_table` (section 5c).
+  ValueParseResult parseValue(String text) {
+    final trimmed = text.trim();
+    if (trimmed.isEmpty) return const ValueParseResult._(null, 'missing value');
+    if (!trimmed.contains('{') && RegExp(r'^[A-Za-z_]').hasMatch(trimmed)) {
+      final dataref = Dataref.tryParse(trimmed);
+      if (dataref != null &&
+          RegExp(r'^[A-Za-z0-9_/.\[\]]+$').hasMatch(trimmed)) {
+        return ValueParseResult._(DatarefExpr(dataref), null);
+      }
+    }
+    try {
+      final scan = _Scan(trimmed);
+      final value = scan.parseExpr();
+      scan.skipBlanks();
+      if (!scan.atEnd) {
+        if (scan.peek(')')) throw _ParseError('unbalanced parentheses');
+        throw scan.unexpected();
+      }
+      return ValueParseResult._(value, null);
+    } on _ParseError catch (e) {
+      return ValueParseResult._(null, e.reason);
+    } on Object {
+      return const ValueParseResult._(null, 'unreadable value');
     }
   }
 }

@@ -41,7 +41,7 @@ The keyword is the text before the first `:`, trimmed.
 | # | Rule | Status | Evidence |
 |---|---|---|---|
 | K1 | Keywords are matched ignoring case (`SW_ITEM` works). | **Assumed** | 0.6: the real plugin is case sensitive and rejects `SW_ITEM`; no upper-case keyword appears in any real file. Tolerance is kept deliberately |
-| K2 | Parsed: `sw_checklist`, `sw_item`, `sw_item_c`, `sw_itemvoid`, `sw_itemvoid_c`, `sw_iteminfo`, `sw_remark`, and the app's own extensions `sw_item_heading`, `sw_item_heading_c`, `sw_item_details`, `sw_item_details_c` (section 5a), and `sw_switch`, `sw_if`, `sw_else`, `sw_end` (section 5b). | **Confirmed** | 0.5 census |
+| K2 | Parsed: `sw_checklist`, `sw_item`, `sw_item_c`, `sw_itemvoid`, `sw_itemvoid_c`, `sw_iteminfo`, `sw_remark`, and the app's own extensions `sw_item_heading`, `sw_item_heading_c`, `sw_item_details`, `sw_item_details_c` (section 5a), and `sw_switch`, `sw_if`, `sw_else`, `sw_end` (section 5b), and `sw_table`, `sw_row`, `sw_table_end`, `sw_calculate` (section 5c). | **Confirmed** | 0.5 census |
 | K3 | Valid but ignored with **no warning**: `sw_rcolsize` only. | **Confirmed** | 0.5: 81 lines |
 | K5 | Parsed into the model: `sw_define_colour` (section 6), `sw_continue` (section 7). | **Confirmed** | 0.5: 201 and 395 lines |
 | K6 | `sw_show` is **ignored like a comment**: the line is skipped with no warning and no effect (D-70). It does not end a checklist and does not affect a bare `sw_continue` look-ahead. | **Confirmed** (keyword); the decision is the user's | 0.5: 50 lines, dataref conditions |
@@ -121,6 +121,31 @@ sw_end
 | G7 | `sw_end` with no open block warns `Line N: sw_end without sw_if or sw_switch`; `sw_else` with no open block warns `Line N: sw_else without sw_if or sw_switch`; a second `sw_else` in one block warns `Line N: second sw_else in a block; ignored` (the items stay in the OFF branch). Each does nothing else. | **Design** | same |
 | G8 | A start with no label (`sw_switch:\|id`, or the bare keyword), or with no id, is skipped with `Line N: sw_switch has no label; ignored` or `Line N: <keyword> has no switch id; ignored`; its items are not gated and its `sw_end` is taken with it. A second `sw_switch` with an id already defined warns `Line N: duplicate switch "id"; first definition kept, no switch row` and its block is gated on the first switch like a `sw_if\|id\|ON`. A `sw_if` naming an id no `sw_switch` defines warns `Line N: sw_if names the unknown switch "id"; its items are always shown`. Any of these lines before any checklist gives `Line N: item before any checklist`. | **Design** | same |
 | G9 | A `sw_continue` followed by `sw_switch` or `sw_if` counts as followed by an item (F3). | **Design** | same |
+
+## 5c. App extension: lookup tables and calculated values
+
+`sw_table`, `sw_row`, `sw_table_end` and `sw_calculate` are not in XChecklist. A **table** holds numbers the pilot would otherwise read from a chart in the flight manual; a **calculate line** shows one value out of it for the aircraft's state right now, for example the torque to set for maximum cruise power at the current altitude, temperature and weight. A file that uses them is for this app only; the real plugin is expected to warn about the unknown keywords and skip the lines (not run, see the status column).
+
+```
+sw_item:Max cruise power|SET
+sw_calculate:maxcruise|torque|Torque|psi|0.1     under the item it belongs to
+sw_calculate:maxcruise|ff_lb|Fuel flow|lb/h|1
+
+sw_table:maxcruise|isa={sim/cockpit2/temperature/outside_air_temp_degc}-(15-0.00198*{sim/flightmodel2/position/pressure_altitude}), alt=sim/flightmodel2/position/pressure_altitude, w=sim/flightmodel/weight/m_total|torque, ff_lb
+sw_row:-40,0,3175|36.9,601
+sw_row:-40,0,3629|36.9,601
+sw_table_end
+```
+
+| # | Rule | Status | Evidence |
+|---|---|---|---|
+| T1 | `sw_table:name\|inputs\|outputs` starts a table. The name and every column name are lower-cased and use only letters, digits and `_`. **Inputs** are `column=source` pairs separated by commas (a comma inside brackets or a function call does not split): the source is a dataref (`sim/x`, `sim/x[2]`) or an arithmetic expression of `{datarefs}` (section 8.4). **Outputs** are plain column names separated by commas. One to four inputs and at least one output; a column name may appear only once in the table. | **Design** | D-83; `test/data/parsers/lookup_table_parser_test.dart` |
+| T2 | `sw_row:in,in\|out,out` is one row of the table above it: the input values, then the output values, as numbers, in the order of the columns. A row with the wrong count or a value that is not a number warns `Line N: sw_row ...; row skipped`. `sw_table_end` ends the table. Tables are file-level: they may stand anywhere (at the end of the file by convention), belong to no checklist and are never shown. | **Design** | same |
+| T3 | The rows must form a **complete grid**: every combination of the distinct values of the input columns has exactly one row, in any order. Otherwise the table is ignored with `Line N: sw_table "name" has no row for (a,b)`, `... has two rows for (a)` or `... has no rows` (N is the `sw_table` line). At most 20,000 rows. | **Design** | same |
+| T4 | A start line that cannot be read (wrong number of parts, a bad or repeated column name, an unreadable source, more than four inputs) or a second table with a name already used is ignored with its warning, and its `sw_row` and `sw_table_end` lines are skipped with no further warning. The first definition of a name is kept. | **Design** | same |
+| T5 | Only `sw_row` and `sw_table_end` belong inside a table. Any other line closes it with `Line N: sw_table "name" has no sw_table_end; closed there` (N is the `sw_table` line) and is then read as usual; a table still open at the end of the file is closed there. A `sw_row` outside a table warns `Line N: sw_row outside sw_table; ignored`, and `sw_table_end` without a table `Line N: sw_table_end without sw_table`. | **Design** | same |
+| T6 | `sw_calculate:table\|column\|label\|unit\|step` belongs to the **check item above it** (`sw_item_details` lines may stand between); an item may have several, shown in file order. `table` and `column` (an output column) are required; the label is the column name when left out, the unit is empty, and the shown value is rounded to a multiple of `step` (`0.1`, `1`, `10`; default `1`). Not under a check item: `Line N: sw_calculate is not under a check item; ignored`. A table or column that does not exist (checked once the whole file is read): `Line N: sw_calculate names the unknown table "x"; ignored` or `Line N: table "x" has no output column "y"; sw_calculate ignored`. A step that is not a number above 0 warns and `1` is used. The line adds no item, is not counted and takes the gate of its item. | **Design** | same |
+| T7 | The value is looked up **live** from the current values of the input sources and is never saved or frozen (how the value is worked out from the rows, and what shows outside the table or with a missing input, is decided with the next step of D-83). | **Design** | D-83 |
 
 ## 6. Colour markers
 

@@ -132,6 +132,8 @@ lib/
 │   │   │   ├── checklist_document.dart     # checklists + parse warnings + sourceName (file name, for display)
 │   │   │   ├── checklist.dart
 │   │   │   ├── checklist_item.dart         # check item or note
+│   │   │   ├── lookup_table.dart           # sw_table: input columns (dataref or expression), output columns, rows (D-83)
+│   │   │   ├── calculate_line.dart         # sw_calculate: one table value shown under an item (D-83)
 │   │   │   └── checklist_progress.dart     # immutable check state + toggle/reset/count logic
 │   │   ├── aircraft/
 │   │   │   └── aircraft_identity.dart      # ICAO, description, aircraft path, checklist modified time
@@ -266,7 +268,7 @@ plugin/                                     # companion X-Plane plugin: C++ (XPL
 ## 6. Layer responsibilities
 
 ### `domain`
-- Immutable models: `Checklist`, `ChecklistItem`, `ChecklistDocument`, `ChecklistProgress`.
+- Immutable models: `Checklist`, `ChecklistItem`, `ChecklistDocument`, `ChecklistProgress`. A `ChecklistDocument` also holds its `LookupTable`s (`sw_table`, never shown) and a `ChecklistItem` its `CalculateLine`s (`sw_calculate`): the data and the references only; the lookup against live values comes with D-83's next steps.
 - Colour and flow data live in the same models: items carry ordered colour runs (colour names only, no Flutter `Color`), the document carries the `sw_define_colour` palette, and each checklist carries its `sw_continue` links (an ordered list). File order is not flight order; a pure helper follows the continue links to give the sequence.
 - `ChecklistProgress` owns the check-state rules (toggle, reset, counts, completion). Both manual taps and auto-check update the same model, so there is one set of rules. A switch (`sw_switch`, D-82) is a switch row plus blocks (`sw_if`, `sw_else`, `sw_end`) whose items point at it through `ChecklistItem.gate` (a `SwitchGate`: the `SwitchDef` with its id and default, and the position of the branch); `ChecklistProgress` keeps the positions that differ from the default by id for the whole file, hides the items of the branch that is not current, counts the switch rows and the shown items (`ChecklistItem.isCheckable`), and auto-check stops at a switch row like at a manual item.
 - Use cases appear only when logic combines several data sources. The first real one is auto-check, which combines the checklist, the live X-Plane values and the current progress.

@@ -1,9 +1,11 @@
+import '../../domain/models/checklist/calculate_line.dart';
 import '../../domain/models/checklist/checklist.dart';
 import '../../domain/models/checklist/checklist_colour.dart';
 import '../../domain/models/checklist/checklist_document.dart';
 import '../../domain/models/checklist/checklist_item.dart';
 import '../../domain/models/checklist/colour_run.dart';
 import '../../domain/models/checklist/continue_link.dart';
+import '../../domain/models/checklist/lookup_table.dart';
 import '../../domain/models/checklist/switch_gate.dart';
 import '../../domain/models/flight_sim/item_condition.dart';
 import 'condition_expression_parser.dart';
@@ -219,10 +221,237 @@ class AircraftWorkflowParser {
       );
     }
 
+    // Lookup tables (section 5c): the open `sw_table` block being read, whether
+    // a rejected block is being skipped, and the `sw_calculate` lines waiting
+    // for the tables, which are defined anywhere in the file.
+    _TableBuilder? openTable;
+    var skippingTable = false;
+    final tables = <String, LookupTable>{};
+    final pendingCalcs = <_PendingCalc>[];
+
+    void finishTable(_TableBuilder table) {
+      final problem = LookupTable.problem(table.inputs.length, table.rows);
+      if (problem != null) {
+        warnings.add(
+          'Line ${table.line}: sw_table "${table.name}" $problem; ignored',
+        );
+        return;
+      }
+      tables[table.name] = LookupTable(
+        name: table.name,
+        inputs: table.inputs,
+        outputs: table.outputs,
+        rows: table.rows,
+      );
+    }
+
+    // A table still open when another line comes, or at the end of the file,
+    // is closed there (G5's rule for tables, T5).
+    void closeOpenTable() {
+      final table = openTable;
+      if (table == null) return;
+      openTable = null;
+      warnings.add(
+        'Line ${table.line}: sw_table "${table.name}" has no sw_table_end; '
+        'closed there',
+      );
+      finishTable(table);
+    }
+
+    // `sw_table:name|col=source,col=source|out,out`.
+    void startTable(int number, String value) {
+      closeOpenTable();
+      skippingTable = false;
+      final parts = value.split('|');
+      if (parts.length != 3) {
+        warnings.add(
+          'Line $number: sw_table needs name|inputs|outputs; ignored',
+        );
+        skippingTable = true;
+        return;
+      }
+      final name = parts[0].trim().toLowerCase();
+      if (!_tableName.hasMatch(name)) {
+        warnings.add('Line $number: sw_table has a bad name "$name"; ignored');
+        skippingTable = true;
+        return;
+      }
+      if (tables.containsKey(name)) {
+        warnings.add(
+          'Line $number: duplicate table "$name"; first definition kept',
+        );
+        skippingTable = true;
+        return;
+      }
+      final used = <String>{};
+      final inputs = <TableInput>[];
+      for (final text in _splitTopLevel(parts[1], ',')) {
+        final equals = text.indexOf('=');
+        final column = equals < 0
+            ? ''
+            : text.substring(0, equals).trim().toLowerCase();
+        if (!_tableName.hasMatch(column) || !used.add(column)) {
+          warnings.add(
+            'Line $number: sw_table "$name" has a bad or repeated input '
+            'column "${equals < 0 ? text.trim() : column}"; ignored',
+          );
+          skippingTable = true;
+          return;
+        }
+        final source = _conditions.parseValue(text.substring(equals + 1));
+        if (source.failed) {
+          warnings.add(
+            'Line $number: sw_table "$name" input "$column": '
+            '${source.reason}; ignored',
+          );
+          skippingTable = true;
+          return;
+        }
+        inputs.add(TableInput(column, source.value!));
+      }
+      final outputs = <String>[];
+      for (final text in parts[2].split(',')) {
+        final column = text.trim().toLowerCase();
+        if (!_tableName.hasMatch(column) || !used.add(column)) {
+          warnings.add(
+            'Line $number: sw_table "$name" has a bad or repeated output '
+            'column "${text.trim()}"; ignored',
+          );
+          skippingTable = true;
+          return;
+        }
+        outputs.add(column);
+      }
+      if (inputs.isEmpty || inputs.length > LookupTable.maxInputs) {
+        warnings.add(
+          'Line $number: sw_table "$name" needs 1 to '
+          '${LookupTable.maxInputs} input columns; ignored',
+        );
+        skippingTable = true;
+        return;
+      }
+      openTable = _TableBuilder(name, number, inputs, outputs);
+    }
+
+    // `sw_row:in,in|out,out`.
+    void addRow(int number, String value) {
+      final table = openTable;
+      if (table == null) {
+        if (!skippingTable) {
+          warnings.add('Line $number: sw_row outside sw_table; ignored');
+        }
+        return;
+      }
+      final parts = value.split('|');
+      final inputs = parts.length == 2 ? _numbers(parts[0]) : null;
+      final outputs = parts.length == 2 ? _numbers(parts[1]) : null;
+      if (inputs == null || outputs == null) {
+        warnings.add(
+          'Line $number: sw_row needs numbers as in,in|out,out; row skipped',
+        );
+      } else if (inputs.length != table.inputs.length ||
+          outputs.length != table.outputs.length) {
+        warnings.add(
+          'Line $number: sw_row has ${inputs.length} input and '
+          '${outputs.length} output values; table "${table.name}" needs '
+          '${table.inputs.length} and ${table.outputs.length}; row skipped',
+        );
+      } else {
+        table.rows.add(TableRow(inputs, outputs));
+      }
+    }
+
+    void endTable(int number) {
+      final table = openTable;
+      if (table != null) {
+        openTable = null;
+        finishTable(table);
+      } else if (skippingTable) {
+        skippingTable = false;
+      } else {
+        warnings.add('Line $number: sw_table_end without sw_table');
+      }
+    }
+
+    // `sw_calculate:table|column|Label|unit|step`: shown under the check item
+    // above it (details lines may sit between).
+    void addCalculate(int number, String value) {
+      final items = currentItems;
+      if (items == null) {
+        warnings.add('Line $number: item before any checklist');
+        return;
+      }
+      final parts = value.split('|');
+      final tableName = parts[0].trim().toLowerCase();
+      final column = parts.length > 1 ? parts[1].trim().toLowerCase() : '';
+      if (tableName.isEmpty || column.isEmpty) {
+        warnings.add('Line $number: sw_calculate needs table|column; ignored');
+        return;
+      }
+      if (parts.length > 5) {
+        warnings.add('Line $number: sw_calculate has extra parts; ignored');
+      }
+      var step = 1.0;
+      if (parts.length > 4 && parts[4].trim().isNotEmpty) {
+        final parsed = double.tryParse(parts[4].trim());
+        if (parsed == null || parsed <= 0 || !parsed.isFinite) {
+          warnings.add(
+            'Line $number: sw_calculate rounding must be a number above 0; '
+            '1 assumed',
+          );
+        } else {
+          step = parsed;
+        }
+      }
+      var target = items.length - 1;
+      while (target >= 0 && items[target].type == ChecklistItemType.details) {
+        target--;
+      }
+      if (target < 0 || items[target].type != ChecklistItemType.check) {
+        warnings.add(
+          'Line $number: sw_calculate is not under a check item; ignored',
+        );
+        return;
+      }
+      final label = parts.length > 2 ? parts[2].trim() : '';
+      pendingCalcs.add(
+        _PendingCalc(
+          items,
+          target,
+          number,
+          CalculateLine(
+            table: tableName,
+            column: column,
+            label: label.isEmpty ? column : label,
+            unit: parts.length > 3 ? parts[3].trim() : '',
+            step: step,
+          ),
+        ),
+      );
+    }
+
     for (var index = 0; index < lines.length; index++) {
       final line = lines[index];
       final kv = splitKeywordValue(line.text);
-      if (kv == null && _isIfLine(line.text)) {
+      // Only `sw_row` and `sw_table_end` belong inside a table; any other line
+      // ends it (a rejected table's rows are skipped only up to there too).
+      final isRow = kv != null && kv.keyword == 'sw_row';
+      final isTableEnd =
+          line.text.toLowerCase() == 'sw_table_end' ||
+          (kv != null && kv.keyword == 'sw_table_end');
+      if (!isRow && !isTableEnd) {
+        closeOpenTable();
+        skippingTable = false;
+      }
+      if (kv != null && kv.keyword == 'sw_table') {
+        startTable(line.number, kv.value);
+      } else if (isRow) {
+        addRow(line.number, kv.value);
+      } else if (isTableEnd) {
+        endTable(line.number);
+      } else if (kv != null && kv.keyword == 'sw_calculate') {
+        addCalculate(line.number, kv.value);
+      } else if (kv == null && _isIfLine(line.text)) {
         startBlock(line.number, 'sw_if', _ifValue(line.text));
       } else if (kv == null) {
         final bare = line.text.toLowerCase();
@@ -362,6 +591,8 @@ class AircraftWorkflowParser {
       }
     }
     closeOpenBlock();
+    closeOpenTable();
+    _attachCalculations(pendingCalcs, tables, warnings);
     // A gate takes the default of its switch, defined anywhere in the file; a
     // block that names a switch nobody defines is shown always.
     final unknown = <String>{};
@@ -434,6 +665,7 @@ class AircraftWorkflowParser {
       checklists: kept,
       warnings: warnings,
       colours: colours,
+      tables: tables,
     );
   }
 
@@ -450,6 +682,7 @@ class AircraftWorkflowParser {
         item.justify,
         item.gate,
         item.switchDef,
+        item.calculations,
       );
 
   ChecklistItem _withGate(ChecklistItem item, SwitchGate gate) => ChecklistItem(
@@ -462,6 +695,7 @@ class AircraftWorkflowParser {
     item.justify,
     gate,
     item.switchDef,
+    item.calculations,
   );
 
   ChecklistItem _withoutGate(ChecklistItem item) => ChecklistItem(
@@ -474,6 +708,7 @@ class AircraftWorkflowParser {
     item.justify,
     null,
     item.switchDef,
+    item.calculations,
   );
 
   ChecklistItem _withSwitch(ChecklistItem item, SwitchDef def) => ChecklistItem(
@@ -486,7 +721,53 @@ class AircraftWorkflowParser {
     item.justify,
     item.gate,
     def,
+    item.calculations,
   );
+
+  ChecklistItem _withCalculations(
+    ChecklistItem item,
+    List<CalculateLine> calculations,
+  ) => ChecklistItem(
+    item.type,
+    item.label,
+    item.result,
+    item.labelRuns,
+    item.resultRuns,
+    item.condition,
+    item.justify,
+    item.gate,
+    item.switchDef,
+    calculations,
+  );
+
+  /// Gives each item its `sw_calculate` lines once every table is known; a
+  /// line that names a missing table or column is dropped with a warning (T6).
+  void _attachCalculations(
+    List<_PendingCalc> pending,
+    Map<String, LookupTable> tables,
+    List<String> warnings,
+  ) {
+    for (final entry in pending) {
+      final table = tables[entry.line.table];
+      if (table == null) {
+        warnings.add(
+          'Line ${entry.number}: sw_calculate names the unknown table '
+          '"${entry.line.table}"; ignored',
+        );
+      } else if (!table.hasOutput(entry.line.column)) {
+        warnings.add(
+          'Line ${entry.number}: table "${table.name}" has no output column '
+          '"${entry.line.column}"; sw_calculate ignored',
+        );
+      } else {
+        final item = entry.items[entry.index];
+        entry.items[entry.index] = _withCalculations(item, [
+          ...item.calculations,
+          entry.line,
+        ]);
+      }
+    }
+  }
 
   /// The condition text of a check or info line: after the first `:` that
   /// follows the label and the optional `|result` (`GRAMMAR.md` W1).
@@ -691,6 +972,62 @@ String? _validateContinue(
     return 'Line ${pending.line}: continue target "$name" not found';
   }
   return null;
+}
+
+/// A name in `sw_table`: a table or a column.
+final _tableName = RegExp(r'^[a-z0-9_]+$');
+
+/// Splits [text] at each [separator] that is not inside brackets.
+List<String> _splitTopLevel(String text, String separator) {
+  final parts = <String>[];
+  var depth = 0;
+  var start = 0;
+  for (var i = 0; i < text.length; i++) {
+    final c = text[i];
+    if ('({['.contains(c)) {
+      depth++;
+    } else if (')}]'.contains(c)) {
+      depth--;
+    } else if (c == separator && depth <= 0) {
+      parts.add(text.substring(start, i));
+      start = i + 1;
+    }
+  }
+  parts.add(text.substring(start));
+  return parts;
+}
+
+/// Reads a comma-separated list of numbers; null when any is not a number.
+List<double>? _numbers(String text) {
+  final values = <double>[];
+  for (final part in text.split(',')) {
+    final value = double.tryParse(part.trim());
+    if (value == null || !value.isFinite) return null;
+    values.add(value);
+  }
+  return values;
+}
+
+/// A `sw_table` block while its rows are being read.
+class _TableBuilder {
+  _TableBuilder(this.name, this.line, this.inputs, this.outputs);
+
+  final String name;
+  final int line;
+  final List<TableInput> inputs;
+  final List<String> outputs;
+  final List<TableRow> rows = [];
+}
+
+/// A `sw_calculate` line waiting for its table.
+class _PendingCalc {
+  _PendingCalc(this.items, this.index, this.number, this.line);
+
+  /// The item list of the checklist it stands in, and the item it belongs to.
+  final List<ChecklistItem> items;
+  final int index;
+  final int number;
+  final CalculateLine line;
 }
 
 const _itemKeywords = {
