@@ -82,10 +82,14 @@ class StatusPill extends StatelessWidget {
               Icon(icon, size: 18, color: foreground),
               const SizedBox(width: 4),
             ],
-            Text(
-              text,
-              // Without a given style the text would keep the theme's colour.
-              style: (style ?? const TextStyle()).copyWith(color: foreground),
+            // Flexible, so a long message wraps inside the pill.
+            Flexible(
+              child: Text(
+                text,
+                // Without a given style the text would keep the theme's
+                // colour.
+                style: (style ?? const TextStyle()).copyWith(color: foreground),
+              ),
             ),
           ],
         ),

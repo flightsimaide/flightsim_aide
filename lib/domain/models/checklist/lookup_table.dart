@@ -6,18 +6,28 @@ import '../flight_sim/item_condition.dart';
 /// An input column of a [LookupTable]: a name and the value of the aircraft
 /// state it is matched against (`GRAMMAR.md` section 5c).
 class TableInput extends Equatable {
-  /// Creates an input column.
-  const TableInput(this.name, this.source);
+  /// Creates an input column. [label] and [unit] are for the messages that
+  /// name this input (`GRAMMAR.md` L1); both may be empty.
+  const TableInput(this.name, this.source, {this.label = '', this.unit = ''});
 
   /// The column name, lower case.
   final String name;
+
+  /// The name shown to the pilot (`Altitude`), empty when the file gave none.
+  final String label;
+
+  /// The unit of the input (`ft`), empty when the file gave none.
+  final String unit;
+
+  /// What to call the input in a message: [label], or [name] without one.
+  String get title => label.isEmpty ? name : label;
 
   /// The live value this column is matched with: a dataref or an arithmetic
   /// expression of datarefs.
   final ValueExpr source;
 
   @override
-  List<Object?> get props => [name, source];
+  List<Object?> get props => [name, source, label, unit];
 }
 
 /// One `sw_row` line: the input values and the output values.

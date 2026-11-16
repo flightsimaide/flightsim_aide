@@ -18,6 +18,7 @@ import '../../core/widgets/loading_indicator.dart';
 import '../../core/widgets/status_pill.dart';
 import '../cubit/checklist_detail_cubit.dart';
 import '../cubit/checklist_detail_state.dart';
+import 'calculated_lines_band.dart';
 import 'checklist_app_bar_title.dart';
 import 'checklist_item_tile.dart';
 
@@ -570,7 +571,7 @@ class _LoadedBodyState extends State<_LoadedBody> {
             children: [
               // A row of the branch a switch hides is not built at all (D-82).
               for (var i = 0; i < state.rows.length; i++)
-                if (state.rows[i].enabled)
+                if (state.rows[i].enabled) ...[
                   ChecklistItemTile(
                     key: _keys.putIfAbsent(i, GlobalKey.new),
                     item: state.rows[i].item,
@@ -592,6 +593,14 @@ class _LoadedBodyState extends State<_LoadedBody> {
                       cubit.toggleOption(state.rows[i].index);
                     },
                   ),
+                  // The calculated lines of the item (D-83): a band, not an
+                  // item, so it has no tap and is not counted.
+                  if (state.rows[i].item.calculations.isNotEmpty)
+                    CalculatedLinesBand(
+                      lines: state.rows[i].item.calculations,
+                      values: state.rows[i].calculated,
+                    ),
+                ],
               if (state.checklists.length > 1)
                 _ChecklistButtons(
                   state: state,

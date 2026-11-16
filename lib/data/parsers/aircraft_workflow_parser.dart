@@ -287,17 +287,22 @@ class AircraftWorkflowParser {
       final inputs = <TableInput>[];
       for (final text in _splitTopLevel(parts[1], ',')) {
         final equals = text.indexOf('=');
-        final column = equals < 0
-            ? ''
-            : text.substring(0, equals).trim().toLowerCase();
-        if (!_tableName.hasMatch(column) || !used.add(column)) {
+        // `name`, or `name(Label, unit)`.
+        final spec = equals < 0
+            ? null
+            : _inputSpec.firstMatch(text.substring(0, equals).trim());
+        final column = spec?.group(1)?.toLowerCase() ?? '';
+        if (spec == null || !_tableName.hasMatch(column) || !used.add(column)) {
           warnings.add(
             'Line $number: sw_table "$name" has a bad or repeated input '
-            'column "${equals < 0 ? text.trim() : column}"; ignored',
+            'column "${equals < 0 ? text.trim() : text.substring(0, equals).trim()}"; ignored',
           );
           skippingTable = true;
           return;
         }
+        final shown = (spec.group(2) ?? '').split(',');
+        final label = shown.first.trim();
+        final unit = shown.skip(1).join(',').trim();
         final source = _conditions.parseValue(text.substring(equals + 1));
         if (source.failed) {
           warnings.add(
@@ -307,7 +312,7 @@ class AircraftWorkflowParser {
           skippingTable = true;
           return;
         }
-        inputs.add(TableInput(column, source.value!));
+        inputs.add(TableInput(column, source.value!, label: label, unit: unit));
       }
       final outputs = <String>[];
       for (final text in parts[2].split(',')) {
@@ -973,6 +978,9 @@ String? _validateContinue(
   }
   return null;
 }
+
+/// An input column of `sw_table`: a name, and optionally `(Label, unit)`.
+final _inputSpec = RegExp(r'^([A-Za-z0-9_]+)\s*(?:\((.*)\))?$', dotAll: true);
 
 /// A name in `sw_table`: a table or a column.
 final _tableName = RegExp(r'^[a-z0-9_]+$');

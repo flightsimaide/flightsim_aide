@@ -90,7 +90,12 @@ void main() {
   test('says when the input is beyond the table', () async {
     sim.signals.setValue('a/x', 20);
     await tick();
-    expect(power(), [const CalculatedValue(100, outsideTable: true)]);
+    expect(power(), [
+      const CalculatedValue(
+        100,
+        limits: [LimitExceeded(name: 'x', actual: 20, limit: 10, above: true)],
+      ),
+    ]);
   });
 
   test('a change smaller than the step emits nothing new', () async {

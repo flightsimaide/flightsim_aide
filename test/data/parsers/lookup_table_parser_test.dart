@@ -57,6 +57,35 @@ void main() {
       ]);
     });
 
+    test('an input column may carry a label and a unit', () {
+      final doc = _parser.parse(
+        '${_head}sw_table:t|alt(Altitude, ft)=sim/a, w(Weight)=sim/w, '
+        'isa( , C)=sim/i, plain=sim/p|y\n'
+        'sw_row:0,0,0,0|1\nsw_table_end\n',
+      );
+      expect(doc.warnings, isEmpty);
+      final inputs = doc.tables['t']!.inputs;
+      expect(inputs.map((i) => i.name), ['alt', 'w', 'isa', 'plain']);
+      expect(inputs.map((i) => i.label), ['Altitude', 'Weight', '', '']);
+      expect(inputs.map((i) => i.unit), ['ft', '', 'C', '']);
+      expect(inputs.map((i) => i.title), [
+        'Altitude',
+        'Weight',
+        'isa',
+        'plain',
+      ]);
+    });
+
+    test('a comma inside a function call is not split off the label', () {
+      final doc = _parser.parse(
+        '${_head}sw_table:t|d(Delta, x)=round({sim/a}/closer_than(1,2,3))|y\n'
+        'sw_row:0|1\nsw_table_end\n',
+      );
+      expect(doc.warnings, isEmpty);
+      expect(doc.tables['t']!.inputs.single.label, 'Delta');
+      expect(doc.tables['t']!.inputs.single.unit, 'x');
+    });
+
     test('an array element can be a source', () {
       final doc = _parser.parse(
         '${_head}sw_table:t|x=sim/arr[2]|y\nsw_row:1|2\nsw_table_end\n',
@@ -313,6 +342,10 @@ void main() {
       ),
       ('sw_table:t|x={sim/a|y', 'sw_table "t" input "x":'),
       ('sw_table:t||y', 'sw_table "t" has a bad or repeated input column'),
+      (
+        'sw_table:t|x(Altitude=sim/a|y',
+        'sw_table "t" has a bad or repeated input column "x(Altitude"',
+      ),
     ]) {
       test('a bad start line is ignored with its rows: $text', () {
         final doc = _parser.parse(

@@ -422,6 +422,20 @@ Pass line: all eight hold, in the dark and the light theme.
 
 Result: NOT RUN | 2026-11-15 | Needs the owner at the PC with the Thranda PC-12 checklist copied to X-Plane (rewritten to `sw_switch`, `sw_if`, `sw_else` and `sw_end`; the blocks are in the local example file).
 
+## AC-57
+
+**Steps (calculated values).** The Thranda PC-12 with a checklist that has an item followed by `sw_calculate` lines and a `sw_table` for them (the local example file after the max cruise power step), X-Plane running with the plugin.
+1. Open the checklist. Under the item there is a band with the first line large (torque) and the other lines as rows. The total (`n/N`) is the same as without the band, and tapping the band ticks nothing.
+2. Fly level at an altitude and weight inside the chart. Compare each value with the chart in the flight manual for the same ISA deviation, pressure altitude and weight: they agree to the rounding of the line.
+3. Climb and descend: the values change smoothly while you move, and the band does not flicker.
+4. Climb above the highest altitude in the table (or use a weight or temperature beyond it): an amber warning at the top of the band says which input is beyond the limit and which value is used; the values below it are those of the limit.
+5. Stop the plugin or close X-Plane: every line shows `no data`; start it again: the values come back.
+6. Check the band in the dark and the light theme and with a long warning on a narrow window.
+
+Pass line: all six hold.
+
+Result: NOT RUN | 2026-11-16 | Needs the owner at the PC with the PC-12 file that has the table (step 4 of D-83 is still to be done).
+
 ## Plugin runs on the simulator (SIM)
 
 Results for the plugin shell in X-Plane 12.4.1 (`sim.version` 12441), Windows, layout A (`plugins/flightsim_aide/64/win.xpl`), 2026-10-24. An early experiment plugin was also loaded.

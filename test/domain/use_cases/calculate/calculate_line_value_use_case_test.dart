@@ -99,12 +99,49 @@ void main() {
     test('holds the input at the edge and says so', () {
       expect(
         _calc(table, {'sim/x': -5, 'sim/y': 0}),
-        const CalculatedValue(1, outsideTable: true),
+        const CalculatedValue(
+          1,
+          limits: [
+            LimitExceeded(name: 'x', actual: -5, limit: 0, above: false),
+          ],
+        ),
       );
       expect(
         _calc(table, {'sim/x': 5, 'sim/y': 500}),
-        const CalculatedValue(311, outsideTable: true),
+        const CalculatedValue(
+          311,
+          limits: [
+            LimitExceeded(name: 'y', actual: 500, limit: 100, above: true),
+          ],
+        ),
       );
+    });
+
+    test('names every input beyond the table, with its label and unit', () {
+      final t = _table(
+        'sw_table:t|alt(Altitude, ft)=sim/a, isa(ISA deviation, C)=sim/i|y\n'
+            'sw_row:0,0|1\nsw_row:0,30|2\nsw_row:30000,0|3\nsw_row:30000,30|4\n'
+            'sw_table_end\n',
+        't',
+      );
+      final value = _calc(t, {'sim/a': 32000, 'sim/i': -2}, column: 'y');
+      expect(value.outsideTable, isTrue);
+      expect(value.limits, const [
+        LimitExceeded(
+          name: 'Altitude',
+          unit: 'ft',
+          actual: 32000,
+          limit: 30000,
+          above: true,
+        ),
+        LimitExceeded(
+          name: 'ISA deviation',
+          unit: 'C',
+          actual: -2,
+          limit: 0,
+          above: false,
+        ),
+      ]);
     });
 
     test('exactly at the edge is inside', () {
@@ -119,7 +156,10 @@ void main() {
       expect(_calc(t, {'sim/x': 5}, column: 'y'), const CalculatedValue(7));
       expect(
         _calc(t, {'sim/x': 6}, column: 'y'),
-        const CalculatedValue(7, outsideTable: true),
+        const CalculatedValue(
+          7,
+          limits: [LimitExceeded(name: 'x', actual: 6, limit: 5, above: true)],
+        ),
       );
     });
   });

@@ -8,7 +8,7 @@ import '../autocheck/condition_evaluator.dart';
 ///
 /// The value is a multilinear interpolation between the grid points around the
 /// inputs. An input beyond the range of its column is held at the nearest edge
-/// and the result says so ([CalculatedValue.outsideTable]). An input with no
+/// and the result names it ([CalculatedValue.limits]). An input with no
 /// value, or one that is not a finite number, gives no value (N4). Pure.
 class CalculateLineValueUseCase {
   /// Creates the use case.
@@ -29,22 +29,32 @@ class CalculateLineValueUseCase {
     if (column < 0) return const CalculatedValue.unavailable();
     final lows = <int>[];
     final fractions = <double>[];
-    var outside = false;
+    final limits = <LimitExceeded>[];
     for (var i = 0; i < table.inputs.length; i++) {
       final x = _evaluator.evaluateExpr(table.inputs[i].source, values);
       if (x == null || !x.isFinite) return const CalculatedValue.unavailable();
       final axis = table.axes[i];
       final last = axis.length - 1;
+      final input = table.inputs[i];
+      void beyond(double edge) => limits.add(
+        LimitExceeded(
+          name: input.title,
+          unit: input.unit,
+          actual: x,
+          limit: edge,
+          above: x > edge,
+        ),
+      );
       if (axis.length == 1) {
-        outside = outside || x != axis.first;
+        if (x != axis.first) beyond(axis.first);
         lows.add(0);
         fractions.add(0);
       } else if (x <= axis.first) {
-        outside = outside || x < axis.first;
+        if (x < axis.first) beyond(axis.first);
         lows.add(0);
         fractions.add(0);
       } else if (x >= axis.last) {
-        outside = outside || x > axis.last;
+        if (x > axis.last) beyond(axis.last);
         lows.add(last);
         fractions.add(0);
       } else {
@@ -70,7 +80,7 @@ class CalculateLineValueUseCase {
       if (weight == 0) continue;
       sum += weight * table.rowAt(at).outputs[column];
     }
-    return CalculatedValue(_round(sum, line.step), outsideTable: outside);
+    return CalculatedValue(_round(sum, line.step), limits: limits);
   }
 
   /// [value] rounded to a multiple of [step], without floating point noise
