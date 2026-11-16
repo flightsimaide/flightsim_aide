@@ -792,7 +792,7 @@ Tags: **[A]** automated, **[SIM]** needs X-Plane and/or devices, **[retired]** n
 29. **AC-29 [A]** Stream contract: the handshake, subscribe, `unknown_name`, `limit`, `unsupported`, heartbeat, disconnect on close and the client cap give the same answers from the Dart fake, `core_test_server` and (SIM) the real plugin, from the shared cases.
 30. **AC-30 [SIM]** The on-ground value reaches the app through the real plugin on XP12: 1 parked, 0 airborne, and the app's restore rule uses it.
 
-**Live data and auto-check (AC-31 to AC-55)**
+**Live data and auto-check (AC-31 to AC-56)**
 
 31. **AC-31 [A]** Grammar: every fixture checklist in `testing/fixtures/conditions/` parses to the conditions its expected-results file describes, and every malformed fixture produces the documented warning and leaves the item manual.
 32. **AC-32 [A]** Evaluator: for every fixture values file, the set of met items equals the expected-results file, including tolerance forms, arrays, `&&`, `||` and grouping.
@@ -819,6 +819,7 @@ Tags: **[A]** automated, **[SIM]** needs X-Plane and/or devices, **[retired]** n
 53. **AC-53 [A]** Plugin health (no regression): loads on XP12 with a clean `Log.txt`, exits cleanly, coexists with the real XChecklist plugin; macOS and Linux still compile in CI.
 54. **AC-54 [A + SIM]** Switches (D-82, `GRAMMAR.md` section 5b): `sw_switch:Label|id|ON/OFF` shows a switch row with a check circle (counted, skippable; auto-check stops at it until the pilot ticks it; its tick and its switch are separate); the items before `sw_else` are shown while the switch is on and the items after it while it is off, and the items of the other branch are hidden (not shown, not counted, passed over by Check, Skip and auto-check, not part of completion); blocks written `sw_if|id|ON/OFF` in any checklist follow the same switch and show no row; moving the switch swaps the branches, changes the total and clears the marks of the items it hides; Reset keeps the position, a reset of every checklist puts it back to the default; the position is saved with the progress.
 55. **AC-55 [A]** Lookup tables, the parsing part (D-83, `GRAMMAR.md` section 5c): `sw_table`, `sw_row` and `sw_table_end` define a table whose input columns are datarefs or expressions of datarefs and whose rows form a complete grid; the table adds no item and no checklist and is never shown; `sw_calculate:table|column|label|unit|step` attaches to the check item above it (details lines may stand between) and keeps that item's gate and condition; a bad start line, a row with the wrong count, a grid with a missing or doubled point, an unclosed table, an unknown table or column and a `sw_calculate` under no check item each give the documented warning and break nothing else.
+56. **AC-56 [A]** Lookup tables, the value (D-83, `GRAMMAR.md` L7 to L9): a `sw_calculate` line's value is the multilinear interpolation of its table at the current values of the input sources (a dataref or an expression of datarefs); an input beyond the table is held at the edge and flagged; an input with no value, a link that is down or stale, or an unknown column gives no value; the value is rounded to the line's step; the input datarefs are watched exactly while the checklist is open; the detail rows carry the values and emit again only when a rounded value changes.
 
 ### 17. Risks
 

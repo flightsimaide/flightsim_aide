@@ -7,6 +7,7 @@ import '../../../data/repositories/checklist/checklist_repository.dart';
 import '../../../data/repositories/flight_sim/dataref_watch.dart';
 import '../../../data/repositories/flight_sim/flight_sim_repository.dart';
 import '../../../data/repositories/settings/settings_repository.dart';
+import '../../../domain/models/checklist/calculated_value.dart';
 import '../../../domain/models/checklist/checklist.dart';
 import '../../../domain/models/checklist/checklist_document.dart';
 import '../../../domain/models/checklist/checklist_item.dart';
@@ -18,6 +19,7 @@ import '../../../domain/models/settings/user_options.dart';
 import '../../../domain/use_cases/autocheck/condition_evaluator.dart';
 import '../../../domain/use_cases/autocheck/evaluate_item_conditions_use_case.dart';
 import '../../../domain/use_cases/autocheck/signals_for.dart';
+import '../../../domain/use_cases/calculate/calculate_line_value_use_case.dart';
 import 'checklist_detail_state.dart';
 
 /// Shows one checklist of the current document and edits its progress.
@@ -37,7 +39,9 @@ class ChecklistDetailCubit extends Cubit<ChecklistDetailState> {
     this._flightSim,
     this._settings,
     EvaluateItemConditionsUseCase? autoCheck,
+    CalculateLineValueUseCase? calculate,
   }) : _autoCheck = autoCheck ?? EvaluateItemConditionsUseCase(),
+       _calculate = calculate ?? const CalculateLineValueUseCase(),
        super(const ChecklistDetailLoading());
 
   static const _notFound = ChecklistDetailFailure('Checklist not found');
@@ -48,6 +52,7 @@ class ChecklistDetailCubit extends Cubit<ChecklistDetailState> {
   final FlightSimRepository? _flightSim;
   final SettingsRepository? _settings;
   final EvaluateItemConditionsUseCase _autoCheck;
+  final CalculateLineValueUseCase _calculate;
   final _tickWarnings = StreamController<TickWarning>.broadcast();
   final _manualNotices = StreamController<void>.broadcast();
   final _watchSubscriptions = <StreamSubscription<Object?>>[];
@@ -107,19 +112,71 @@ class ChecklistDetailCubit extends Cubit<ChecklistDetailState> {
     final flightSim = _flightSim;
     final checklist = _find();
     if (flightSim == null || checklist == null || _watch != null) return;
-    final watch = flightSim.watch(signalsFor(checklist));
+    final watch = flightSim.watch(
+      signalsFor(checklist, tables: _document?.tables ?? const {}),
+    );
     _watch = watch;
     _watchSubscriptions
       ..add(
         watch.batches.listen((_) {
           _hadBatch = true;
           _evaluate();
+          _refreshCalculations();
         }),
       )
       ..add(watch.unavailableChanges.listen((_) => _emitState()))
-      ..add(flightSim.connectionStatus.listen((_) => _evaluate()));
+      ..add(
+        flightSim.connectionStatus.listen((_) {
+          _evaluate();
+          _refreshCalculations();
+        }),
+      );
     _emitState(); // the watch may already know unavailable names
     _evaluate();
+  }
+
+  /// Shows the new values of the `sw_calculate` lines. The state is emitted
+  /// again only when a (rounded) value changed, as equal states are dropped.
+  void _refreshCalculations() {
+    final checklist = _find();
+    if (checklist != null &&
+        checklist.items.any((i) => i.calculations.isNotEmpty)) {
+      _emitState();
+    }
+  }
+
+  /// The values the `sw_calculate` lines read, or null while there are none
+  /// to read: no sim, no watch or a link that is down or stale.
+  ValueLookup? _liveValues() {
+    final flightSim = _flightSim;
+    final watch = _watch;
+    if (flightSim == null ||
+        watch == null ||
+        flightSim.current is! ConnectionConnected) {
+      return null;
+    }
+    return MapValues({
+      for (final e in watch.current.entries) e.key.wireName: e.value.number,
+    });
+  }
+
+  List<CalculatedValue> _calculatedFor(
+    ChecklistItem item,
+    ChecklistDocument document,
+    ValueLookup? values,
+  ) {
+    if (item.calculations.isEmpty) return const [];
+    return [
+      for (final line in item.calculations)
+        switch (document.tables[line.table]) {
+          final table? when values != null => _calculate.calculate(
+            table,
+            line,
+            values,
+          ),
+          _ => const CalculatedValue.unavailable(),
+        },
+    ];
   }
 
   /// Checks what the current sim values say and decides the continue result.
@@ -372,6 +429,9 @@ class ChecklistDetailCubit extends Cubit<ChecklistDetailState> {
     final counts = progress.countsFor(checklist);
     final unavailable = _watch?.unavailable ?? const <Dataref>{};
     final continueTo = _continueTo;
+    final values = checklist.items.any((i) => i.calculations.isNotEmpty)
+        ? _liveValues()
+        : null;
     emit(
       ChecklistDetailLoaded(
         title: checklist.title,
@@ -397,6 +457,7 @@ class ChecklistDetailCubit extends Cubit<ChecklistDetailState> {
                 final def? => progress.isSwitchOn(def),
                 null => false,
               },
+              calculated: _calculatedFor(checklist.items[i], document, values),
             ),
         ],
         done: counts.done,

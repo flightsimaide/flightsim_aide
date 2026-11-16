@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 
+import '../../../domain/models/checklist/calculated_value.dart';
 import '../../../domain/models/checklist/checklist_colour.dart';
 import '../../../domain/models/checklist/checklist_item.dart';
 import '../../../domain/models/checklist/checklist_progress.dart';
@@ -17,6 +18,7 @@ class ChecklistDetailRow extends Equatable {
     this.skipped = false,
     this.enabled = true,
     this.optionOn = false,
+    this.calculated = const [],
   });
 
   /// Position of [item] in the checklist.
@@ -46,6 +48,10 @@ class ChecklistDetailRow extends Equatable {
   /// For a switch row: whether the switch is on. False for every other row.
   final bool optionOn;
 
+  /// The live value of each of the item's `sw_calculate` lines, in the order
+  /// of `item.calculations` (D-83); empty for an item with none.
+  final List<CalculatedValue> calculated;
+
   @override
   List<Object?> get props => [
     index,
@@ -56,6 +62,7 @@ class ChecklistDetailRow extends Equatable {
     skipped,
     enabled,
     optionOn,
+    calculated,
   ];
 }
 

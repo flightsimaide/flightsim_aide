@@ -246,7 +246,7 @@ class AircraftWorkflowParser {
     }
 
     // A table still open when another line comes, or at the end of the file,
-    // is closed there (G5's rule for tables, T5).
+    // is closed there (G5's rule for tables, L5).
     void closeOpenTable() {
       final table = openTable;
       if (table == null) return;
@@ -741,7 +741,7 @@ class AircraftWorkflowParser {
   );
 
   /// Gives each item its `sw_calculate` lines once every table is known; a
-  /// line that names a missing table or column is dropped with a warning (T6).
+  /// line that names a missing table or column is dropped with a warning (L6).
   void _attachCalculations(
     List<_PendingCalc> pending,
     Map<String, LookupTable> tables,

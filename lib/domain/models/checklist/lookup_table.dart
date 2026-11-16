@@ -77,6 +77,35 @@ class LookupTable extends Equatable {
   /// For each input column, its distinct row values in increasing order.
   final List<List<double>> axes;
 
+  /// The row at grid position [index], one position per input column (the
+  /// position of the value in [axes]). Only for a table whose rows passed
+  /// [problem]; throws [StateError] for a point with no row.
+  TableRow rowAt(List<int> index) {
+    var at = 0;
+    for (var i = 0; i < axes.length; i++) {
+      at = at * axes[i].length + index[i];
+    }
+    return _grid[at] ?? (throw StateError('no row at $index'));
+  }
+
+  late final List<TableRow?> _grid = _buildGrid();
+
+  List<TableRow?> _buildGrid() {
+    var size = 1;
+    for (final axis in axes) {
+      size *= axis.length;
+    }
+    final grid = List<TableRow?>.filled(size, null);
+    for (final row in rows) {
+      var at = 0;
+      for (var i = 0; i < axes.length; i++) {
+        at = at * axes[i].length + axes[i].indexOf(row.inputs[i]);
+      }
+      grid[at] = row;
+    }
+    return grid;
+  }
+
   /// Whether [column] is an output column of this table.
   bool hasOutput(String column) => outputs.contains(column);
 
