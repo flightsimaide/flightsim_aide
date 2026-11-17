@@ -434,7 +434,7 @@ Result: NOT RUN | 2026-11-15 | Needs the owner at the PC with the Thranda PC-12 
 
 Pass line: all six hold.
 
-Result: NOT RUN | 2026-11-16 | Needs the owner at the PC with the PC-12 file that has the table (step 4 of D-83 is still to be done).
+Result: DEFERRED (not run) | 2026-11-16 | The owner tried the PC-12 file with the table and reported that it works, but the six steps were not gone through: the chart comparison at altitude (step 2), the warning above the table (step 4) and the loss of the plugin (step 5) are unchecked. Deferred by the owner.
 
 ## Plugin runs on the simulator (SIM)
 
