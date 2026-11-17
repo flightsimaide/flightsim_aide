@@ -106,3 +106,13 @@ class InvalidManualIp extends AppException {
   @override
   String get message => '"$input" is not a valid IP address';
 }
+
+/// Speech recognition is not available: no microphone, access denied, or the
+/// system has no recogniser (the voice then only speaks).
+class SpeechUnavailable extends AppException {
+  /// Creates the failure.
+  SpeechUnavailable();
+
+  @override
+  String get message => 'Speech recognition is not available';
+}

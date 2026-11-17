@@ -37,6 +37,7 @@ void main() {
     expect(InvalidManualIp('abc').message, contains('abc'));
     expect(PluginUnreachable().toString(), contains('PluginUnreachable'));
     expect(NoChecklistForAircraft().message, isNotEmpty);
+    expect(SpeechUnavailable().message, isNotEmpty);
   });
 
   test('AppException switch is exhaustive without default', () {
@@ -50,6 +51,7 @@ void main() {
       NoChecklistForAircraft() => 'noChecklist',
       ProtocolError() => 'protocol',
       InvalidManualIp() => 'ip',
+      SpeechUnavailable() => 'speech',
     };
     expect(name(PluginUnreachable()), 'unreachable');
   });
