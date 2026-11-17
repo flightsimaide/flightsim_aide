@@ -40,6 +40,15 @@ class AircraftWorkflowParser {
     var openKeyword = '';
     var openLine = 0;
     var ignoredBlocks = 0;
+    // The open challenge block, if any (section 5d): its line, and the serial
+    // of the switch block it opened inside (0 for none). [challengeCut] is set
+    // when a switch boundary closed it, so the `sw_challenge: OFF` that follows
+    // is taken without a second warning.
+    var challengeOpen = false;
+    var challengeLine = 0;
+    var challengeSerial = 0;
+    var challengeCut = false;
+    var blockSerial = 0;
     final switchDefs = <String, SwitchDef>{};
     final ifUses = <({int line, String id})>[];
 
@@ -78,6 +87,14 @@ class AircraftWorkflowParser {
     // A block ends at `sw_end`; one still open when its checklist or the file
     // ends is closed there, with a warning (G5).
     void closeOpenBlock() {
+      if (challengeOpen) {
+        warnings.add(
+          'Line $challengeLine: sw_challenge: ON has no OFF; '
+          'closed at the end of the checklist',
+        );
+        challengeOpen = false;
+      }
+      challengeCut = false;
       if (openSwitch != null) {
         warnings.add(
           'Line $openLine: $openKeyword has no sw_end; '
@@ -112,6 +129,7 @@ class AircraftWorkflowParser {
       SwitchDef switchDef,
       bool firstWhen,
     ) {
+      blockSerial++;
       openSwitch = switchDef;
       openFirstWhen = firstWhen;
       openInElse = false;
@@ -181,8 +199,63 @@ class AircraftWorkflowParser {
         defaultOn: readState(number, keyword, stateWord, false),
       );
       switchDefs[key] = def;
-      items.add(_withSwitch(row, def));
+      items.add(
+        challengeOpen
+            ? _asChallenge(_withSwitch(row, def))
+            : _withSwitch(row, def),
+      );
       openBlock(number, keyword, def, true);
+    }
+
+    // A challenge block that opened inside the switch block now ending, or
+    // changing branch, stops there (C5).
+    void cutChallengeAtBoundary(int number) {
+      if (challengeOpen && challengeSerial == blockSerial) {
+        warnings.add(
+          'Line $number: sw_challenge crosses a switch block; '
+          'closed at the block boundary',
+        );
+        challengeOpen = false;
+        challengeCut = true;
+      }
+    }
+
+    // `sw_challenge: ON` and `sw_challenge: OFF`.
+    void challengeLineFor(int number, String value) {
+      if (currentItems == null) {
+        warnings.add('Line $number: item before any checklist');
+        return;
+      }
+      switch (value.trim().toLowerCase()) {
+        case 'on':
+          if (challengeOpen) {
+            warnings.add(
+              'Line $number: sw_challenge: ON inside a challenge block; '
+              'ignored',
+            );
+          } else {
+            challengeOpen = true;
+            challengeCut = false;
+            challengeLine = number;
+            challengeSerial = openSwitch == null ? 0 : blockSerial;
+          }
+        case 'off':
+          if (challengeOpen) {
+            if (openSwitch != null && challengeSerial != blockSerial) {
+              warnings.add(
+                'Line $number: sw_challenge crosses a switch block; '
+                'closed at the block boundary',
+              );
+            }
+            challengeOpen = false;
+          } else if (challengeCut) {
+            challengeCut = false;
+          } else {
+            warnings.add('Line $number: sw_challenge: OFF without ON');
+          }
+        default:
+          warnings.add('Line $number: sw_challenge needs ON or OFF; ignored');
+      }
     }
 
     void elseBlock(int number) {
@@ -195,6 +268,7 @@ class AircraftWorkflowParser {
       } else if (openInElse) {
         warnings.add('Line $number: second sw_else in a block; ignored');
       } else {
+        cutChallengeAtBoundary(number);
         openInElse = true;
       }
     }
@@ -207,6 +281,7 @@ class AircraftWorkflowParser {
       } else if (openSwitch == null) {
         warnings.add('Line $number: sw_end without sw_if or sw_switch');
       } else {
+        cutChallengeAtBoundary(number);
         openSwitch = null;
       }
     }
@@ -469,6 +544,8 @@ class AircraftWorkflowParser {
           addContinue(index, '');
         } else if (bare == 'sw_show') {
           // sw_show is ignored like a comment (D-70).
+        } else if (bare == 'sw_challenge') {
+          challengeLineFor(line.number, '');
         } else if (bare == 'sw_end') {
           endBlock(line.number);
         } else if (bare == 'sw_else') {
@@ -484,6 +561,8 @@ class AircraftWorkflowParser {
         // comment, with no warning and no effect (K6, D-70).
       } else if (kv.keyword == 'sw_continue') {
         addContinue(index, kv.value);
+      } else if (kv.keyword == 'sw_challenge') {
+        challengeLineFor(line.number, kv.value);
       } else if (kv.keyword == 'sw_switch') {
         startBlock(line.number, 'sw_switch', kv.value);
       } else if (kv.keyword == 'sw_end') {
@@ -591,6 +670,7 @@ class AircraftWorkflowParser {
             warnings.add('Line ${line.number}: empty note');
           } else {
             final gate = currentGate();
+            if (challengeOpen) item = _asChallenge(item);
             currentItems.add(gate == null ? item : _withGate(item, gate));
           }
         }
@@ -691,7 +771,22 @@ class AircraftWorkflowParser {
         item.gate,
         item.switchDef,
         item.calculations,
+        item.challenge,
       );
+
+  ChecklistItem _asChallenge(ChecklistItem item) => ChecklistItem(
+    item.type,
+    item.label,
+    item.result,
+    item.labelRuns,
+    item.resultRuns,
+    item.condition,
+    item.justify,
+    item.gate,
+    item.switchDef,
+    item.calculations,
+    true,
+  );
 
   ChecklistItem _withGate(ChecklistItem item, SwitchGate gate) => ChecklistItem(
     item.type,
@@ -704,6 +799,7 @@ class AircraftWorkflowParser {
     gate,
     item.switchDef,
     item.calculations,
+    item.challenge,
   );
 
   ChecklistItem _withoutGate(ChecklistItem item) => ChecklistItem(
@@ -717,6 +813,7 @@ class AircraftWorkflowParser {
     null,
     item.switchDef,
     item.calculations,
+    item.challenge,
   );
 
   ChecklistItem _withSwitch(ChecklistItem item, SwitchDef def) => ChecklistItem(
@@ -730,6 +827,7 @@ class AircraftWorkflowParser {
     item.gate,
     def,
     item.calculations,
+    item.challenge,
   );
 
   ChecklistItem _withCalculations(
@@ -746,6 +844,7 @@ class AircraftWorkflowParser {
     item.gate,
     item.switchDef,
     calculations,
+    item.challenge,
   );
 
   /// Gives each item its `sw_calculate` lines once every table is known; a
@@ -920,6 +1019,11 @@ bool _isContinueLine(String text) {
   return splitKeywordValue(text)?.keyword == 'sw_continue';
 }
 
+bool _isChallengeLine(String text) {
+  if (text.toLowerCase() == 'sw_challenge') return true;
+  return splitKeywordValue(text)?.keyword == 'sw_challenge';
+}
+
 bool _isShowLine(String text) {
   if (text.toLowerCase() == 'sw_show') return true;
   return splitKeywordValue(text)?.keyword == 'sw_show';
@@ -928,7 +1032,9 @@ bool _isShowLine(String text) {
 ({_Follow kind, int? headerLine}) _lookAhead(List<NumberedLine> lines, int at) {
   var next = at + 1;
   while (next < lines.length &&
-      (_isContinueLine(lines[next].text) || _isShowLine(lines[next].text))) {
+      (_isContinueLine(lines[next].text) ||
+          _isShowLine(lines[next].text) ||
+          _isChallengeLine(lines[next].text))) {
     next++;
   }
   if (next >= lines.length) return (kind: _Follow.end, headerLine: null);

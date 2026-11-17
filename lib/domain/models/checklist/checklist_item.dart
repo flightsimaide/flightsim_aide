@@ -59,6 +59,7 @@ class ChecklistItem extends Equatable {
     this.gate,
     this.switchDef,
     this.calculations = const [],
+    this.challenge = false,
   ]);
 
   /// Whether this is a check item or a note.
@@ -101,6 +102,11 @@ class ChecklistItem extends Equatable {
   /// items carry them (`GRAMMAR.md` section 5c).
   final List<CalculateLine> calculations;
 
+  /// Whether the row lies between `sw_challenge: ON` and `sw_challenge: OFF`
+  /// and is read as a challenge and a response (`GRAMMAR.md` section 5d); a
+  /// flow row otherwise. Set by the parser; not part of the file syntax.
+  final bool challenge;
+
   /// Whether the pilot can tick or skip this line and it is counted: a check
   /// item or a switch row.
   bool get isCheckable =>
@@ -129,5 +135,6 @@ class ChecklistItem extends Equatable {
     gate,
     switchDef,
     calculations,
+    challenge,
   ];
 }
