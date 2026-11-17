@@ -98,3 +98,19 @@ dart run tools/protocol_contract.dart http://127.0.0.1:18086 --live
 With the test aircraft loaded the last line should read `54 passed, 0 failed` (the count grows with new cases). With any other aircraft loaded (stock, or an add-on such as the Thranda PC-12) the 10 cases that compare the aircraft and the checklist text with the fixtures print `SKIP` and are counted apart: `44 passed, 0 failed, 10 skipped`. That run is still a valid check of the plugin, only a smaller one. For a full check pass `--require-fixture-aircraft`, which fails those cases instead of skipping them. Before the stream cases it sets a few datarefs through the web API (`tools/live_setup.dart`: the barometer setting, `ignition_key[0]` and `throttle_ratio[0..3]`) and puts the old values back afterwards. `--no-setup` skips that, `--sim-api <url>` points it at another address. For the no-checklist cases load `C172 No Checklist` and add `--scenario no_checklist`.
 
 The step-by-step manual tests (phone and tablet runs, edits to a checklist while the sim runs, add-on aircraft such as the Thranda PC-12) are in `Documentation/Testing/MANUAL_TEST.md`, each with the setup it needs. Anything that needs an add-on aircraft or a device you do not own is optional: record it as "not run".
+
+## Voice
+
+The app can read checklist items aloud and listen for the answers (decision D-84, `Documentation/Reference/GRAMMAR.md` section 5d). It uses two packages, `flutter_tts` for speech out and `speech_to_text` for speech in, both only in `lib/data/services/voice/`. Both switches (Settings, Voice) are off by default.
+
+**What the tests need.** Nothing. The Dart tests use fakes (`testing/fakes/services/fake_speech_output_service.dart`, `fake_speech_input_service.dart`, `testing/fakes/repositories/fake_voice_repository.dart`), so `tools/verify.sh` needs no microphone, speaker or speech engine. The real speech and microphone are only tried by hand: `Documentation/Testing/MANUAL_TEST.md`, `AC-65`.
+
+**Platforms.**
+- **Android is the main target.** The manifest asks for `RECORD_AUDIO` and lists the system's speech recogniser and speech engine under `queries`. The first time the voice is on, the system asks for the microphone. Recognition on a phone normally goes through the Google speech service and needs a network unless an offline language pack is installed. No Android build or run has been done for the voice yet.
+- **Windows is best effort.** It is kept because it is available and helps automated testing, not because a flight PC is the expected user. A Windows problem is written down here and not worked around. The packages ship Windows implementations (`speech_to_text_windows`, `flutter_tts`) and `flutter build windows --debug` builds with them (tried 2026-11-17: `flutter_tts_plugin.dll` and `speech_to_text_windows_plugin.dll` are in the output); what they do at run time has not been tried. Things to check on the first run: a text-to-speech voice is installed (Settings, Time & language, Speech), the microphone is allowed for desktop apps (Settings, Privacy & security, Microphone) and online speech recognition is turned on, because the Windows recogniser may need it.
+- iOS and macOS are deferred; the permission strings for the microphone and speech recognition are not set.
+
+**Known gaps.** Units and symbols in a result (`°C`, `psi`) are read as the engine reads them. All-capital words of four letters or more are lower-cased so they are read as words. What the voice does when the app goes to the background is not decided. The microphone is switched off while the voice speaks so it does not hear itself; a headset is still better than a speaker in a cockpit.
+
+**Findings so far.** (Add what the first real run shows here: the voice the engine picked, whether the microphone worked, how well the recogniser heard `check`, `set`, `on`, `off`, `closed`, `skip` and `pause checklist`.)
+
