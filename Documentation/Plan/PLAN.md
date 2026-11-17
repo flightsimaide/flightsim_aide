@@ -63,7 +63,7 @@ Part C, live data and auto-check
 **Non-goals**
 - **No dataref writes.** The `set` operation stays reserved and answered `unsupported` (D-40 is not extended). The `SET` that appears in many item lines (`sw_item:Parking brake|SET:sim/flightmodel/controls/parkbrake:1`) is a result word shown to the pilot; the `dataref:value` part is the condition for the check, as in the real plugin. Nothing is ever written to the sim. (If writes are wanted later, they need their own plugin-side safety design.)
 - **No auto-uncheck, ever** (D-50). A condition that goes false again does not change a mark.
-- **No voice**, no text-to-speech, no speech recognition. `@` stays stripped and ignored.
+- **Voice is limited** (D-84): it reads items aloud and listens for a short fixed set of spoken answers. It never writes a dataref and ticks only what the pilot did or said; there is no free speech and no assistant. `@` stays stripped and ignored.
 - No UI for choosing user options is specified here. The mechanism and the default exist (section 14).
 - No evaluation of checklists that are not open (section 13.2), and no offline evaluation: without live values nothing is auto-checked.
 - No Web API use (X-Plane 12.1.1 and later only), no X-Plane 11, and no fallback to X-Plane's native `RREF`/`DREF` (D-36, D-46).
@@ -822,6 +822,17 @@ Tags: **[A]** automated, **[SIM]** needs X-Plane and/or devices, **[retired]** n
 56. **AC-56 [A]** Lookup tables, the value (D-83, `GRAMMAR.md` L7 to L9): a `sw_calculate` line's value is the multilinear interpolation of its table at the current values of the input sources (a dataref or an expression of datarefs); an input beyond the table is held at the edge and flagged; an input with no value, a link that is down or stale, or an unknown column gives no value; the value is rounded to the line's step; the input datarefs are watched exactly while the checklist is open; the detail rows carry the values and emit again only when a rounded value changes.
 57. **AC-57 [A + SIM]** Lookup tables, the display (D-83, `GRAMMAR.md` L10): the `sw_calculate` lines of an item are shown in a band under it that is not an item (the total and the completion do not change, a tap on it ticks nothing); a warning on an amber pill with the caution icon comes first for each input beyond the table, naming the input with its label and unit, the limit and the value used; the first line is large and the others are rows; a line with no value shows `no data`; and in the sim the values follow the aircraft (altitude, outside temperature, weight).
 
+**Voice (D-84), planned.** Not numbered yet, because `tools/check_acceptance_tags.sh` fails an `[A]` criterion with no test. Each gets its number (from AC-58) and its test in the step that builds it.
+- Block parsing (`GRAMMAR.md` section 5d): `sw_challenge: ON` and `sw_challenge: OFF` mark challenge rows, with the warnings C1 to C6 `[A]`.
+- The prompt: challenge rows with one or two auto items in a row say the challenge, a pause and the response; more than two say how many are verified and then the first unticked item; headings, notes, details, calculated bands and hidden items are not spoken `[A]`.
+- Flow rows: voice reads the next unticked item and waits for a dataref change (auto on), a tick or a spoken answer `[A]`.
+- Auto off: a true dataref does not advance the list `[A]`.
+- Disagreement: a tick or an answer that disagrees with the dataref says "Double check <item name>" `[A]`.
+- Spoken answers: `check`, `set`, `on`, `off`, `closed` and the item's result; `skip` skips; a close match asks "Did you mean ...?" and takes yes or no `[A]`.
+- Pause: `pause checklist` and the Pause button stop the voice and flash PAUSED (icon and text); `resume checklist` and `continue checklist` carry on `[A + SIM]`.
+- Settings: Voice for flows and Voice for challenges, both off by default and kept `[A]`.
+- The real speech and microphone on Android (Windows best effort, problems noted) `[SIM]`.
+
 ### 17. Risks
 
 | # | Risk | Likelihood / impact | Mitigation |
@@ -862,7 +873,7 @@ Tags: **[A]** automated, **[SIM]** needs X-Plane and/or devices, **[retired]** n
 | R-34 | Retired: deleting the temporary code broke nothing the seam protects | Done | Done in the migration; the gate keeps a `temporary/` folder from returning |
 | R-35 | Retired: retiring the file-based acceptance tests lost coverage | Done | The tests that read fixtures directly stay; the criteria were re-expressed for the network source (`Documentation/Architecture/DECISIONS.md`) |
 | R-36 | Progress format 2 migration corrupts or loses saved marks | Low / high | Format 1 loads with empty sets; corrupt or unknown files are a miss; storage tests with real v1 files |
-| R-37 | Scope creep into writes, voice or the options UI | Medium / medium | Section 1 non-goals; review against them |
+| R-37 | Scope creep into writes, voice beyond D-84 or the options UI | Medium / medium | Section 1 non-goals; review against them |
 | R-38 | The cubit-orchestrated use case makes the detail cubit large | Medium / low | The rule stays in the use case and the policy in domain; the cubit only wires; split a coordinator inside `ui/checklist_detail/cubit/` if needed |
 
 ### 18. Open items and questions

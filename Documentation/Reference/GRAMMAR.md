@@ -7,7 +7,7 @@ Frozen from `PLAN.md` section 2, adjusted by a survey of real checklist files (n
 - **Confirmed** means seen in real files (a survey of 27 files, not published) or observed in the real checker. The survey section is named.
 - **Assumed** means not seen in the corpus. It is either a design choice or a safety net and is kept on purpose.
 
-The viewer shows labels, results and notes. Dataref text is kept on the item line and parsed into a condition (section 8). The parser keeps colours (markers and the `sw_define_colour` palette) and `sw_continue` links in the model; the UI shows them. Voice is out of scope, and `sw_show` is ignored (D-70).
+The viewer shows labels, results and notes. Dataref text is kept on the item line and parsed into a condition (section 8). The parser keeps colours (markers and the `sw_define_colour` palette) and `sw_continue` links in the model; the UI shows them. The voice rows (`sw_challenge`, section 5d) mark which rows are read as a challenge and a response (D-84), and `sw_show` is ignored (D-70).
 
 ## Example
 
@@ -41,7 +41,7 @@ The keyword is the text before the first `:`, trimmed.
 | # | Rule | Status | Evidence |
 |---|---|---|---|
 | K1 | Keywords are matched ignoring case (`SW_ITEM` works). | **Assumed** | 0.6: the real plugin is case sensitive and rejects `SW_ITEM`; no upper-case keyword appears in any real file. Tolerance is kept deliberately |
-| K2 | Parsed: `sw_checklist`, `sw_item`, `sw_item_c`, `sw_itemvoid`, `sw_itemvoid_c`, `sw_iteminfo`, `sw_remark`, and the app's own extensions `sw_item_heading`, `sw_item_heading_c`, `sw_item_details`, `sw_item_details_c` (section 5a), and `sw_switch`, `sw_if`, `sw_else`, `sw_end` (section 5b), and `sw_table`, `sw_row`, `sw_table_end`, `sw_calculate` (section 5c). | **Confirmed** | 0.5 census |
+| K2 | Parsed: `sw_checklist`, `sw_item`, `sw_item_c`, `sw_itemvoid`, `sw_itemvoid_c`, `sw_iteminfo`, `sw_remark`, and the app's own extensions `sw_item_heading`, `sw_item_heading_c`, `sw_item_details`, `sw_item_details_c` (section 5a), and `sw_switch`, `sw_if`, `sw_else`, `sw_end` (section 5b), and `sw_table`, `sw_row`, `sw_table_end`, `sw_calculate` (section 5c), and `sw_challenge` (section 5d). | **Confirmed** | 0.5 census |
 | K3 | Valid but ignored with **no warning**: `sw_rcolsize` only. | **Confirmed** | 0.5: 81 lines |
 | K5 | Parsed into the model: `sw_define_colour` (section 6), `sw_continue` (section 7). | **Confirmed** | 0.5: 201 and 395 lines |
 | K6 | `sw_show` is **ignored like a comment**: the line is skipped with no warning and no effect (D-70). It does not end a checklist and does not affect a bare `sw_continue` look-ahead. | **Confirmed** (keyword); the decision is the user's | 0.5: 50 lines, dataref conditions |
@@ -149,6 +149,29 @@ sw_table_end
 | L8 | An input beyond the first or last row value of its column is **held at that edge** (the value is the edge's, not an extrapolation) and the result names each such input with its value now, the edge used and the side (`LimitExceeded`). A column with a single row value matches only that value; any other input is outside. The display says it as `Altitude 32,000 ft is above the 30,000 ft limit: using 30,000 ft.` (the label and unit of L1, or the column name). | **Design** | same; `test/ui/checklist_detail/calculated_lines_band_test.dart` |
 | L9 | An input with no value (the dataref is unavailable, the link is down or stale, or the number is not finite) gives **no value** (N4); so does an expression that divides to infinity. The result is the number rounded to a multiple of the line's `step`, with no floating point noise (`36.9`, not `36.900000000000006`). A calculated value never ticks an item and never changes the progress. | **Design** | same |
 | L10 | The `sw_calculate` lines of an item are shown in one **band** under it, in the colour of the details lines. It is not an item: not counted, no check circle, no tap, no skip, and not in the saved progress. A warning for each input beyond the table (L8) comes first, on an amber pill with the caution icon; then the **first** line large (the number, then its unit and label small); then each other line as a row, label on the left and number and unit on the right. A line with no value shows `no data` (the large line shows an em dash and `<label> · no data`). Numbers have thousands separators and as many decimals as the line's step has. With no sim connected every line has no value. | **Design** | D-83; `test/ui/checklist_detail/calculated_lines_band_test.dart` |
+
+## 5d. App extension: challenge-response rows
+
+`sw_challenge` is not in XChecklist. It marks rows to be read as a **challenge and a response** by the voice (D-84): the app reads the item, the pilot answers, and a dataref (if the item has one) verifies it. Rows outside a block are **flow** rows: the voice reads the next item and waits for the pilot to do it. The text of the rows is the same in both kinds. A file that uses it is for this app only; the real plugin is expected to warn about the unknown keyword and show every item (not run).
+
+```
+sw_checklist:Before start:Before start
+sw_item:Parking brake|SET            a flow row
+sw_challenge: ON
+sw_item:Beacon|ON                    challenge rows
+sw_item:Fuel quantity|CHECK
+sw_challenge: OFF
+sw_item:Flaps|SET                    a flow row again
+```
+
+| # | Rule | Status | Evidence |
+|---|---|---|---|
+| C1 | `sw_challenge: ON` opens a block and `sw_challenge: OFF` closes it; the value is `ON` or `OFF` in any case and the line makes no item. Every row between them (check items, switch rows, notes, headings and details lines) is a challenge row; the model carries this as a flag on the row, which is not part of the file syntax. Keywords ignore case (K1). | **Design** | D-84 |
+| C2 | A block lies inside one checklist; there may be any number in a checklist. A block still open at the next `sw_checklist` or at the end of the file is closed there with `Line N: sw_challenge: ON has no OFF; closed at the end of the checklist` (N is the line of the start). | **Design** | same |
+| C3 | `sw_challenge: OFF` with no open block warns `Line N: sw_challenge: OFF without ON`; `sw_challenge: ON` inside an open block warns `Line N: sw_challenge: ON inside a challenge block; ignored`. Each does nothing else. | **Design** | same |
+| C4 | A value other than `ON` or `OFF`, or none, warns `Line N: sw_challenge needs ON or OFF; ignored`. | **Design** | same |
+| C5 | A challenge block and a switch block (section 5b) may nest, in either order, if the inner one ends before the outer one. A challenge block that opens inside a switch branch is closed at that branch's `sw_else` or `sw_end`, and a switch block that opens inside a challenge block ends before it, with `Line N: sw_challenge crosses a switch block; closed at the block boundary` when they cross. | **Design** | same |
+| C6 | For a `sw_continue` look-ahead (F3) the line is skipped like a comment: it is not an item. | **Design** | same |
 
 ## 6. Colour markers
 

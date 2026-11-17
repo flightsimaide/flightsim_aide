@@ -142,13 +142,15 @@ lib/
 │   │   │   ├── dataref_value.dart
 │   │   │   ├── item_condition.dart
 │   │   │   └── connection_status.dart
-│   │   └── voice/                          # [placeholder]
-│   │       └── voice_settings.dart
+│   │   └── voice/                          # voice settings and prompts (D-84)
+│   │       ├── voice_settings.dart
+│   │       └── voice_prompt.dart
 │   └── use_cases/
 │       ├── autocheck/                      # placeholder
 │       │   └── evaluate_item_conditions_use_case.dart
-│       └── voice/                          # [placeholder]
-│           └── announce_next_item_use_case.dart
+│       └── voice/                          # what to say and what to wait for (D-84)
+│           ├── build_voice_prompt_use_case.dart
+│           └── match_spoken_response_use_case.dart
 │
 ├── data/
 │   ├── repositories/
@@ -161,7 +163,7 @@ lib/
 │   │   │   ├── flight_sim_repository.dart                      # abstract: connection + dataref stream + set
 │   │   │   ├── flight_sim_repository_remote.dart               # the real connection
 │   │   │   └── flight_sim_repository_local.dart                # scriptable fake for tests
-│   │   ├── voice/                          # [placeholder]
+│   │   ├── voice/                          # speak, listen, pause (D-84)
 │   │   │   ├── voice_repository.dart
 │   │   │   └── voice_repository_impl.dart
 │   │   └── settings/                       # (manual sim IP, preferences)
@@ -183,8 +185,9 @@ lib/
 │       │   ├── companion_plugin_service.dart               # HTTP: GET /v1/aircraft
 │       │   └── model/
 │       │       └── raw_dataref_message.dart
-│       ├── voice/                          # [placeholder]
-│       │   └── speech_service.dart
+│       ├── voice/                          # the TTS and speech-to-text packages live only here (D-84)
+│       │   ├── speech_output_service.dart
+│       │   └── speech_input_service.dart
 │       ├── local/                          # shared_preferences and similar; checklist cache
 │       │   ├── preferences_service.dart
 │       │   ├── checklist_cache_service.dart                # raw checklist text + file mtime/size, keyed by aircraft path
@@ -500,7 +503,7 @@ Nothing in this flow requires new top-level folders. The use case goes in `domai
 | Fakes for tests | `testing/fakes/` |
 
 **Guidelines that prevent relayout**
-- Placeholder folders (voice, localization) exist with a one-line `README.md` that starts `Status: placeholder`; `tools/check_structure.sh` checks them.
+- Placeholder folders (localization) exist with a one-line `README.md` that starts `Status: placeholder`; `tools/check_structure.sh` checks them.
 - Add fields and files to existing folders. Do not create new top-level folders under `lib/` without updating this document.
 - If a feature folder grows large, add sub-folders inside `widgets/`. Do not restructure `cubit/`.
 
@@ -544,8 +547,10 @@ Nothing in this flow requires new top-level folders. The use case goes in `domai
 - `shared_preferences` for settings; `path_provider` for the checklist cache and saved progress files (see section 16)
 - Possibly a small plugin or platform channel for the Android multicast lock
 
-**Not chosen yet**
-- Voice: a text-to-speech package (and speech recognition if voice input is wanted)
+**Voice (D-84)**
+- `flutter_tts` for speech out and `speech_to_text` for speech in, used only in `data/services/voice/` and wired from `config/`; a fake of each goes in `testing/fakes/`. `domain/` and the cubits never name them.
+- Android is the main target. Windows is best effort: a problem there is noted in `BUILDING.md`, not worked around. iOS and macOS stay deferred.
+- A short spike on the PC settles what `speech_to_text` does on Windows and offline before any voice code is written.
 
 ---
 
