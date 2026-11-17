@@ -53,6 +53,12 @@ void main() {
       expect(useCase.match('pause'), isNot(isA<SpokenPause>()));
     });
 
+    test('ready, okay and roger are a yes too', () {
+      for (final word in ['ready', 'Okay', 'ok', 'roger', 'go ahead']) {
+        expect(useCase.match(word), const SpokenYes(), reason: word);
+      }
+    });
+
     test('yes and no answer a question', () {
       expect(useCase.match('yes'), const SpokenYes());
       expect(useCase.match('Yeah'), const SpokenYes());

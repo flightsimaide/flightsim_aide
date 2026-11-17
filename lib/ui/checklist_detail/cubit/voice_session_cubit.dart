@@ -57,6 +57,11 @@ class VoiceSessionCubit extends Cubit<VoiceSessionState> {
   /// What a "yes" would do: the meaning of the last close match.
   SpokenInput? _pending;
 
+  /// True from opening a challenge checklist in auto mode until the pilot says
+  /// yes (or ticks something by hand): the voice asked "Ready for ...?" and
+  /// reads nothing else meanwhile.
+  bool _awaitingReady = false;
+
   /// Starts following the progress, the settings and the microphone.
   void load() {
     _before = _progressRepository.current;
@@ -81,7 +86,11 @@ class VoiceSessionCubit extends Cubit<VoiceSessionState> {
   void resume() {
     if (!state.paused) return;
     emit(state.copyWith(paused: false));
-    _speak(_afterStep());
+    if (_awaitingReady) {
+      _askReady();
+    } else {
+      _speak(_afterStep());
+    }
   }
 
   Checklist? _find() {
@@ -92,7 +101,10 @@ class VoiceSessionCubit extends Cubit<VoiceSessionState> {
     return null;
   }
 
-  VoicePrompt _afterStep({List<int> auto = const []}) {
+  VoicePrompt _afterStep({
+    List<int> auto = const [],
+    List<int> ticked = const [],
+  }) {
     final checklist = _find();
     if (checklist == null) return VoicePrompt.silent;
     return _prompts.afterStep(
@@ -100,7 +112,29 @@ class VoiceSessionCubit extends Cubit<VoiceSessionState> {
       progress: _progressRepository.current,
       settings: _voiceSettings,
       autoChecked: auto,
+      ticked: ticked,
     );
+  }
+
+  /// Whether auto mode is on for this checklist, as the detail cubit sees it.
+  bool get _auto =>
+      !_progressRepository.isManual(_checklistName) &&
+      _settings.options.autoMode;
+
+  /// Asks "Ready for ...?" when a challenge checklist opens in auto mode.
+  bool _shouldAskReady() {
+    final checklist = _find();
+    return _voiceSettings.challenges &&
+        _auto &&
+        checklist != null &&
+        _prompts.startsWithChallenge(checklist, _progressRepository.current);
+  }
+
+  void _askReady() {
+    final checklist = _find();
+    if (checklist == null) return;
+    _awaitingReady = true;
+    _speak(_prompts.ready(checklist));
   }
 
   Future<void> _activate() async {
@@ -108,11 +142,17 @@ class VoiceSessionCubit extends Cubit<VoiceSessionState> {
     final result = await _voice.startListening();
     if (isClosed) return;
     emit(state.copyWith(listening: result.isOk, micUnavailable: !result.isOk));
-    if (!state.paused) _speak(_afterStep());
+    if (state.paused) return;
+    if (_shouldAskReady()) {
+      _askReady();
+    } else {
+      _speak(_afterStep());
+    }
   }
 
   void _deactivate() {
     _pending = null;
+    _awaitingReady = false;
     _prompt = VoicePrompt.silent;
     unawaited(_voice.stopSpeaking());
     unawaited(_voice.stopListening());
@@ -133,7 +173,7 @@ class VoiceSessionCubit extends Cubit<VoiceSessionState> {
       _deactivate();
     } else if (!was.any) {
       unawaited(_activate());
-    } else if (!state.paused) {
+    } else if (!state.paused && !_awaitingReady) {
       _speak(_afterStep());
     }
   }
@@ -161,7 +201,22 @@ class VoiceSessionCubit extends Cubit<VoiceSessionState> {
       for (final i in newly)
         if (now.isDisagreed(name, i)) i,
     ];
-    final next = _afterStep(auto: auto);
+    if (_awaitingReady) {
+      // Waiting for "yes": only a tick or skip by hand starts the checklist;
+      // auto-check ticking items does not.
+      final byHand =
+          newly.any((i) => !now.isAutoChecked(name, i)) ||
+          !_same(skips(now), skips(before));
+      if (!byHand) return;
+      _awaitingReady = false;
+    }
+    final next = _afterStep(
+      auto: auto,
+      ticked: [
+        for (final i in newly)
+          if (!disagreed.contains(i)) i,
+      ]..sort(),
+    );
     final checklist = _find();
     if (disagreed.isNotEmpty && checklist != null) {
       final warning = _prompts.doubleCheck(checklist.items[disagreed.first]);
@@ -189,6 +244,17 @@ class VoiceSessionCubit extends Cubit<VoiceSessionState> {
         ? checklist.items[waiting].result
         : '';
     final input = _matcher.match(heard, itemResult: result);
+    if (_awaitingReady && !state.paused) {
+      switch (input) {
+        case SpokenYes():
+          _awaitingReady = false;
+          _speak(_afterStep());
+        case SpokenPause():
+          pause();
+        default:
+      }
+      return;
+    }
     if (state.paused) {
       switch (input) {
         case SpokenResume():

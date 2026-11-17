@@ -13,8 +13,12 @@ import '../../models/voice/voice_settings.dart';
 /// - for the challenge rows auto-check just ticked: with one or two, says each
 ///   one as a challenge, a pause, then the response; with more than two, says
 ///   how many are verified;
-/// - reads the next unticked row: a challenge row as its challenge only (the
-///   pilot answers), a flow row as its label and result (the pilot does it);
+/// - for the flow rows ticked in the step (the pilot did the action): says the
+///   result as the confirmation, or with more than one the label and result of
+///   each, or how many are done when there are more than two;
+/// - reads the next unticked row as its label only: a challenge row waits for
+///   the pilot's answer, a flow row for the pilot to do it, and the result is
+///   said after the action;
 /// - says "Checklist complete" when there is none left.
 ///
 /// A kind of row the voice is off for is not spoken and not waited on.
@@ -36,6 +40,7 @@ class BuildVoicePromptUseCase {
     required ChecklistProgress progress,
     required VoiceSettings settings,
     List<int> autoChecked = const [],
+    List<int> ticked = const [],
   }) {
     if (!settings.any) return VoicePrompt.silent;
     final utterances = <VoiceUtterance>[];
@@ -61,6 +66,29 @@ class BuildVoicePromptUseCase {
       }
     }
 
+    final done = [
+      for (final index in ticked)
+        if (index >= 0 &&
+            index < checklist.items.length &&
+            !checklist.items[index].challenge &&
+            settings.flows)
+          checklist.items[index],
+    ];
+    if (done.length > spokenRunLimit) {
+      utterances.add(VoiceUtterance('${done.length} done'));
+    } else if (done.length == 1) {
+      if (done.single.result.isNotEmpty) {
+        utterances.add(VoiceUtterance(_say(done.single.result)));
+      }
+    } else {
+      for (final item in done) {
+        final words = item.result.isEmpty
+            ? _say(item.label)
+            : '${_say(item.label)}, ${_say(item.result)}';
+        utterances.add(VoiceUtterance(words));
+      }
+    }
+
     final next = _pointer(checklist, progress);
     if (next == null) {
       if (_isComplete(checklist, progress)) {
@@ -73,15 +101,39 @@ class BuildVoicePromptUseCase {
     if (!settings.speaksFor(challenge: item.challenge)) {
       return VoicePrompt(utterances: utterances);
     }
-    final words = item.challenge || item.result.isEmpty
-        ? _say(item.label)
-        : '${_say(item.label)}, ${_say(item.result)}';
-    utterances.add(VoiceUtterance(words));
+    utterances.add(VoiceUtterance(_say(item.label)));
     return VoicePrompt(
       utterances: utterances,
       waitingFor: next,
       waitingForChallenge: item.challenge,
     );
+  }
+
+  /// The title as it is spoken: the word "challenge" is dropped, all-capital
+  /// words are read as words, and it ends with "checklist" (`CHALLENGE BEFORE
+  /// START` is "before start checklist").
+  static String spokenTitle(Checklist checklist) {
+    var title = checklist.title.isEmpty ? checklist.name : checklist.title;
+    title = title
+        .replaceAll(RegExp(r'\bchallenge\b', caseSensitive: false), ' ')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim()
+        .toLowerCase();
+    if (title.isEmpty) return 'checklist';
+    return title.endsWith('checklist') ? title : '$title checklist';
+  }
+
+  /// "Ready for <title>?", asked when a challenge checklist is opened in auto
+  /// mode; the pilot answers yes to start.
+  VoicePrompt ready(Checklist checklist) => VoicePrompt(
+    utterances: [VoiceUtterance('Ready for ${spokenTitle(checklist)}?')],
+  );
+
+  /// Whether the next row to do on [checklist] is a challenge row, so the
+  /// voice asks if the pilot is ready before it starts.
+  bool startsWithChallenge(Checklist checklist, ChecklistProgress progress) {
+    final next = _pointer(checklist, progress);
+    return next != null && checklist.items[next].challenge;
   }
 
   /// What to say when the pilot's tick or answer disagrees with the sim.

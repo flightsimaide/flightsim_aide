@@ -72,7 +72,7 @@ void main() {
       await open(flowFile);
       expect(cubit.state.active, isTrue);
       expect(cubit.state.listening, isTrue);
-      expect(voice.texts, ['Parking brake, SET']);
+      expect(voice.texts, ['Parking brake']);
     });
 
     test('with no microphone it still speaks', () async {
@@ -93,7 +93,89 @@ void main() {
       await settle();
       expect(cubit.state.micUnavailable, isTrue);
       expect(cubit.state.listening, isFalse);
-      expect(voice.texts, ['Parking brake, SET']);
+      expect(voice.texts, ['Parking brake']);
+    });
+  });
+
+  group('the ready question', () {
+    test(
+      'a challenge checklist in auto mode asks and reads nothing else',
+      () async {
+        await open(challengeFile);
+        expect(voice.texts, ['Ready for a checklist?']);
+        voice.hear('on');
+        voice.hear('skip');
+        await settle();
+        expect(checks + skips, 0);
+        expect(voice.texts, ['Ready for a checklist?']);
+      },
+    );
+
+    test('yes, ready and okay start it', () async {
+      for (final word in ['yes', 'ready', 'okay']) {
+        await open(challengeFile);
+        voice.hear(word);
+        await settle();
+        expect(voice.texts.last, 'Beacon', reason: word);
+        await cubit.close();
+      }
+    });
+
+    test(
+      'auto-check ticking items does not start it, a tick by hand does',
+      () async {
+        await open(challengeFile);
+        progress.autoCheck('A', {0}, cursor: 1);
+        await settle();
+        expect(voice.texts, ['Ready for a checklist?']);
+        progress.toggle('A', 1);
+        await settle();
+        expect(voice.texts.last, 'Nav');
+      },
+    );
+
+    test('a flow checklist does not ask', () async {
+      await open(flowFile);
+      expect(voice.texts, ['Parking brake']);
+    });
+
+    test('manual mode does not ask', () async {
+      final document = const AircraftWorkflowParser().parse(challengeFile);
+      progress = FakeChecklistProgressRepository()
+        ..setManual('A', manual: true);
+      settings = FakeSettingsRepository();
+      await settings.update(
+        (o) => o.set(UserOptions.voiceChallengesOption, true),
+      );
+      voice = FakeVoiceRepository();
+      cubit = VoiceSessionCubit(
+        checklistName: 'A',
+        checklistRepository: FakeChecklistRepository(current: document),
+        progressRepository: progress,
+        settings: settings,
+        voice: voice,
+        checkNext: () {},
+        skipNext: () {},
+      )..load();
+      await settle();
+      expect(voice.texts, ['Beacon']);
+    });
+
+    test('with the challenge voice off it does not ask', () async {
+      await open(challengeFile, challenges: false);
+      expect(voice.texts.every((t) => t.isEmpty), isTrue);
+    });
+
+    test('pause and resume while waiting asks again', () async {
+      await open(challengeFile);
+      voice.hear('pause checklist');
+      await settle();
+      voice.hear('resume checklist');
+      await settle();
+      expect(voice.texts, ['Ready for a checklist?', 'Ready for a checklist?']);
+      voice.hear('yes');
+      await settle();
+      expect(voice.texts.last, 'Beacon');
     });
   });
 
@@ -102,12 +184,14 @@ void main() {
       await open(flowFile);
       progress.toggle('A', 0);
       await settle();
-      expect(voice.texts.last, 'Flaps, SET');
+      expect(voice.texts.last, 'SET Flaps');
     });
 
     test('three challenge rows ticked by auto are counted', () async {
       await open(challengeFile);
-      expect(voice.texts, ['Beacon']);
+      voice.hear('yes');
+      await settle();
+      expect(voice.texts, ['Ready for a checklist?', 'Beacon']);
       progress.autoCheck('A', {0, 1, 2}, cursor: 3);
       await settle();
       expect(voice.texts.last, '3 verified Taxi');
@@ -117,7 +201,7 @@ void main() {
       await open(flowFile);
       progress.toggle('A', 0, disagrees: true);
       await settle();
-      expect(voice.texts.last, 'Double check Parking brake Flaps, SET');
+      expect(voice.texts.last, 'Double check Parking brake Flaps');
     });
 
     test('the last tick says the checklist is complete', () async {
@@ -126,7 +210,7 @@ void main() {
         progress.toggle('A', i);
         await settle();
       }
-      expect(voice.texts.last, 'Checklist complete');
+      expect(voice.texts.last, 'ON Checklist complete');
     });
 
     test('a change to another checklist is not spoken', () async {
@@ -195,7 +279,7 @@ void main() {
       voice.hear('no');
       await settle();
       expect(checks, 0);
-      expect(voice.texts.last, 'Parking brake, SET');
+      expect(voice.texts.last, 'Parking brake');
     });
 
     test('a yes with nothing asked does nothing', () async {
@@ -235,7 +319,7 @@ void main() {
       voice.hear('resume checklist');
       await settle();
       expect(cubit.state.paused, isFalse);
-      expect(voice.texts.last, 'Flaps, SET');
+      expect(voice.texts.last, 'Flaps');
     });
 
     test('the button pauses and resumes', () async {
@@ -244,7 +328,7 @@ void main() {
       expect(cubit.state.paused, isTrue);
       cubit.resume();
       expect(cubit.state.paused, isFalse);
-      expect(voice.texts.last, 'Parking brake, SET');
+      expect(voice.texts.last, 'Parking brake');
     });
 
     test('a near miss of resume asks, and yes resumes', () async {
@@ -271,7 +355,7 @@ void main() {
       await settings.update((o) => o.set(UserOptions.voiceFlowsOption, true));
       await settle();
       expect(cubit.state.active, isTrue);
-      expect(voice.texts, ['Parking brake, SET']);
+      expect(voice.texts, ['Parking brake']);
     });
 
     test('turning both off stops it', () async {

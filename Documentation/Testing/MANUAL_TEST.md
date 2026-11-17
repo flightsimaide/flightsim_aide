@@ -440,12 +440,12 @@ Result: DEFERRED (not run) | 2026-11-16 | The owner tried the PC-12 file with th
 
 **Steps (real speech and microphone).** The app on an Android phone (the main target; on Windows it is best effort: write down what fails in `BUILDING.md` and do not work around it), X-Plane running with the plugin and an aircraft whose checklist has a `sw_challenge: ON` ... `sw_challenge: OFF` block, a headset or the phone's speaker in a quiet room.
 1. Settings > Voice: both switches are off. Open a checklist: nothing is spoken and there is no Pause button.
-2. Turn on Voice for flows and open a checklist. The system asks for the microphone: allow it. The first item is read as its label and result, and a Pause button shows.
-3. Say "set": the item ticks and the next one is read. Say "chek": it asks "Did you mean check?"; say "yes": the item ticks. Say "skip": the item is skipped.
+2. Turn on Voice for flows and open a checklist. The system asks for the microphone: allow it. The first item is read as its label only (no result), and a Pause button shows.
+3. Say "set": the item ticks, the voice says its result as the confirmation, then reads the next one. Say "chek": it asks "Did you mean check?"; say "yes": the item ticks. Say "skip": the item is skipped.
 4. Say "pause checklist": the voice stops and PAUSED flashes with an icon. Say something else: nothing happens. Say "resume checklist" (also try "continue checklist"): it reads the item to do now.
 5. With auto on, do the action in the sim: the item ticks by itself and the next one is read. With auto off, a true dataref does not move on, but a tick or "set" does.
 6. Tick an item the sim says is not set: the voice says "Double check" and the item name.
-7. Turn on Voice for challenges, open a challenge block with two items the sim already agrees with: each is said as the challenge, a pause, then the response. With more than two in a row: "N verified", then the first open item. Answer it by voice.
+7. Turn on Voice for challenges and open a challenge checklist in auto mode: the voice asks "Ready for ... checklist?" (without the word challenge) and reads nothing until you say "yes" (or "ready"). Then, in a challenge block with two items the sim already agrees with: each is said as the challenge, a pause, then the response. With more than two in a row: "N verified", then the first open item. Answer it by voice.
 8. The voice never ticks an item by hearing itself, and a phrase that is not an answer does nothing.
 9. Turn the microphone permission off and reopen the checklist: a microphone-off icon shows and the voice still speaks.
 10. Check PAUSED in the dark and the light theme, and with the system's animations turned off (steady, not flashing).

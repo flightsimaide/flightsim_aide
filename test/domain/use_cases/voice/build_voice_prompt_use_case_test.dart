@@ -17,6 +17,11 @@ Checklist list(String body) => const AircraftWorkflowParser()
     .checklists
     .single;
 
+Checklist titled(String title) => const AircraftWorkflowParser()
+    .parse('sw_checklist:A:$title\nsw_item:X')
+    .checklists
+    .single;
+
 ChecklistProgress done(Iterable<int> indexes, {int cursor = 0}) =>
     ChecklistProgress.marks(
       checked: {'A': indexes.toSet()},
@@ -28,11 +33,13 @@ VoicePrompt after(
   ChecklistProgress progress, {
   VoiceSettings settings = both,
   List<int> auto = const [],
+  List<int>? ticked,
 }) => useCase.afterStep(
   checklist: checklist,
   progress: progress,
   settings: settings,
   autoChecked: auto,
+  ticked: ticked ?? auto,
 );
 
 void main() {
@@ -40,9 +47,9 @@ void main() {
   const flow = 'sw_challenge: OFF\n';
 
   group('the next row', () {
-    test('a flow row is read as its label and result and waited for', () {
+    test('a flow row is read as its label only and waited for', () {
       final p = after(list('sw_item:Parking brake|SET'), done([]));
-      expect(p.text, 'Parking brake, SET');
+      expect(p.text, 'Parking brake');
       expect(p.waitingFor, 0);
       expect(p.waitingForChallenge, isFalse);
     });
@@ -87,7 +94,75 @@ void main() {
 
     test('long capital words are read as words, short ones are kept', () {
       final p = after(list('sw_item:ENG FIRE test|AVAILABLE'), done([]));
-      expect(p.text, 'ENG fire test, available');
+      expect(p.text, 'ENG fire test');
+    });
+  });
+
+  group('after the action on a flow row', () {
+    final c = list(
+      'sw_item:Parking brake|SET\nsw_item:Flaps|SET\nsw_item:Lights|ON\n'
+      'sw_item:Doors',
+    );
+
+    test('the result is said, then the next item', () {
+      final p = after(c, done([0], cursor: 1), ticked: [0]);
+      expect(p.text, 'SET Flaps');
+      expect(p.waitingFor, 1);
+    });
+
+    test('no result gives nothing to confirm', () {
+      final p = after(c, done([3]), ticked: [3]);
+      expect(p.text, 'Parking brake');
+    });
+
+    test('two rows done at once are said with their results', () {
+      final p = after(c, done([0, 1], cursor: 2), ticked: [0, 1]);
+      expect(p.text, 'Parking brake, SET Flaps, SET Lights');
+    });
+
+    test('more than two are counted', () {
+      final p = after(c, done([0, 1, 2], cursor: 3), ticked: [0, 1, 2]);
+      expect(p.text, '3 done Doors');
+    });
+
+    test('a challenge row ticked by hand is not echoed', () {
+      final ch = list('sw_challenge: ON\nsw_item:Beacon|ON\nsw_item:Nav|ON');
+      final p = after(ch, done([0], cursor: 1), ticked: [0]);
+      expect(p.text, 'Nav');
+    });
+
+    test('with flows off the result is not said', () {
+      final p = after(
+        c,
+        done([0], cursor: 1),
+        ticked: [0],
+        settings: const VoiceSettings(challenges: true),
+      );
+      expect(p.text, '');
+    });
+  });
+
+  group('the ready question', () {
+    test('the spoken title drops challenge and ends with checklist', () {
+      String say(String title) =>
+          BuildVoicePromptUseCase.spokenTitle(titled(title));
+      expect(say('CHALLENGE BEFORE START'), 'before start checklist');
+      expect(say('Challenge Taxi'), 'taxi checklist');
+      expect(say('BEFORE TAKEOFF CHECKLIST'), 'before takeoff checklist');
+      expect(say('Challenge'), 'checklist');
+    });
+
+    test('ready asks for the title', () {
+      final c = titled('CHALLENGE AFTER START');
+      expect(useCase.ready(c).text, 'Ready for after start checklist?');
+    });
+
+    test('a checklist starts with a challenge when its next row is one', () {
+      final ch = list('sw_challenge: ON\nsw_item:Beacon|ON');
+      final fl = list('sw_item:Beacon|ON');
+      expect(useCase.startsWithChallenge(ch, done([])), isTrue);
+      expect(useCase.startsWithChallenge(fl, done([])), isFalse);
+      expect(useCase.startsWithChallenge(ch, done([0])), isFalse);
     });
   });
 
@@ -143,16 +218,16 @@ void main() {
       expect(p.text, '3 verified Taxi');
       expect(p.waitingFor, 3);
       final four = after(c, done([0, 1, 2, 3], cursor: 4), auto: [0, 1, 2, 3]);
-      expect(four.text, '4 verified Flaps, SET');
+      expect(four.text, '4 verified Flaps');
       expect(four.waitingForChallenge, isFalse);
     });
 
-    test('flow rows ticked by auto are not spoken or counted', () {
+    test('flow rows ticked by auto are counted as done, not verified', () {
       final f = list(
         'sw_item:One|ON\nsw_item:Two|ON\nsw_item:Three|ON\nsw_item:Four|ON',
       );
       final p = after(f, done([0, 1, 2], cursor: 3), auto: [0, 1, 2]);
-      expect(p.text, 'Four, ON');
+      expect(p.text, '3 done Four');
     });
 
     test('with challenges off nothing is said for them', () {

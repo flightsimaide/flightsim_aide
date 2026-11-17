@@ -17,7 +17,20 @@ class MatchSpokenResponseUseCase {
   /// The fixed answer words every item accepts.
   static const fixedAnswers = ['check', 'set', 'on', 'off', 'closed'];
 
-  static const _yes = {'yes', 'yeah', 'yep', 'correct', 'affirmative'};
+  static const _yes = {
+    'yes',
+    'yeah',
+    'yep',
+    'correct',
+    'affirmative',
+    'affirm',
+    'ready',
+    'okay',
+    'ok',
+    'roger',
+    'proceed',
+    'go ahead',
+  };
   static const _no = {'no', 'nope', 'negative'};
   static const _pauseWords = ['pause', 'hold', 'stop'];
   static const _resumeWords = ['resume', 'continue', 'unpause', 'start'];

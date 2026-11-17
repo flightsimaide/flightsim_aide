@@ -88,7 +88,7 @@ void main() {
     await pump(tester);
     expect(find.byKey(voicePauseButtonKey), findsOneWidget);
     expect(find.byKey(voicePausedChipKey), findsNothing);
-    expect(voice.texts, ['Parking brake, SET']);
+    expect(voice.texts, ['Parking brake']);
   });
 
   testWidgets('Pause flashes PAUSED with an icon and Resume clears it', (
@@ -116,7 +116,7 @@ void main() {
     await tester.tap(find.byKey(voicePauseButtonKey));
     await tester.pump();
     expect(find.byKey(voicePausedChipKey), findsNothing);
-    expect(voice.texts.last, 'Parking brake, SET');
+    expect(voice.texts.last, 'Parking brake');
   });
 
   testWidgets('the flash stops when animations are off, the word stays', (
@@ -145,7 +145,7 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));
     expect(progress.current.isChecked('A', 0), isTrue);
-    expect(voice.texts.last, 'Flaps, SET');
+    expect(voice.texts.last, 'SET Flaps');
   });
 
   testWidgets('a spoken skip skips the item', (tester) async {
@@ -161,6 +161,6 @@ void main() {
   ) async {
     await pump(tester, micAvailable: false);
     expect(find.byKey(voiceMicOffKey), findsOneWidget);
-    expect(voice.texts, ['Parking brake, SET']);
+    expect(voice.texts, ['Parking brake']);
   });
 }
