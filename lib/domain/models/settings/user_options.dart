@@ -1,5 +1,7 @@
 import 'package:equatable/equatable.dart';
 
+import '../voice/voice_settings.dart';
+
 /// One user option: a key, a default and the rule that turns any value into a
 /// valid one. Adding an option needs only an [OptionDef] (decision D-51,
 /// AC-40).
@@ -79,10 +81,19 @@ class UserOptions extends Equatable {
   /// The user's own choice, kept until the user changes it.
   static const autoModeOption = BoolOption('auto_mode', true);
 
+  /// Whether the voice speaks for flow rows (D-84). Off until the user turns
+  /// it on: speech that starts by itself in a cockpit would surprise people.
+  static const voiceFlowsOption = BoolOption('voice_flows', false);
+
+  /// Whether the voice speaks for challenge rows (D-84). Off by default.
+  static const voiceChallengesOption = BoolOption('voice_challenges', false);
+
   /// The options the app ships.
   static const List<OptionDef<Object>> definitions = [
     streamRateHzOption,
     autoModeOption,
+    voiceFlowsOption,
+    voiceChallengesOption,
   ];
 
   final Map<OptionDef<Object>, Object> _values;
@@ -109,6 +120,12 @@ class UserOptions extends Equatable {
 
   /// Whether auto-check is on, as the user last chose it.
   bool get autoMode => get(autoModeOption);
+
+  /// Which kinds of row the voice speaks for.
+  VoiceSettings get voice => VoiceSettings(
+    flows: get(voiceFlowsOption),
+    challenges: get(voiceChallengesOption),
+  );
 
   @override
   List<Object?> get props => [

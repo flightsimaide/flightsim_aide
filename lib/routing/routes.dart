@@ -12,6 +12,9 @@ abstract final class Routes {
   /// Appearance screen, under Settings.
   static const appearance = '/settings/appearance';
 
+  /// Voice screen, under Settings.
+  static const voice = '/settings/voice';
+
   /// Checklist detail route pattern; the `:name` segment is URL-encoded.
   static const detail = '/checklists/:name';
 

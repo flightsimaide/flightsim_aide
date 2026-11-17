@@ -5,6 +5,7 @@ import '../ui/checklist_list/widgets/checklist_list_screen.dart';
 import '../ui/home/widgets/home_screen.dart';
 import '../ui/settings/widgets/appearance_screen.dart';
 import '../ui/settings/widgets/settings_screen.dart';
+import '../ui/settings/widgets/voice_settings_screen.dart';
 import 'app_shell.dart';
 import 'routes.dart';
 
@@ -34,6 +35,10 @@ GoRouter createRouter({String initialLocation = Routes.home}) {
           GoRoute(
             path: Routes.appearance,
             builder: (context, state) => const AppearanceScreen(),
+          ),
+          GoRoute(
+            path: Routes.voice,
+            builder: (context, state) => const VoiceSettingsScreen(),
           ),
           GoRoute(
             path: Routes.detail,
