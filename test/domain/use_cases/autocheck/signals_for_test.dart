@@ -92,6 +92,21 @@ void main() {
       expect(signalsFor(doc.checklists.single), [const Dataref('b/x')]);
     });
 
+    test('a heading with calculations adds the inputs too', () {
+      final doc = const AircraftWorkflowParser().parse(
+        'sw_checklist:A\n'
+        'sw_item:one|OK\n'
+        'sw_item_heading:Long range\n'
+        'sw_calculate:t|y\n'
+        'sw_table:t|w=a/w|y\n'
+        'sw_row:0|1\n'
+        'sw_table_end\n',
+      );
+      expect(signalsFor(doc.checklists.single, tables: doc.tables), [
+        const Dataref('a/w'),
+      ]);
+    });
+
     test('a calculation of an unknown table adds nothing', () {
       final doc = const AircraftWorkflowParser().parse(
         'sw_checklist:A\nsw_item:one|OK\nsw_calculate:nothere|y\n',

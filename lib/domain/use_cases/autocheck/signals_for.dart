@@ -26,9 +26,10 @@ List<Dataref> signalsFor(
   for (final item in checklist.items) {
     if (item.type == ChecklistItemType.check) {
       add(item.condition?.signals ?? const []);
-      for (final line in item.calculations) {
-        add(tables[line.table]?.signals ?? const []);
-      }
+    }
+    // A check item or a heading can carry calculations.
+    for (final line in item.calculations) {
+      add(tables[line.table]?.signals ?? const []);
     }
   }
   for (final link in checklist.continues) {
