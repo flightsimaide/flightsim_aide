@@ -3,7 +3,11 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../data/repositories/checklist/checklist_progress_repository_impl.dart';
 import '../data/repositories/flight_sim/flight_sim_repository.dart';
 import '../data/repositories/settings/settings_repository.dart';
+import '../data/repositories/voice/voice_repository.dart';
+import '../data/repositories/voice/voice_repository_impl.dart';
 import '../data/services/local/progress_storage_service.dart';
+import '../data/services/voice/flutter_tts_speech_output_service.dart';
+import '../data/services/voice/speech_to_text_input_service.dart';
 import 'dependencies.dart';
 import 'network_link.dart';
 
@@ -33,6 +37,12 @@ List<RepositoryProvider<dynamic>> productionProviders({
       value: link.flightSimRepository,
     ),
     RepositoryProvider<SettingsRepository>.value(value: link.settings),
+    RepositoryProvider<VoiceRepository>(
+      create: (_) => VoiceRepositoryImpl(
+        output: FlutterTtsSpeechOutputService(),
+        input: SpeechToTextInputService(),
+      ),
+    ),
     RepositoryProvider<NetworkLink>(
       lazy: false,
       create: (_) {

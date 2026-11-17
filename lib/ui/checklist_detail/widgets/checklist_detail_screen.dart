@@ -21,6 +21,7 @@ import '../cubit/checklist_detail_state.dart';
 import 'calculated_lines_band.dart';
 import 'checklist_app_bar_title.dart';
 import 'checklist_item_tile.dart';
+import 'voice_controls.dart';
 
 /// One checklist with tappable rows, progress and a reset action.
 class ChecklistDetailScreen extends StatelessWidget {
@@ -40,7 +41,10 @@ class ChecklistDetailScreen extends StatelessWidget {
         flightSim: _optional<FlightSimRepository>(context),
         settings: _optional<SettingsRepository>(context),
       )..load(),
-      child: const _ContinueListener(child: _ChecklistDetailView()),
+      child: VoiceScope(
+        checklistName: checklistName,
+        child: const _ContinueListener(child: _ChecklistDetailView()),
+      ),
     );
   }
 
@@ -187,7 +191,7 @@ class _ChecklistDetailView extends StatelessWidget {
           appBar: AppBar(
             centerTitle: true,
             title: ChecklistAppBarTitle(title: loaded.title),
-            actions: [const ConnectionStatusIndicator()],
+            actions: [const VoiceControls(), const ConnectionStatusIndicator()],
           ),
           body: _LoadedBody(state: loaded),
         ),

@@ -144,7 +144,8 @@ lib/
 │   │   │   └── connection_status.dart
 │   │   └── voice/                          # voice settings and prompts (D-84)
 │   │       ├── voice_settings.dart
-│   │       └── voice_prompt.dart
+│   │       ├── voice_prompt.dart
+│   │       └── spoken_input.dart
 │   └── use_cases/
 │       ├── autocheck/                      # placeholder
 │       │   └── evaluate_item_conditions_use_case.dart
@@ -163,7 +164,7 @@ lib/
 │   │   │   ├── flight_sim_repository.dart                      # abstract: connection + dataref stream + set
 │   │   │   ├── flight_sim_repository_remote.dart               # the real connection
 │   │   │   └── flight_sim_repository_local.dart                # scriptable fake for tests
-│   │   ├── voice/                          # speak, listen, pause (D-84)
+│   │   ├── voice/                          # speak, listen (D-84)
 │   │   │   ├── voice_repository.dart
 │   │   │   └── voice_repository_impl.dart
 │   │   └── settings/                       # (manual sim IP, preferences)
@@ -187,7 +188,9 @@ lib/
 │       │       └── raw_dataref_message.dart
 │       ├── voice/                          # the TTS and speech-to-text packages live only here (D-84)
 │       │   ├── speech_output_service.dart
-│       │   └── speech_input_service.dart
+│       │   ├── speech_input_service.dart
+│       │   ├── flutter_tts_speech_output_service.dart
+│       │   └── speech_to_text_input_service.dart
 │       ├── local/                          # shared_preferences and similar; checklist cache
 │       │   ├── preferences_service.dart
 │       │   ├── checklist_cache_service.dart                # raw checklist text + file mtime/size, keyed by aircraft path
@@ -218,10 +221,13 @@ lib/
     ├── checklist_detail/
     │   ├── cubit/
     │   │   ├── checklist_detail_cubit.dart
-    │   │   └── checklist_detail_state.dart
+    │   │   ├── checklist_detail_state.dart
+    │   │   ├── voice_session_cubit.dart        # the voice for the open checklist (D-84)
+    │   │   └── voice_session_state.dart
     │   └── widgets/
     │       ├── checklist_detail_screen.dart
-    │       └── checklist_item_tile.dart
+    │       ├── checklist_item_tile.dart
+    │       └── voice_controls.dart             # Pause button, PAUSED chip, VoiceScope
     │
     ├── connection/                         # X-Plane connection status, manual IP entry, "plugin not detected"
     │   ├── cubit/
