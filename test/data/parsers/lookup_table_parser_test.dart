@@ -192,7 +192,7 @@ void main() {
       expect(doc.warnings.single, contains('no output column "alt"'));
     });
 
-    test('with no check item above it warns', () {
+    test('with no check item or heading above it warns', () {
       final doc = _parser.parse(
         'sw_checklist:C\n'
         'sw_calculate:cruise|torque\n'
@@ -202,9 +202,25 @@ void main() {
         '$_table',
       );
       expect(doc.warnings, [
-        'Line 2: sw_calculate is not under a check item; ignored',
-        'Line 5: sw_calculate is not under a check item; ignored',
+        'Line 2: sw_calculate is not under a check item or heading; ignored',
+        'Line 5: sw_calculate is not under a check item or heading; ignored',
       ]);
+    });
+
+    test('a heading can carry calculations', () {
+      final doc = _parser.parse(
+        'sw_checklist:C\n'
+        'sw_item:A|B\n'
+        'sw_item_heading:Long range\n'
+        'sw_calculate:cruise|torque|Torque|psi|0.1\n'
+        'sw_calculate:cruise|torque\n'
+        '$_table',
+      );
+      expect(doc.warnings, isEmpty);
+      final items = doc.checklists.single.items;
+      expect(items[0].calculations, isEmpty);
+      expect(items[1].type, ChecklistItemType.heading);
+      expect(items[1].calculations, hasLength(2));
     });
 
     test('before any checklist warns', () {

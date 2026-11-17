@@ -412,9 +412,12 @@ class AircraftWorkflowParser {
       while (target >= 0 && items[target].type == ChecklistItemType.details) {
         target--;
       }
-      if (target < 0 || items[target].type != ChecklistItemType.check) {
+      if (target < 0 ||
+          (items[target].type != ChecklistItemType.check &&
+              items[target].type != ChecklistItemType.heading)) {
         warnings.add(
-          'Line $number: sw_calculate is not under a check item; ignored',
+          'Line $number: sw_calculate is not under a check item or heading; '
+          'ignored',
         );
         return;
       }
