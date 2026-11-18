@@ -29,6 +29,12 @@
 - Add a `Co-Authored-By:` trailer only for a change Claude wrote.
 - Never rewrite pushed commits to fix a message.
 
+## Branches
+- `main` is always releasable. Before starting a change, ask two questions: does it break backward compatibility (a checklist file that parses today, the wire protocol, a stored value, a setting, or any behaviour a user relies on), and would it be dead code if the work it serves (for example MSFS support) were dropped?
+- If either answer is yes, the change goes on a branch named after the topic (for example `msfs-support`). The branch stays local until the user says to push, is brought up to date with `main` now and then, and is merged only when the whole path works.
+- A change that is backward-compatible and useful on its own (for example a new optional grammar form that leaves existing files unchanged) may go straight to `main`.
+- When proposing a plan, say which of the two cases the change is in.
+
 ## Privacy
 - Never commit personal paths, LAN addresses, email addresses, keystores, signing keys or account details. Use placeholders (`<X-Plane>`, `192.168.1.x`, `you@example.com`).
 - Commits use the GitHub noreply address (`<id>+<login>@users.noreply.github.com`), set per repository with `git config user.email`, never a private mailbox: the history is public.
