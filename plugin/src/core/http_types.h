@@ -59,6 +59,8 @@ struct Response {
 /// Facts about the running server that the handlers report.
 struct ServerInfo {
   int port = 0;
+  /// Reported as `sim.kind`: `xplane` or `msfs`.
+  std::string simKind = "xplane";
   std::string simVersion;
   std::string os;
   std::string pluginVersion;

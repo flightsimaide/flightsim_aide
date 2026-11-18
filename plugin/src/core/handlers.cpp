@@ -30,7 +30,7 @@ Response jsonResponse(const Request& request, int status, const std::string& bod
 
 Response handleHello(const Request& request, const ServerInfo& info) {
   HelloInfo h;
-  h.simKind = "xplane";
+  h.simKind = info.simKind;
   h.simVersion = info.simVersion;
   h.os = info.os;
   h.pluginVersion = info.pluginVersion;

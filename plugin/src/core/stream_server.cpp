@@ -75,6 +75,7 @@ struct Server::Impl {
 
     ServerInfo serverInfo;
     serverInfo.port = self->boundPort;
+    serverInfo.simKind = self->owner->config_.simKind;
     serverInfo.simVersion = self->owner->config_.simVersion;
     serverInfo.os = self->owner->config_.os;
     serverInfo.pluginVersion = self->owner->config_.pluginVersion;

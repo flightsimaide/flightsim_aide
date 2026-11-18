@@ -24,6 +24,8 @@ struct ServerConfig {
   /// Replaces the CivetWeb access list when non-empty (tests); the default is
   /// the table in address_filter.
   std::string accessControlList;
+  /// Reported by /v1/hello as `sim.kind`: `xplane` (the plugin) or `msfs`.
+  std::string simKind = "xplane";
   /// Reported by /v1/hello.
   std::string simVersion;
   /// Reported by /v1/hello as `os`; see hostOsName().

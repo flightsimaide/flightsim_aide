@@ -74,7 +74,7 @@ The contract script runs the same HTTP and stream cases against the Dart fake, `
 ## Install and troubleshooting (for users)
 
 1. Close X-Plane. Copy the `flightsim_aide` folder (from a release or your own build with `-DXPLANE_PLUGINS`) into `X-Plane/Resources/plugins/`, so that the file sits at `Resources/plugins/flightsim_aide/64/win.xpl` (`mac.xpl` or `lin.xpl` on macOS and Linux).
-2. Start X-Plane. In **Plugins > Plugin Admin** the entry "FlightSim Aide 0.1.0" (the name followed by the plugin version) should be enabled. `Log.txt` in the X-Plane folder has a line `flightsim_aide: listening on port 18086` (or a port up to 18093).
+2. Start X-Plane. In **Plugins > Plugin Admin** the entry "FlightSim Aide 0.1.1" (the name followed by the plugin version) should be enabled. `Log.txt` in the X-Plane folder has a line `flightsim_aide: listening on port 18086` (or a port up to 18093).
 3. Windows: when the firewall asks, allow X-Plane on **private networks**.
 4. Check from the phone or another computer on the same network: `curl http://<sim-ip>:18086/v1/hello` answers with a short JSON text that names the plugin and its port. Use the port from `Log.txt` if it is not 18086.
 

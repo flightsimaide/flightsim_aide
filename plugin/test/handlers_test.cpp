@@ -165,3 +165,13 @@ TEST_CASE("crlf file is served byte for byte") {
   CHECK(r.body.size() == 10);
   CHECK(r.header("Content-Length") == "10");
 }
+
+TEST_CASE("hello reports the simulator kind the companion was configured with") {
+  ServerInfo i = info();
+  i.simKind = "msfs";
+  const Response r = handleHello(get("/v1/hello"), i);
+  CHECK(r.status == 200);
+  CHECK(r.body.find("\"sim\":{\"kind\":\"msfs\"") != std::string::npos);
+  // The default stays xplane, so the plugin and the golden file are unchanged.
+  CHECK(handleHello(get("/v1/hello"), info()).body.find("\"kind\":\"xplane\"") != std::string::npos);
+}
