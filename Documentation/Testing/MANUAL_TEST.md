@@ -468,7 +468,7 @@ Result: NOT RUN | 2026-11-17 | Needs the owner with a phone (or the PC) and the 
 
 Pass line: all eight hold.
 
-Result: NOT RUN | 2026-11-18 | Steps 1, 2 (values) and 3 were done live on MSFS 2024 during development; the aircraft-change steps, MSFS 2020 and the Microsoft Store versions have not been run.
+Result: PARTIAL | 2026-11-18 | MSFS 2024, Steam, PC-12, companion 0.2.1. Steps 1 to 5 PASS: found by beacon, checklist and auto-check work, pause is fine, a livery change shows no wrong value and auto-check keeps ticking (an earlier 0.2.0 run did not tick an unchanged value until the checklist was reopened; fixed in 0.2.1). Step 6 (the C152) was seen to load with no checklist and no ticking, but the return to the PC-12, step 7, step 8, MSFS 2020 and the Microsoft Store versions have not been run.
 
 ## AC-69
 
