@@ -1099,19 +1099,47 @@ List<String> _splitTopLevel(String text, String separator) {
   final parts = <String>[];
   var depth = 0;
   var start = 0;
+  // Once the `=` of a `column=source` part has been seen, a quote where a name
+  // can start opens a quoted name (`GRAMMAR.md` N6), whose separators are not
+  // separators. Before the `=` a quote is plain text (`Pilot's OAT`).
+  var inSource = false;
   for (var i = 0; i < text.length; i++) {
     final c = text[i];
+    if (inSource && (c == '"' || c == "'") && _startsName(text, i)) {
+      final end = text.indexOf(c, i + 1);
+      if (end > 0) {
+        i = end;
+        continue;
+      }
+    }
+    if (c == '=' && depth <= 0) {
+      inSource = true;
+    } else if (c == separator && depth <= 0) {
+      parts.add(text.substring(start, i));
+      start = i + 1;
+      inSource = false;
+      continue;
+    }
     if ('({['.contains(c)) {
       depth++;
     } else if (')}]'.contains(c)) {
       depth--;
-    } else if (c == separator && depth <= 0) {
-      parts.add(text.substring(start, i));
-      start = i + 1;
     }
   }
   parts.add(text.substring(start));
   return parts;
+}
+
+/// Whether a name can start at [i] in [text]: nothing before it but blanks, or
+/// the last other character is one that comes before a value (`=`, `{`, `(`,
+/// an operator or a comma).
+bool _startsName(String text, int i) {
+  for (var j = i - 1; j >= 0; j--) {
+    final c = text[j];
+    if (c == ' ' || c == '\t') continue;
+    return '={(,+-*/'.contains(c);
+  }
+  return true;
 }
 
 /// Reads a comma-separated list of numbers; null when any is not a number.

@@ -222,7 +222,33 @@ class _Scan {
 
   // ---- atoms ----
 
+  /// A quoted name (`GRAMMAR.md` N6) at the current position: the text between
+  /// two quotes of the same kind, taken as it stands. Null when the text here
+  /// does not start with a quote. A name is quoted when it holds characters the
+  /// condition grammar reads as structure, such as `:` and `,`.
+  Dataref? quotedName() {
+    if (atEnd || (s[i] != '"' && s[i] != "'")) return null;
+    final quote = s[i];
+    final end = s.indexOf(quote, i + 1);
+    if (end < 0) throw _ParseError('unterminated quote');
+    final name = s.substring(i + 1, end).trim();
+    if (name.isEmpty) throw _ParseError('empty name in quotes');
+    // The wire reads `[n]` at the end of a name as an array index.
+    if (name.contains('[') || name.contains(']')) {
+      throw _ParseError('square brackets in a quoted name');
+    }
+    i = end + 1;
+    return Dataref(name);
+  }
+
   ItemCondition parseAtom() {
+    final quoted = quotedName();
+    if (quoted != null) {
+      skipBlanks();
+      if (!peek(':')) throw _ParseError('missing ":" after the name');
+      i++; // ':'
+      return _atomTail(DatarefExpr(quoted));
+    }
     final start = i;
     while (i < s.length && !':|()&'.contains(s[i])) {
       i++;
@@ -421,7 +447,25 @@ class _Scan {
       i++;
       return e;
     }
+    final quoted = quotedName();
+    if (quoted != null) return DatarefExpr(quoted);
     if (c == '{') {
+      final inner = i + 1;
+      var look = inner;
+      while (look < s.length && (s[look] == ' ' || s[look] == '\t')) {
+        look++;
+      }
+      if (look < s.length && (s[look] == '"' || s[look] == "'")) {
+        // `{"quoted name"}`
+        i = look;
+        final name = quotedName()!;
+        skipBlanks();
+        if (!peek('}')) {
+          throw _ParseError('unexpected text "{${s.substring(inner, i)}"');
+        }
+        i++;
+        return DatarefExpr(name);
+      }
       final end = s.indexOf('}', i);
       if (end < 0) throw unexpected();
       final text = s.substring(i + 1, end);

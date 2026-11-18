@@ -7,6 +7,62 @@ import 'package:flutter_test/flutter_test.dart';
 const _parser = AircraftWorkflowParser();
 
 void main() {
+  // AC-66
+  group('quoted names in a file (GRAMMAR.md N6)', () {
+    test('an item, a continue link and a plain item together', () {
+      final doc = _parser.parse(
+        'sw_checklist:A\n'
+        'sw_item:Battery 1|ON:"L:ELECTRICAL_Switch_BATTERY_Bus_1":1\n'
+        'sw_item:Gen|ON:"A:GENERAL ENG MASTER ALTERNATOR:1, bool":1\n'
+        "sw_item:Pilot's seat|SET:'L:SEAT, number':2\n"
+        'sw_item:Gear|DOWN:sim/gear:1\n'
+        'sw_continue:B:"L:next, bool":1\n'
+        'sw_checklist:B\n'
+        'sw_item:x|y',
+      );
+      expect(doc.warnings, isEmpty);
+      final items = doc.checklists.first.items;
+      expect(items[0].label, 'Battery 1');
+      expect(items[0].result, 'ON');
+      expect(
+        items[0].condition,
+        const CompareCondition(
+          DatarefExpr(Dataref('L:ELECTRICAL_Switch_BATTERY_Bus_1')),
+          CompareOp.equal,
+          NumberExpr(1),
+        ),
+      );
+      expect(
+        items[1].condition,
+        const CompareCondition(
+          DatarefExpr(Dataref('A:GENERAL ENG MASTER ALTERNATOR:1, bool')),
+          CompareOp.equal,
+          NumberExpr(1),
+        ),
+      );
+      expect(items[2].label, "Pilot's seat");
+      expect(items[2].result, 'SET');
+      expect(items[2].condition, isNotNull);
+      expect(items[3].condition, isNotNull);
+    });
+
+    test('an item without a result and a quoted name', () {
+      final doc = _parser.parse(
+        'sw_checklist:A\nsw_item:Battery:"L:x, bool":1',
+      );
+      expect(doc.warnings, isEmpty);
+      final item = doc.checklists.single.items.single;
+      expect(item.label, 'Battery');
+      expect(item.condition, isNotNull);
+    });
+
+    test('a bad quote warns and leaves the item manual', () {
+      final doc = _parser.parse('sw_checklist:A\nsw_item:x|ON:"L:y:1');
+      expect(doc.warnings.single, contains('unterminated quote'));
+      expect(doc.checklists.single.items.single.condition, isNull);
+    });
+  });
+
   group('item conditions', () {
     test(
       'a condition fills ChecklistItem.condition; label and result stay',

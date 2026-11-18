@@ -423,4 +423,116 @@ void main() {
     final r = _parser.parse('${open}a:1$close');
     expect(r.condition != null || r.reason != null, isTrue);
   });
+
+  // AC-66
+  group('quoted names (GRAMMAR.md N6)', () {
+    test('a quoted name keeps its colons, commas and spaces', () {
+      expect(
+        _ok('"A:GENERAL ENG MASTER ALTERNATOR:1, bool":1'),
+        CompareCondition(
+          _d('A:GENERAL ENG MASTER ALTERNATOR:1, bool'),
+          CompareOp.equal,
+          _n(1),
+        ),
+      );
+    });
+
+    test('single and double quotes both work, the other kind is text', () {
+      expect(
+        _ok("'L:ELECTRICAL_Switch_BATTERY_Bus_1':1"),
+        CompareCondition(
+          _d('L:ELECTRICAL_Switch_BATTERY_Bus_1'),
+          CompareOp.equal,
+          _n(1),
+        ),
+      );
+      expect(
+        _ok('"L:it\'s":0'),
+        CompareCondition(_d("L:it's"), CompareOp.equal, _n(0)),
+      );
+    });
+
+    test('every operator form follows a quoted name', () {
+      expect(
+        _ok('"A:PLANE ALTITUDE, feet":>5000'),
+        CompareCondition(
+          _d('A:PLANE ALTITUDE, feet'),
+          CompareOp.greater,
+          _n(5000),
+        ),
+      );
+      expect(_ok('"L:x":10|20'), RangeCondition(_d('L:x'), _n(10), _n(20)));
+      expect(_ok('"L:x":10:20'), CrossingCondition(_d('L:x'), _n(10), _n(20)));
+      expect(
+        _ok('"L:x":+>5'),
+        ChangeCondition(_d('L:x'), ChangeOp.rise, _n(5)),
+      );
+    });
+
+    test('blanks around the quotes are skipped', () {
+      expect(_ok(' "L:x" : 1 '), _ok('"L:x":1'));
+    });
+
+    test('quoted names join with && and || and sit in parentheses', () {
+      expect(
+        _ok('("L:a":1)&&("L:b, bool":0)||(plain/c:2)'),
+        OrCondition([
+          AndCondition([
+            CompareCondition(_d('L:a'), CompareOp.equal, _n(1)),
+            CompareCondition(_d('L:b, bool'), CompareOp.equal, _n(0)),
+          ]),
+          CompareCondition(_d('plain/c'), CompareOp.equal, _n(2)),
+        ]),
+      );
+    });
+
+    test('a quoted name on the right side, bare or in braces', () {
+      final expected = CompareCondition(
+        _d('x'),
+        CompareOp.greater,
+        _d('A:AMBIENT TEMPERATURE, celsius'),
+      );
+      expect(_ok('x:>"A:AMBIENT TEMPERATURE, celsius"'), expected);
+      expect(_ok('x:>{"A:AMBIENT TEMPERATURE, celsius"}'), expected);
+      expect(
+        _ok("x:>{ 'L:y' }+1"),
+        CompareCondition(
+          _d('x'),
+          CompareOp.greater,
+          BinaryExpr(ArithmeticOp.add, _d('L:y'), _n(1)),
+        ),
+      );
+    });
+
+    test('a quoted name in the relational form', () {
+      expect(
+        _ok(':("L:a"=="L:b")'),
+        CompareCondition(_d('L:a'), CompareOp.equal, _d('L:b')),
+      );
+    });
+
+    test('unquoted names are read as before', () {
+      expect(_ok("it's/odd:1"), isA<CompareCondition>());
+    });
+
+    test('bad quotes are named, never partly used', () {
+      expect(_reason('"L:x:1'), 'unterminated quote');
+      expect(_reason("'L:x:1"), 'unterminated quote');
+      expect(_reason('"":1'), 'empty name in quotes');
+      expect(_reason('" ":1'), 'empty name in quotes');
+      expect(_reason('"L:x"'), 'missing ":" after the name');
+      expect(_reason('"L:x"y:1'), 'missing ":" after the name');
+      expect(_reason('"L:x[1]":1'), 'square brackets in a quoted name');
+      expect(_reason('"L:x[1..2]":1'), 'square brackets in a quoted name');
+      expect(_reason('x:>{"L:y"'), startsWith('unexpected text'));
+    });
+
+    test('parseValue reads a bare quoted name', () {
+      final r = _parser.parseValue('"A:AMBIENT TEMPERATURE, celsius"');
+      expect(r.failed, isFalse);
+      expect(r.value, _d('A:AMBIENT TEMPERATURE, celsius'));
+      expect(_parser.parseValue('"L:x" - 1').value, isA<BinaryExpr>());
+      expect(_parser.parseValue('"L:x').failed, isTrue);
+    });
+  });
 }

@@ -27,6 +27,38 @@ sw_table_end
 ''';
 
 void main() {
+  // AC-66
+  group('quoted names in a table input (GRAMMAR.md N6)', () {
+    test('commas inside a quoted source do not split the inputs', () {
+      final doc = _parser.parse(
+        "${_head}sw_table:t|oat(Pilot's OAT, C)=\"A:AMBIENT TEMPERATURE, celsius\", "
+        "alt={'A:INDICATED ALTITUDE, feet'}|y\n"
+        'sw_row:0,0|1\nsw_table_end\n',
+      );
+      expect(doc.warnings, isEmpty);
+      final table = doc.tables['t']!;
+      expect(table.inputs.map((i) => i.name), ['oat', 'alt']);
+      expect(table.inputs.first.label, "Pilot's OAT");
+      expect(
+        table.inputs.first.source,
+        const DatarefExpr(Dataref('A:AMBIENT TEMPERATURE, celsius')),
+      );
+      expect(
+        table.inputs[1].source,
+        const DatarefExpr(Dataref('A:INDICATED ALTITUDE, feet')),
+      );
+    });
+
+    test('an apostrophe in a label is still plain text', () {
+      final doc = _parser.parse(
+        "${_head}sw_table:t|a(Pilot's a, C)=sim/a, b(Co-pilot's b)=sim/b|y\n"
+        'sw_row:0,0|1\nsw_table_end\n',
+      );
+      expect(doc.warnings, isEmpty);
+      expect(doc.tables['t']!.inputs.map((i) => i.name), ['a', 'b']);
+    });
+  });
+
   // AC-55
   group('lookup tables (GRAMMAR.md section 5c)', () {
     test('reads a table, its input sources and its rows', () {
