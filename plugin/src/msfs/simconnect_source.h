@@ -91,7 +91,7 @@ class SimConnectSource : public ValueSource {
     Sent what;
   };
 
-  void send(Entry& e);
+  void send(Entry& e, bool once = false);
   void noteSent(size_t entry, Sent what);
   void lookUpInputEvents();
   void waitFor(const std::function<bool()>& done, int64_t maxMs);

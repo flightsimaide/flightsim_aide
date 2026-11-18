@@ -22,6 +22,19 @@ const _bare = AircraftIdentity(
 );
 
 void main() {
+  test('the aircraft line names the simulator of the computer', () {
+    const msfs = DiscoveredSim(
+      host: '10.0.0.5',
+      name: 'PC',
+      simulator: Simulator.msfs,
+    );
+    expect(aircraftLine(_cessna), 'X-Plane Cessna 172');
+    expect(
+      aircraftLine(_cessna, msfs),
+      'Microsoft Flight Simulator Cessna 172',
+    );
+  });
+
   test('no network text is shown for LinkNoNetwork', () {
     final m = messageFor(const LinkNoNetwork());
     expect(m.headline, 'Network is off');

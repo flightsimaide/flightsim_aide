@@ -13,6 +13,8 @@ namespace {
 // names start here. One id is both the definition and the request of a name.
 constexpr DWORD kFirstId = 100;
 constexpr DWORD kEnumerateRequest = 90;
+// The one-shot read of a name uses this request id plus its slot, the same definition.
+constexpr DWORD kOnceFirstId = 1000000;
 constexpr size_t kMaxEntries = 2048;
 constexpr size_t kMaxSentRemembered = 4096;
 
@@ -54,7 +56,7 @@ void SimConnectSource::noteSent(size_t entry, Sent what) {
   sent_[id] = SentInfo{entry, what};
 }
 
-void SimConnectSource::send(Entry& e) {
+void SimConnectSource::send(Entry& e, bool once) {
   const size_t index = static_cast<size_t>(&e - entries_.data());
   if (e.var.kind == MsfsVar::Kind::inputEvent) return;  // read by polling
   if (e.id == 0) {
@@ -65,6 +67,13 @@ void SimConnectSource::send(Entry& e) {
   SimConnect_RequestDataOnSimObject(sc_, e.id, e.id, SIMCONNECT_OBJECT_ID_USER, SIMCONNECT_PERIOD_SIM_FRAME,
                                     SIMCONNECT_DATA_REQUEST_FLAG_CHANGED);
   noteSent(index, Sent::request);
+  if (once) {
+    // The request above sends only when the value changes. After a load the value may be the same
+    // as before it, so read it once as well: this always answers.
+    SimConnect_RequestDataOnSimObject(sc_, kOnceFirstId + static_cast<DWORD>(index), e.id,
+                                      SIMCONNECT_OBJECT_ID_USER, SIMCONNECT_PERIOD_ONCE);
+    noteSent(index, Sent::request);
+  }
 }
 
 Resolution SimConnectSource::resolve(const std::string& base, int index) {
@@ -138,7 +147,7 @@ void SimConnectSource::setAvailable(bool available) {
     e.seen = false;
     if (!available || e.failed) continue;
     e.nextDueMs = 0;
-    if (e.var.kind != MsfsVar::Kind::inputEvent) send(e);  // a fresh first value
+    if (e.var.kind != MsfsVar::Kind::inputEvent) send(e, true);  // a fresh first value
   }
 }
 
@@ -180,8 +189,9 @@ void SimConnectSource::poll(int64_t nowMs) {
 }
 
 void SimConnectSource::onSimObjectData(const SIMCONNECT_RECV_SIMOBJECT_DATA* data) {
-  if (data->dwRequestID < kFirstId) return;
-  const size_t index = data->dwRequestID - kFirstId;
+  const DWORD request = data->dwRequestID;
+  if (request < kFirstId) return;
+  const size_t index = request >= kOnceFirstId ? request - kOnceFirstId : request - kFirstId;
   if (index >= entries_.size()) return;
   Entry& e = entries_[index];
   e.answered = true;

@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../domain/models/aircraft/aircraft_identity.dart';
+import '../../../domain/models/flight_sim/discovered_sim.dart';
 import '../../../domain/models/flight_sim/switch_offer.dart';
 import '../../../routing/routes.dart';
 import '../../core/themes/status_colors.dart';
@@ -113,6 +114,7 @@ class _ConnectionDialogHostState extends State<ConnectionDialogHost> {
         _aircraftRoute = _push(
           child: _AircraftChangedDialog(
             live: live,
+            computer: context.read<ConnectionCubit>().state.computer,
             onOpen: _openChecklist,
             onContinue: context
                 .read<ConnectionDialogCubit>()
@@ -250,11 +252,13 @@ class _NotifyDialog extends StatelessWidget {
 class _AircraftChangedDialog extends StatelessWidget {
   const _AircraftChangedDialog({
     required this.live,
+    required this.computer,
     required this.onOpen,
     required this.onContinue,
   });
 
   final AircraftIdentity live;
+  final DiscoveredSim? computer;
   final VoidCallback onOpen;
   final VoidCallback onContinue;
 
@@ -263,7 +267,7 @@ class _AircraftChangedDialog extends StatelessWidget {
     final theme = Theme.of(context);
     final caution =
         theme.extension<StatusColors>()?.caution ?? theme.colorScheme.primary;
-    final line = aircraftLine(live);
+    final line = aircraftLine(live, computer);
     return Dialog(
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 440),
