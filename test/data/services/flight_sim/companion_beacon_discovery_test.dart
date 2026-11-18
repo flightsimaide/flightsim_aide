@@ -35,6 +35,7 @@ class _FakeSource implements DatagramSource {
 Uint8List _bytes(String text) => Uint8List.fromList(utf8.encode(text));
 
 void main() {
+  // AC-67: the companion beacon is found, validated and kept apart per simulator.
   final from = InternetAddress('192.168.1.10');
 
   group('decodeCompanionBeacon', () {

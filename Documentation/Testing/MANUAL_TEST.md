@@ -454,6 +454,36 @@ Pass line: all ten hold.
 
 Result: NOT RUN | 2026-11-17 | Needs the owner with a phone (or the PC) and the sim; nothing about the real speech engine or the microphone has been tried yet.
 
+## AC-68
+
+**Steps (MSFS companion).** A PC with MSFS 2024 and the SWS PC-12, the package installed by the Setup program, the app on the same network. Repeat on MSFS 2020 if available. Write down which simulator and store (Steam or Microsoft Store) was used.
+1. Start the simulator and load a flight in the PC-12. Within about two minutes of the main menu the app finds the PC by itself (no typing) and shows Microsoft Flight Simulator and the aircraft.
+2. Open the checklist: items with a condition tick as the switches are moved. `dart run tools/msfs_name_check.dart http://<PC>:18086 <the checklist>` prints no UNKNOWN.
+3. Misspell an A: name and a B: name in a copy of the checklist: the tool prints UNKNOWN for each.
+4. Pause the sim: values keep updating.
+5. Change the livery: the app shows the new livery name after the load, with no wrong value in between.
+6. Change to another aircraft (a default one, for example the Cessna 152): the app shows it, the checklist changes or says there is none, and the values on screen are not the loading values (altitude near 53 800, parking brake 0, alternator 1) at any moment.
+7. Reload the same aircraft: the app shows it again after the load, not before.
+8. Return to the main menu: the app shows no aircraft or waits, with no wrong value. Quit the simulator: the companion ends by itself within about ten seconds.
+
+Pass line: all eight hold.
+
+Result: NOT RUN | 2026-11-18 | Steps 1, 2 (values) and 3 were done live on MSFS 2024 during development; the aircraft-change steps, MSFS 2020 and the Microsoft Store versions have not been run.
+
+## AC-69
+
+**Steps (Setup program).** `tools\platform\win\msfs_setup\build_setup.ps1` builds `FlightSimAide-MSFS-Setup.exe`. On a PC that never ran the companion:
+1. Run it: the window lists each simulator found; Microsoft Store entries are marked UNTESTED and unticked.
+2. Install: the report names the package folder, says the start-up entry was added and gives a firewall line. EXE.xml has one block between the FlightSim Aide markers and `EXE.xml.bak-flightsimaide` is the original.
+3. Start the simulator: Windows asks about the firewall once (allow Private networks) or the firewall line said it was already allowed; `flightsim_aide_msfs.exe` runs; the app finds the PC.
+4. Run Setup again and Install: nothing doubles (one block); a checklist you edited is kept.
+5. Remove: the block and the program are gone; the checklists folder stays unless you say to delete it.
+6. On a Microsoft Store installation (both versions if available), repeat 1 to 5 and write down the folders the setup used.
+
+Pass line: all six hold.
+
+Result: NOT RUN | 2026-11-18 | Install and Remove were run only against a scratch folder with the command line; the window, the firewall wording, the simulator start and the Store locations were not tried.
+
 ## Plugin runs on the simulator (SIM)
 
 Results for the plugin shell in X-Plane 12.4.1 (`sim.version` 12441), Windows, layout A (`plugins/flightsim_aide/64/win.xpl`), 2026-10-24. An early experiment plugin was also loaded.
