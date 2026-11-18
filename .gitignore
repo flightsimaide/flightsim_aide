@@ -80,3 +80,5 @@ plugin/build-msfs/
 # Legacy Flutter files
 .packages
 .flutter-plugins
+tools/platform/win/msfs_setup/work/
+tools/platform/win/msfs_setup/out/
