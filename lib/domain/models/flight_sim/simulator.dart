@@ -25,7 +25,7 @@ enum Simulator {
 
 /// The simulators that have a companion plugin today. Only supported
 /// simulators belong here; the no-activity text is built from it.
-const supportedSimulators = [Simulator.xplane];
+const supportedSimulators = [Simulator.xplane, Simulator.msfs];
 
 /// The operating system of the computer a simulator runs on.
 enum HostOs {

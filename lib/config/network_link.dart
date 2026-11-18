@@ -4,6 +4,7 @@ import '../data/repositories/flight_sim/flight_sim_repository_remote.dart';
 import '../data/repositories/settings/settings_repository.dart';
 import '../data/repositories/settings/settings_repository_impl.dart';
 import '../data/services/checklist/network_checklist_source_service.dart';
+import '../data/services/flight_sim/companion_beacon_discovery.dart';
 import '../data/services/flight_sim/companion_plugin_service.dart';
 import '../data/services/flight_sim/flight_sim_connection_service.dart';
 import '../data/services/flight_sim/model/sim_endpoint.dart';
@@ -40,10 +41,16 @@ class NetworkLink {
       sessions: sessions,
       network: network,
       settings: settings,
-      createDiscovery: (host) => XPlaneBeaconDiscovery(
-        manualHost: host,
-        multicastLock: defaultMulticastLockController(),
-      ),
+      createDiscovery: (host) => host != null
+          ? XPlaneBeaconDiscovery(manualHost: host)
+          : CompositeSimDiscovery([
+              XPlaneBeaconDiscovery(
+                multicastLock: defaultMulticastLockController(),
+              ),
+              CompanionBeaconDiscovery(
+                multicastLock: defaultMulticastLockController(),
+              ),
+            ]),
     );
     source = NetworkChecklistSourceService(
       sessions: sessions,

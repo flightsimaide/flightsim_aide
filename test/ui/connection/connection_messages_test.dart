@@ -93,7 +93,8 @@ void main() {
       expect(m.headline, 'Waiting for connection');
       expect(
         m.detail,
-        'FlightSim Aide requires a network connection to X-Plane flight simulator. '
+        'FlightSim Aide requires a network connection to X-Plane or Microsoft '
+        'Flight Simulator. '
         'Press Details for more information.',
       );
     }
@@ -102,14 +103,21 @@ void main() {
   test('the rest of the no-activity text is for the Details page', () {
     expect(
       noActivityDetails,
-      'To connect, install the FlightSim Aide plugin for X-Plane, then run '
-      'X-Plane. FlightSim Aide will automatically connect to X-Plane.\n\n'
-      'If it keeps waiting, X-Plane may not be announcing itself on the '
-      'network. This happens on a PC where Windows has reserved the UDP port '
-      'that X-Plane uses for its announcement (49707), for example with '
+      'To connect, install the FlightSim Aide plugin for X-Plane or the '
+      'FlightSim Aide companion for Microsoft Flight Simulator (run '
+      'FlightSimAide-MSFS-Setup.exe), then run the simulator. FlightSim Aide '
+      'will automatically connect to it.\n\n'
+      'If it keeps waiting with X-Plane, X-Plane may not be announcing itself '
+      'on the network. This happens on a PC where Windows has reserved the UDP '
+      'port that X-Plane uses for its announcement (49707), for example with '
       'Hyper-V or WSL installed. Open the simulator\'s Log.txt and look for '
-      '"Failed to init multicast *BEACON* socket". Use Enter IP address and '
-      'type the PC\'s address to connect without the announcement.',
+      '"Failed to init multicast *BEACON* socket".\n\n'
+      'With Microsoft Flight Simulator the companion starts about 90 seconds '
+      'after the simulator opens and announces itself on UDP port 18094. Check '
+      'that flightsim_aide_msfs.exe is running in Task Manager and that '
+      'Windows Firewall allows it on private networks.\n\n'
+      'Use Enter IP address and type the PC\'s address to connect without the '
+      'announcement.',
     );
   });
 

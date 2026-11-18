@@ -3,9 +3,10 @@ import 'package:flightsim_aide/domain/models/flight_sim/simulator.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  test('only X-Plane is supported today', () {
-    expect(supportedSimulators, [Simulator.xplane]);
+  test('X-Plane and Microsoft Flight Simulator are supported', () {
+    expect(supportedSimulators, [Simulator.xplane, Simulator.msfs]);
     expect(Simulator.xplane.displayName, 'X-Plane');
+    expect(Simulator.msfs.displayName, 'Microsoft Flight Simulator');
   });
 
   test('HostOs reads the plugin value and shows its name', () {

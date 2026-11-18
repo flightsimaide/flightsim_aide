@@ -29,21 +29,24 @@ abstract class DatagramSource {
 /// Opens a [DatagramSource].
 typedef DatagramSourceOpener = Future<DatagramSource> Function();
 
-/// The real socket: UDP 49707 with address reuse, joined to the group on each
-/// non-loopback IPv4 interface.
-Future<DatagramSource> openBeaconSocket() async {
+/// The real socket: UDP [port] (X-Plane's 49707 by default) with address reuse,
+/// joined to [group] on each non-loopback IPv4 interface.
+Future<DatagramSource> openBeaconSocket({
+  String group = beaconGroup,
+  int port = beaconPort,
+}) async {
   final socket = await RawDatagramSocket.bind(
     InternetAddress.anyIPv4,
-    beaconPort,
+    port,
     reuseAddress: true,
   );
-  final source = _SocketSource(socket);
+  final source = _SocketSource(socket, group);
   await source.refreshMembership();
   return source;
 }
 
 class _SocketSource implements DatagramSource {
-  _SocketSource(this._socket) {
+  _SocketSource(this._socket, this._group) {
     _socket.listen((event) {
       if (event != RawSocketEvent.read) return;
       final datagram = _socket.receive();
@@ -52,6 +55,7 @@ class _SocketSource implements DatagramSource {
   }
 
   final RawDatagramSocket _socket;
+  final String _group;
   final _controller = StreamController<Datagram>.broadcast();
   final _joined = <String>{};
 
@@ -60,7 +64,7 @@ class _SocketSource implements DatagramSource {
 
   @override
   Future<void> refreshMembership() async {
-    final group = InternetAddress(beaconGroup);
+    final group = InternetAddress(_group);
     final List<NetworkInterface> interfaces;
     try {
       interfaces = await NetworkInterface.list(type: InternetAddressType.IPv4);

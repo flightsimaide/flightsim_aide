@@ -113,20 +113,26 @@ String get _simulatorNames =>
 /// first sentence and a pointer to the Details button. It names the supported
 /// simulators only, so it grows with [supportedSimulators].
 String get noActivityText =>
-    'FlightSim Aide requires a network connection to $_simulatorNames flight '
-    'simulator. Press Details for more information.';
+    'FlightSim Aide requires a network connection to $_simulatorNames. '
+    'Press Details for more information.';
 
 /// The rest of the no-activity text, shown in the panel's Details section.
 String get noActivityDetails =>
-    'To connect, install the FlightSim Aide plugin for $_simulatorNames, then '
-    'run $_simulatorNames. FlightSim Aide will automatically connect to '
-    '$_simulatorNames.\n\n'
-    'If it keeps waiting, $_simulatorNames may not be announcing itself on '
-    'the network. This happens on a PC where Windows has reserved the UDP '
-    'port that $_simulatorNames uses for its announcement (49707), for '
-    'example with Hyper-V or WSL installed. Open the simulator\'s Log.txt and '
-    'look for "Failed to init multicast *BEACON* socket". Use Enter IP '
-    'address and type the PC\'s address to connect without the announcement.';
+    'To connect, install the FlightSim Aide plugin for X-Plane or the '
+    'FlightSim Aide companion for Microsoft Flight Simulator (run '
+    'FlightSimAide-MSFS-Setup.exe), then run the simulator. FlightSim Aide '
+    'will automatically connect to it.\n\n'
+    'If it keeps waiting with X-Plane, X-Plane may not be announcing itself '
+    'on the network. This happens on a PC where Windows has reserved the UDP '
+    'port that X-Plane uses for its announcement (49707), for example with '
+    'Hyper-V or WSL installed. Open the simulator\'s Log.txt and look for '
+    '"Failed to init multicast *BEACON* socket".\n\n'
+    'With Microsoft Flight Simulator the companion starts about 90 seconds '
+    'after the simulator opens and announces itself on UDP port 18094. Check '
+    'that flightsim_aide_msfs.exe is running in Task Manager and that Windows '
+    'Firewall allows it on private networks.\n\n'
+    'Use Enter IP address and type the PC\'s address to connect without the '
+    'announcement.';
 
 /// Shown after a long wait for the aircraft. It makes no claim about the
 /// plugin: a long wait looks the same whether the aircraft is still loading

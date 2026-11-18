@@ -168,7 +168,7 @@ class FlightSimRepositoryRemote implements FlightSimRepository {
       simulator:
           Simulator.fromWire(flightSim.simKind) ??
           (_manual ? null : (target.simulator ?? Simulator.xplane)),
-      os: _os[target.name ?? target.host],
+      os: _os[_keyOf(target.name, target.host, target.simulator)],
     );
   }
 
@@ -321,7 +321,7 @@ class FlightSimRepositoryRemote implements FlightSimRepository {
 
   bool _isSame(DiscoveredSim sim, SimEndpoint? e) {
     if (e == null) return false;
-    if (_key(sim) == (e.name ?? e.host)) return true;
+    if (_key(sim) == _keyOf(e.name, e.host, e.simulator)) return true;
     final hosts = _hosts[_key(sim)] ?? [sim.host];
     return hosts.contains(e.host) || e.alternateHosts.any(hosts.contains);
   }
@@ -489,7 +489,7 @@ class FlightSimRepositoryRemote implements FlightSimRepository {
     if (_disposed) return;
     // One X-Plane announces itself once per network adapter, from a different
     // address each time; the computer name makes them one sim.
-    final key = endpoint.name ?? endpoint.host;
+    final key = _keyOf(endpoint.name, endpoint.host, endpoint.simulator);
     _heard[key] = clock.now();
     final hosts = _hosts.putIfAbsent(key, () => []);
     if (!hosts.contains(endpoint.host)) {
@@ -565,7 +565,14 @@ class FlightSimRepositoryRemote implements FlightSimRepository {
     unawaited(_connect(_endpointFor(sim)));
   }
 
-  static String _key(DiscoveredSim sim) => sim.name ?? sim.host;
+  static String _key(DiscoveredSim sim) =>
+      _keyOf(sim.name, sim.host, sim.simulator);
+
+  /// One entry per computer and simulator: the computer name, or its address,
+  /// with a prefix for a simulator other than X-Plane, so two simulators on
+  /// one PC are two entries.
+  static String _keyOf(String? name, String host, Simulator? simulator) =>
+      '${simulator == null || simulator == Simulator.xplane ? '' : '${simulator.wireKind}:'}${name ?? host}';
 
   SimEndpoint _endpointFor(DiscoveredSim sim) {
     final hosts = _hosts[_key(sim)] ?? [sim.host];
