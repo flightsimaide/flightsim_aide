@@ -126,7 +126,11 @@ void main() {
       await connectSim();
       expect(repo.current, const ConnectionConnecting());
       expect(flightSim.connects, [
-        const SimEndpoint(host: '192.168.1.10', name: 'SIM'),
+        const SimEndpoint(
+          host: '192.168.1.10',
+          name: 'SIM',
+          simulator: Simulator.xplane,
+        ),
       ]);
     });
 
@@ -709,6 +713,30 @@ void main() {
       expect(repo.currentTarget?.name, 'A');
       expect(repo.currentTarget?.simulator, Simulator.xplane);
     });
+
+    test('the simulator is the one the discovery named', () async {
+      discoveries.last.see(
+        const SimEndpoint(
+          host: '192.168.1.10',
+          name: 'FLIGHT-PC',
+          simulator: Simulator.msfs,
+        ),
+      );
+      await pumpEventQueue();
+      await settle();
+      expect(repo.currentSims.single.simulator, Simulator.msfs);
+      expect(repo.currentTarget?.simulator, Simulator.msfs);
+    });
+
+    test(
+      'the sim kind in the hello names the simulator once connected',
+      () async {
+        await connectSim();
+        expect(repo.currentTarget?.simulator, Simulator.xplane);
+        flightSim.simKind = 'msfs';
+        expect(repo.currentTarget?.simulator, Simulator.msfs);
+      },
+    );
 
     test('retry forgets the sim and listens for beacons again', () async {
       await connectSim();

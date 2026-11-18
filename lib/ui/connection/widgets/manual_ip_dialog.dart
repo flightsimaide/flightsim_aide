@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../domain/models/flight_sim/simulator.dart';
 import '../../../utils/ipv4.dart';
 import '../cubit/connection_cubit.dart';
 import '../cubit/known_address.dart';
@@ -37,8 +38,12 @@ class ManualIpDialog extends StatefulWidget {
     this.known = const [],
     this.current,
     this.computerName,
+    this.simulatorName = 'X-Plane',
     super.key,
   });
+
+  /// The simulator's name for the title; X-Plane unless another is connected.
+  final String simulatorName;
 
   /// The name of the computer X-Plane runs on, shown in the title, or null.
   final String? computerName;
@@ -99,12 +104,12 @@ class _ManualIpDialogState extends State<ManualIpDialog> {
     final address = widget.current;
     if (address == null) {
       return name == null || name.isEmpty
-          ? 'X-Plane IP address'
-          : 'X-Plane connected to $name';
+          ? '${widget.simulatorName} IP address'
+          : '${widget.simulatorName} connected to $name';
     }
     return name == null || name.isEmpty
-        ? 'X-Plane on IP $address'
-        : 'X-Plane connected to $name on IP $address';
+        ? '${widget.simulatorName} on IP $address'
+        : '${widget.simulatorName} connected to $name on IP $address';
   }
 
   final MenuController _menu = MenuController();
@@ -242,6 +247,7 @@ Future<bool> showManualIpDialog(BuildContext context) async {
       known: known,
       current: target?.host,
       computerName: target?.name,
+      simulatorName: (target?.simulator ?? Simulator.xplane).displayName,
     ),
   );
   switch (choice) {

@@ -4,6 +4,7 @@ import 'dart:typed_data';
 
 import 'package:flightsim_aide/data/services/flight_sim/model/sim_endpoint.dart';
 import 'package:flightsim_aide/data/services/flight_sim/xplane_beacon_discovery.dart';
+import 'package:flightsim_aide/domain/models/flight_sim/simulator.dart';
 import 'package:flightsim_aide/utils/app_exception.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -56,7 +57,13 @@ void main() {
     await discovery.start();
     source.send(FakeBeaconSender.build(name: 'SIMPC'), '192.168.1.10');
     await pumpEventQueue();
-    expect(found, [const SimEndpoint(host: '192.168.1.10', name: 'SIMPC')]);
+    expect(found, [
+      const SimEndpoint(
+        host: '192.168.1.10',
+        name: 'SIMPC',
+        simulator: Simulator.xplane,
+      ),
+    ]);
   });
 
   test('undecodable datagrams are ignored', () async {

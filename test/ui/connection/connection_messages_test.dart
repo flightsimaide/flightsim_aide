@@ -1,5 +1,6 @@
 import 'package:flightsim_aide/domain/models/aircraft/aircraft_identity.dart';
 import 'package:flightsim_aide/domain/models/flight_sim/discovered_sim.dart';
+import 'package:flightsim_aide/domain/models/flight_sim/simulator.dart';
 import 'package:flightsim_aide/ui/connection/cubit/connection_state.dart';
 import 'package:flightsim_aide/ui/connection/widgets/connection_messages.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -33,6 +34,30 @@ void main() {
     expect(
       m.headline,
       'X-Plane is not responding. Last seen 14:32. Retrying...',
+    );
+  });
+
+  test('the messages name the simulator of the computer', () {
+    const msfs = DiscoveredSim(
+      host: '10.0.0.7',
+      name: 'FLIGHT-PC',
+      simulator: Simulator.msfs,
+    );
+    expect(
+      messageFor(const LinkSimUnreachable(computer: msfs)).headline,
+      'Microsoft Flight Simulator is not responding. Retrying...',
+    );
+    expect(
+      messageFor(const LinkNoChecklist(_cessna, computer: msfs)).detail,
+      'Microsoft Flight Simulator Cessna 172',
+    );
+    expect(
+      messageFor(const LinkConnecting(hint: true, computer: msfs)).note,
+      contains('flightsim_aide_msfs.exe'),
+    );
+    expect(
+      messageFor(const LinkConnecting(hint: true)).note,
+      contains('Plugin Admin'),
     );
   });
 

@@ -39,6 +39,11 @@ abstract class FlightSimService implements SignalSource {
   /// null before the first connection. It stays after the stream drops.
   String? get runId;
 
+  /// The `sim.kind` from the same hello (for example `xplane` or `msfs`), or
+  /// null before the first connection or when the plugin did not say. It stays
+  /// after the stream drops, like [runId].
+  String? get simKind;
+
   /// Finds the plugin on [sim], opens the stream and keeps it open, retrying
   /// with back-off. Completes after the first attempt.
   Future<void> connect(SimEndpoint sim);

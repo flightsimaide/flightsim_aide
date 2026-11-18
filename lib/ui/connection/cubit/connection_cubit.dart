@@ -228,7 +228,7 @@ class ConnectionCubit extends Cubit<ConnectionViewState> {
       case ConnectionSearching():
         return LinkSearching(sims: _flightSim.currentSims);
       case ConnectionConnecting():
-        return LinkConnecting(hint: _hint);
+        return LinkConnecting(hint: _hint, computer: _flightSim.currentTarget);
       case ConnectionNoNetwork():
         return const LinkNoNetwork();
       case ConnectionLocalNetworkDenied():
@@ -245,7 +245,12 @@ class ConnectionCubit extends Cubit<ConnectionViewState> {
         return LinkVersionMismatch(found: found, required: required);
       case ConnectionConnected():
         final live = _flightSim.currentAircraft;
-        if (live == null) return LinkConnecting(hint: _hint);
+        if (live == null) {
+          return LinkConnecting(
+            hint: _hint,
+            computer: _flightSim.currentTarget,
+          );
+        }
         final loaded = _loaded;
         final computer = _flightSim.currentTarget;
         final others = _otherComputers(computer);

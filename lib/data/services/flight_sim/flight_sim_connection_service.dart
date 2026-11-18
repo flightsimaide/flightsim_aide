@@ -101,6 +101,7 @@ class FlightSimConnectionService implements FlightSimService {
   SimEndpoint? _sim;
   PluginEndpoint? _pluginEndpoint;
   String? _runId;
+  String? _simKind;
   PluginState _state = const PluginStateUnknown();
   bool _streamUp = false;
   bool _paused = false;
@@ -272,6 +273,9 @@ class FlightSimConnectionService implements FlightSimService {
   String? get runId => _runId;
 
   @override
+  String? get simKind => _simKind;
+
+  @override
   Future<void> connect(SimEndpoint sim) async {
     if (_disposed) return;
     await _stop();
@@ -296,6 +300,7 @@ class FlightSimConnectionService implements FlightSimService {
     _sim = null;
     _pluginEndpoint = null;
     _runId = null;
+    _simKind = null;
     _tracker.reset();
     _publishState();
   }
@@ -381,6 +386,7 @@ class FlightSimConnectionService implements FlightSimService {
     }
     _pluginEndpoint = PluginEndpoint(host: host, port: port);
     _runId = hello.runId;
+    _simKind = hello.simKind;
     _socket = socket;
     _tracker.onFrame();
     _unavailableNames.clear();

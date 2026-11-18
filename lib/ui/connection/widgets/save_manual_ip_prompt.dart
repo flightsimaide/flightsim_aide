@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../domain/models/flight_sim/simulator.dart';
 import '../cubit/connection_cubit.dart';
 
 /// Asks, on any screen, whether to keep a typed IP address once it has
@@ -41,12 +42,14 @@ class _SaveManualIpPromptState extends State<SaveManualIpPrompt> {
 
   Future<void> _ask(String address) async {
     if (!mounted) return;
+    final simulator =
+        (_cubit.target?.simulator ?? Simulator.xplane).displayName;
     final save = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
         title: const Text('Save IP address?'),
         content: Text(
-          'FlightSim Aide connected to X-Plane at $address. '
+          'FlightSim Aide connected to $simulator at $address. '
           'Save this IP address to use it every time?',
         ),
         actions: [

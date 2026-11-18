@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../domain/models/flight_sim/discovered_sim.dart';
+import '../../../domain/models/flight_sim/simulator.dart';
 import '../cubit/connection_cubit.dart';
 import 'connection_messages.dart';
 
@@ -42,13 +43,18 @@ class _SimChooserState extends State<SimChooser> {
     final sims = widget.sims;
     final others = widget.from != null;
     if (sims.length < (others ? 1 : 2)) return const SizedBox.shrink();
+    // One simulator is named; a mix is "a simulator" (each entry names its own).
+    final names = {
+      for (final sim in sims) (sim.simulator ?? Simulator.xplane).displayName,
+    };
+    final named = names.length == 1 ? names.single : null;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           others
-              ? 'Other computers with X-Plane:'
-              : 'Several X-Plane computers answered. Choose one:',
+              ? 'Other computers with ${named ?? 'a simulator'}:'
+              : 'Several ${named ?? 'simulator'} computers answered. Choose one:',
         ),
         for (final sim in sims) _entry(context, sim, others: others),
       ],

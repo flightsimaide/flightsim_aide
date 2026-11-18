@@ -3,10 +3,15 @@ import '../../../domain/models/flight_sim/discovered_sim.dart';
 import '../../../domain/models/flight_sim/simulator.dart';
 import '../cubit/connection_state.dart';
 
+/// The simulator of [computer]; X-Plane when it is not known (the first
+/// simulator, and the one an address typed by hand has been assumed to be).
+Simulator _simulatorOf(DiscoveredSim? computer) =>
+    computer?.simulator ?? Simulator.xplane;
+
 /// "X-Plane on Windows-PC (192.168.1.10)": which simulator, on which
 /// computer, at which address.
 String computerLabel(DiscoveredSim sim) {
-  final simulator = (sim.simulator ?? Simulator.xplane).displayName;
+  final simulator = _simulatorOf(sim).displayName;
   final name = sim.name;
   return name == null
       ? '$simulator at ${sim.host}'
@@ -16,7 +21,7 @@ String computerLabel(DiscoveredSim sim) {
 /// "Connected to X-Plane on Windows-PC"; without a known computer, just
 /// "Connected to X-Plane".
 String connectedHeadline(DiscoveredSim? computer) {
-  final simulator = (computer?.simulator ?? Simulator.xplane).displayName;
+  final simulator = _simulatorOf(computer).displayName;
   if (computer == null) return 'Connected to $simulator';
   return 'Connected to $simulator on ${computer.name ?? computer.host}';
 }
@@ -131,6 +136,17 @@ const waitingHint =
     'X-Plane Plugins menu, choose Show Plugin Admin and check that FlightSim Aide '
     'is listed and enabled.';
 
+/// The wait hint for the simulator of [computer].
+String waitingHintFor(DiscoveredSim? computer) =>
+    _simulatorOf(computer) == Simulator.msfs ? _waitingHintMsfs : waitingHint;
+
+const _waitingHintMsfs =
+    'If the aircraft has loaded and FlightSim Aide is still waiting, check '
+    'that it was installed for Microsoft Flight Simulator (run '
+    'FlightSimAide-MSFS-Setup.exe) and that flightsim_aide_msfs.exe is '
+    'running in Task Manager. The simulator starts it about 90 seconds after '
+    'it opens.';
+
 /// The title the searching panels share.
 const waitingHeadline = 'Waiting for connection';
 
@@ -139,8 +155,8 @@ const waitingHeadline = 'Waiting for connection';
 const aircraftChangedHeadline = 'Aircraft changed';
 
 /// The line naming the simulator's aircraft.
-String aircraftLine(AircraftIdentity aircraft) =>
-    'X-Plane ${aircraft.description}';
+String aircraftLine(AircraftIdentity aircraft, [DiscoveredSim? computer]) =>
+    '${_simulatorOf(computer).displayName} ${aircraft.description}';
 
 /// The title when the loaded aircraft has no checklist file.
 const noChecklistHeadline = 'Aircraft has no Checklist';
@@ -176,7 +192,7 @@ ConnectionMessage messageFor(ConnectionViewState state) => switch (state) {
     headline: 'Waiting for aircraft to load',
     spinning: true,
     offersCancel: true,
-    note: hint ? waitingHint : null,
+    note: hint ? waitingHintFor(state.computer) : null,
   ),
   LinkConnected(:final aircraft, :final computer) => ConnectionMessage(
     headline: connectedHeadline(computer),
@@ -191,14 +207,14 @@ ConnectionMessage messageFor(ConnectionViewState state) => switch (state) {
   LinkNoChecklist(:final aircraft) => ConnectionMessage(
     headline: noChecklistHeadline,
     tone: MessageTone.caution,
-    detail: aircraftLine(aircraft),
+    detail: aircraftLine(aircraft, state.computer),
     offersReload: true,
     offersManualIp: true,
   ),
   LinkAircraftChanged(:final live) => ConnectionMessage(
     headline: aircraftChangedHeadline,
     tone: MessageTone.caution,
-    detail: aircraftLine(live),
+    detail: aircraftLine(live, state.computer),
     // After Continue with current checklist the dialog is gone; the card must
     // still lead somewhere (found on the tablet, task 0.16).
     offersReload: true,
@@ -230,8 +246,8 @@ ConnectionMessage messageFor(ConnectionViewState state) => switch (state) {
   ),
   LinkSimUnreachable(:final lastSeen) => ConnectionMessage(
     headline: lastSeen == null
-        ? 'X-Plane is not responding. Retrying...'
-        : 'X-Plane is not responding. Last seen ${_clockTime(lastSeen)}. '
+        ? '${_simulatorOf(state.computer).displayName} is not responding. Retrying...'
+        : '${_simulatorOf(state.computer).displayName} is not responding. Last seen ${_clockTime(lastSeen)}. '
               'Retrying...',
     detail: _progressKept,
     offersRetry: true,

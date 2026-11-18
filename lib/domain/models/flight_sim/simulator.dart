@@ -1,12 +1,26 @@
 /// A flight simulator FlightSim Aide can connect to.
 enum Simulator {
   /// Laminar Research X-Plane.
-  xplane('X-Plane');
+  xplane('X-Plane', 'xplane'),
 
-  const Simulator(this.displayName);
+  /// Microsoft Flight Simulator (2020 and 2024).
+  msfs('Microsoft Flight Simulator', 'msfs');
+
+  const Simulator(this.displayName, this.wireKind);
 
   /// The name shown to the user.
   final String displayName;
+
+  /// The `sim.kind` the simulator's companion reports in its hello.
+  final String wireKind;
+
+  /// The simulator for a hello's `sim.kind`, or null when absent or unknown.
+  static Simulator? fromWire(String? kind) {
+    for (final simulator in values) {
+      if (simulator.wireKind == kind) return simulator;
+    }
+    return null;
+  }
 }
 
 /// The simulators that have a companion plugin today. Only supported

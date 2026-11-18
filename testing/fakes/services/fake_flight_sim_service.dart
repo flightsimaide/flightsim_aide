@@ -23,6 +23,9 @@ class FakeFlightSimService implements FlightSimService {
   @override
   String? runId;
 
+  @override
+  String? simKind;
+
   /// Every sim passed to [connect], in order.
   final List<SimEndpoint> connects = [];
 

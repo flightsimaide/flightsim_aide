@@ -144,7 +144,7 @@ class _FeatureCards extends StatelessWidget {
             icon: Icons.checklist,
             title: 'Checklists',
             info: checklists == null
-                ? 'No checklist yet. Connect to X-Plane to load the '
+                ? 'No checklist yet. Connect to your simulator to load the '
                       "aircraft's checklists."
                 : '${checklists.length} '
                       '${checklists.length == 1 ? 'checklist' : 'checklists'} '

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import '../../../domain/models/flight_sim/simulator.dart';
 import '../../../utils/app_exception.dart';
 import '../../../utils/result.dart';
 import 'beacon_decoder.dart';
@@ -163,7 +164,13 @@ class XPlaneBeaconDiscovery implements SimDiscoveryService {
     if (beacon == null) return;
     // Every beacon is passed on: the repository uses them to keep its list of
     // computers fresh (a computer leaves the list when they stop).
-    _controller.add(SimEndpoint(host: beacon.ip, name: beacon.name));
+    _controller.add(
+      SimEndpoint(
+        host: beacon.ip,
+        name: beacon.name,
+        simulator: Simulator.xplane,
+      ),
+    );
   }
 
   @override

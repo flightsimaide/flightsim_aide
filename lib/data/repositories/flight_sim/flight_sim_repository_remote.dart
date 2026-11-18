@@ -163,7 +163,11 @@ class FlightSimRepositoryRemote implements FlightSimRepository {
     return DiscoveredSim(
       host: target.host,
       name: target.name,
-      simulator: _manual ? null : Simulator.xplane,
+      // The hello says which simulator answered; before it, the discovery
+      // that found it (X-Plane's group is X-Plane) or nothing for a typed IP.
+      simulator:
+          Simulator.fromWire(flightSim.simKind) ??
+          (_manual ? null : (target.simulator ?? Simulator.xplane)),
       os: _os[target.name ?? target.host],
     );
   }
@@ -497,7 +501,7 @@ class FlightSimRepositoryRemote implements FlightSimRepository {
       host: hosts.first,
       name: endpoint.name,
       // A beacon on X-Plane's multicast group comes from X-Plane.
-      simulator: Simulator.xplane,
+      simulator: endpoint.simulator ?? Simulator.xplane,
       os: _os[key],
     );
     final index = _sims.indexWhere((s) => _key(s) == key);
@@ -569,6 +573,7 @@ class FlightSimRepositoryRemote implements FlightSimRepository {
       host: hosts.first,
       name: sim.name,
       alternateHosts: hosts.skip(1).toList(),
+      simulator: sim.simulator,
     );
   }
 

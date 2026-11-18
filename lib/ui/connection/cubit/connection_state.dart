@@ -53,14 +53,14 @@ final class LinkSearching extends ConnectionViewState {
 /// the wait has lasted [waitingHintDelay].
 final class LinkConnecting extends ConnectionViewState {
   /// Creates the state.
-  const LinkConnecting({this.hint = false, super.inputError});
+  const LinkConnecting({this.hint = false, super.inputError, super.computer});
 
   /// Whether the wait is long enough to suggest checking the plugin list.
   final bool hint;
 
   @override
   LinkConnecting withInputError(String? error) =>
-      LinkConnecting(hint: hint, inputError: error);
+      LinkConnecting(hint: hint, inputError: error, computer: computer);
 
   @override
   List<Object?> get props => [...super.props, hint];
