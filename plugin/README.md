@@ -55,6 +55,15 @@ Which layout loads with the real plugin is still to be confirmed in the simulato
 - macOS and Linux: **untested at runtime.** They are compiled and tested by CI only (task 4.13).
 - CI: `.github/workflows/plugin.yml` builds and tests the plugin on Windows, macOS and Linux (see the Actions tab of the repository).
 
+## Microsoft Flight Simulator companion
+
+`src/msfs/` is a separate Windows program for Microsoft Flight Simulator 2020 and 2024 (design: `Documentation/Architecture/DECISIONS.md` D-86 to D-88; wire details: `PROTOCOL.md` section 11). MSFS cannot load a plugin that listens on a port, so it is an external program that the simulator starts through an `EXE.xml` entry. It reuses the same core (server, cache, stream hub) and replaces the X-Plane SDK with SimConnect.
+
+- **Build.** It needs the MSFS SDK, which is **not** in this repository and is not redistributable here (its licence allows development of add-ons; whether a release binary may contain the SimConnect static library is still to be confirmed). Install the SDK, then run `plugin\build_msfs.ps1` (the folder comes from the `MSFS2024_SDK` environment variable, or `-Sdk <folder>`). The result is `plugin\build-msfs\flightsim_aide_msfs.exe`. The SimConnect library links the dynamic C++ runtime, so a PC needs the Visual C++ runtime. CI does not build it (no SDK); the logic that does not need SimConnect (`src/msfs_logic/`, `src/core/aircraft_key.*`, `src/core/companion_beacon.*`) is built and tested with the other core tests.
+- **Install and remove.** `tools/platform/win/msfs_setup/` builds `FlightSimAide-MSFS-Setup.exe`, which puts the package `flightsimaide-checklists` into each simulator's `Community` folder and adds one marked block to its `EXE.xml`.
+- **Run by hand** (for development): `flightsim_aide_msfs.exe --run --no-parent-watch --checklists <folder>`, with the simulator running. It has no window; its log is `%LOCALAPPDATA%\FlightSimAide\msfs-companion.log`. `--serve-only <seconds>` serves the hello and the beacon without the simulator.
+- **Watch it.** `dart run tools/stream_watch.dart http://127.0.0.1:18086 "L:ELECTRICAL_Switch_BATTERY_Bus_1" 2` prints the values of one name.
+
 ## Network
 
 The server binds the first free port from 18086 to 18093 and never asks the OS for another one, so the app's probe range always covers it. `/v1/hello` reports the bound port. Only private-range and loopback sources are accepted.
@@ -74,7 +83,7 @@ The contract script runs the same HTTP and stream cases against the Dart fake, `
 ## Install and troubleshooting (for users)
 
 1. Close X-Plane. Copy the `flightsim_aide` folder (from a release or your own build with `-DXPLANE_PLUGINS`) into `X-Plane/Resources/plugins/`, so that the file sits at `Resources/plugins/flightsim_aide/64/win.xpl` (`mac.xpl` or `lin.xpl` on macOS and Linux).
-2. Start X-Plane. In **Plugins > Plugin Admin** the entry "FlightSim Aide 0.1.1" (the name followed by the plugin version) should be enabled. `Log.txt` in the X-Plane folder has a line `flightsim_aide: listening on port 18086` (or a port up to 18093).
+2. Start X-Plane. In **Plugins > Plugin Admin** the entry "FlightSim Aide 0.2.0" (the name followed by the plugin version) should be enabled. `Log.txt` in the X-Plane folder has a line `flightsim_aide: listening on port 18086` (or a port up to 18093).
 3. Windows: when the firewall asks, allow X-Plane on **private networks**.
 4. Check from the phone or another computer on the same network: `curl http://<sim-ip>:18086/v1/hello` answers with a short JSON text that names the plugin and its port. Use the port from `Log.txt` if it is not 18086.
 

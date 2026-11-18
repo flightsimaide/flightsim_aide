@@ -149,3 +149,27 @@ if(XPLANE_SDK)
       COMMENT "Installing to ${_dest}/${_name}")
   endif()
 endif()
+
+# The Microsoft Flight Simulator companion (src/msfs): a Windows program built against
+# the SimConnect static library of the MSFS SDK, which is not part of this repository
+# and not redistributable here (D-88). Needs -DMSFS_SDK=<folder with "SimConnect SDK">;
+# plugin/build_msfs.ps1 passes the folder from the MSFS2024_SDK environment variable.
+set(MSFS_SDK "$ENV{MSFS2024_SDK}" CACHE PATH "The MSFS SDK folder (the one that holds 'SimConnect SDK')")
+if(WIN32 AND MSFS_SDK)
+  set(_sc "${MSFS_SDK}/SimConnect SDK")
+  if(NOT EXISTS "${_sc}/include/SimConnect.h")
+    message(FATAL_ERROR "MSFS_SDK must contain 'SimConnect SDK/include/SimConnect.h'")
+  endif()
+  file(GLOB MSFS_SHELL_SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/msfs/*.cpp")
+  add_executable(flightsim_aide_msfs WIN32 ${MSFS_SHELL_SOURCES})
+  target_link_libraries(flightsim_aide_msfs PRIVATE
+    flightsim_aide_core flightsim_aide_platform flightsim_aide_msfs_logic
+    "${_sc}/lib/static/SimConnect.lib" ws2_32 iphlpapi shlwapi user32 advapi32 ole32 oleaut32 shell32)
+  target_include_directories(flightsim_aide_msfs PRIVATE
+    "${_sc}/include" "${CMAKE_CURRENT_SOURCE_DIR}/src/msfs")
+  # A window-less program that still starts in main().
+  target_link_options(flightsim_aide_msfs PRIVATE /ENTRY:mainCRTStartup)
+  target_compile_definitions(flightsim_aide_msfs PRIVATE _CRT_SECURE_NO_WARNINGS)
+  target_compile_options(flightsim_aide_msfs PRIVATE /W4 /utf-8)
+  set_target_properties(flightsim_aide_msfs PROPERTIES OUTPUT_NAME "flightsim_aide_msfs")
+endif()

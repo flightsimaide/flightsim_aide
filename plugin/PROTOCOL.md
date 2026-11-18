@@ -24,7 +24,7 @@ The app learns the sim's IP from X-Plane's multicast beacon (or a manual entry),
 | Field | Type | Required | Meaning |
 |---|---|---|---|
 | `protocolVersion` | integer | yes | See section 1 |
-| `sim.kind` | string | no | `xplane` for this plugin; another sim's companion says something else |
+| `sim.kind` | string | no | `xplane` for the X-Plane plugin, `msfs` for the Microsoft Flight Simulator companion (section 11) |
 | `sim.version` | string | no | The simulator's version, informational |
 | `os` | string | no | The OS of the computer the sim runs on: `windows`, `macos` or `linux`. Added after the first release; the app shows it in the computer list and works without it |
 | `pluginVersion` | string | no | The companion's own version, informational |
@@ -83,6 +83,8 @@ An aircraft without a checklist file omits `checklistPath`, `checklistModified` 
 A signal is a named number. Names are opaque strings. For the X-Plane plugin a name is an X-Plane dataref name (for example `sim/flightmodel/failures/onground_any`, 1 on the ground and 0 airborne). One name is reserved:
 
 - `flightsim_aide/aircraft_generation` (integer): the same counter as `generation` in `/v1/aircraft`.
+
+For the Microsoft Flight Simulator companion a name is one of three forms, written as the sim writes them (a checklist quotes them, `GRAMMAR.md` N6): `A:NAME[:index][, unit]` a simulation variable (unit default `number`), `L:NAME[, unit]` a local variable of the aircraft, `B:NAME` an input event. L-variable names are case-insensitive. See section 11 for what the companion answers.
 
 A name the companion does not know is `unknown_name`; one it knows but cannot read as a single number (a whole array, a string) is `unsupported`. An array **element** is named `name[n]` (section 9). Both are deterministic: the same name always gets the same answer.
 
@@ -178,3 +180,34 @@ Three extensions were added to the stream after the first version. `protocolVers
 - A single element `name[n]` is unchanged and still answers one number.
 
 Golden cases: `testing/fixtures/protocol/stream_cases.json` (the `array range` and `range` cases).
+
+## 11. Microsoft Flight Simulator companion
+
+`protocolVersion` **stays 1**: nothing above changes meaning. The companion (`plugin/src/msfs/`, built by `plugin\build_msfs.ps1`, D-87, D-88) serves the same endpoints, with these differences.
+
+**Hello.** `sim.kind` is `msfs`. `sim.version` is the simulator's version when it was known at start, else empty. `port` is one of 18086 to 18093 as before; on a PC that also runs X-Plane the two take different ports and the app finds both.
+
+**Aircraft.** `icao` is the aircraft key: the `ATC MODEL` value, and for a default aircraft that reports `ATCCOM.AC_MODEL C152.0.text` the model in it (`C152`). `description` is `TITLE` (the livery). `aircraftPath` is `msfs/<key>`, opaque: two liveries of one aircraft share it, and so the checklist. Before any flight is loaded the aircraft is `No aircraft loaded` with the path `msfs/none` and no checklist. `generation` rises once per load, after the new aircraft's values can be trusted (below). The checklist file is `<key>_clist.txt`, then `clist.txt`, in the `checklists` folder next to the companion's own folder (`<package>\checklists`).
+
+**Names.** `A:`, `L:` and `B:` (section 6). Answers to a subscribe:
+- an A-variable the sim refuses, or a wrong unit, is `unknown_name` (SimConnect exception `NAME_UNRECOGNIZED`); the answer waits up to 0.4 s for the sim;
+- a `B:` name that is not in the sim's list of input events for the loaded aircraft is `unknown_name`; one that is not a number is `unsupported`;
+- an L-variable that does not exist reads `0` and cannot be told from one that does, so it is **always accepted** (an exception to the rule that an unknown name is `unknown_name`, D-86);
+- any other form, and any `[n]` or `[a..b]` index, is `unknown_name`.
+
+**Values.** A value is `null` while the aircraft is loading and for a variable the sim cannot read now. The measured load (D-88) is `SimStop`, `FlightLoaded`, `SimStart`, then `AircraftLoaded` 2 to 3 s later; values read in that window are wrong (altitude 53819.6, parking brake 0). So after a load starts the companion reports `null` until the sim runs again, `AircraftLoaded` was seen, the aircraft was read again and 2 s passed, and only then publishes the new aircraft and raises `generation`. A change of `TITLE` (a livery) with no load event is treated as a load. Pausing the sim changes nothing: values keep arriving. A `B:` value is read at 4 Hz from the sim and so can lag a switch by up to 0.25 s.
+
+**Beacon.** The sim has no beacon of its own, so the companion sends one: a UDP datagram to the multicast group `239.255.18.86`, port `18094`, once a second from every IPv4 adapter that is up (TTL 1). The text is one compact JSON object, the golden file `testing/fixtures/protocol/companion_beacon_msfs.json`:
+
+```json
+{"fsaide":1,"sim":"msfs","name":"FLIGHT-PC","port":18086}
+```
+
+| Field | Meaning |
+|---|---|
+| `fsaide` | Beacon version, `1`. A reader ignores a datagram without it |
+| `sim` | The `sim.kind` of the companion that sent it |
+| `name` | The computer's name |
+| `port` | The TCP port the companion listens on |
+
+The address is the datagram's source address. The app joins the group on each adapter, takes the host and name, then probes the ports as for X-Plane. It does not trust `port`: the hello answers decide.

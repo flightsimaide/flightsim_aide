@@ -60,6 +60,7 @@ Documentation/temp/
 # Plugin build output
 plugin/build/
 plugin/build-xp/
+plugin/build-msfs/
 
 # External downloads (SDKs and other third-party files we must not redistribute).
 # The folder stays in the repository, empty; see BUILDING.md for what goes in it.
