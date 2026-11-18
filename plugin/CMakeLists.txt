@@ -58,11 +58,22 @@ else()
   target_compile_options(flightsim_aide_platform PRIVATE -Wall -Wextra)
 endif()
 
+# The Microsoft Flight Simulator logic with no SimConnect in it (names, aircraft change),
+# built and tested everywhere. The SimConnect shell is added on Windows with -DMSFS_SDK.
+file(GLOB MSFS_LOGIC_SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/msfs_logic/*.cpp")
+add_library(flightsim_aide_msfs_logic STATIC ${MSFS_LOGIC_SOURCES})
+target_include_directories(flightsim_aide_msfs_logic PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src/msfs_logic")
+if(MSVC)
+  target_compile_options(flightsim_aide_msfs_logic PRIVATE /W4 /utf-8)
+else()
+  target_compile_options(flightsim_aide_msfs_logic PRIVATE -Wall -Wextra)
+endif()
+
 if(BUILD_TESTS)
   enable_testing()
   file(GLOB TEST_SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/test/*.cpp")
   add_executable(core_tests ${TEST_SOURCES})
-  target_link_libraries(core_tests PRIVATE flightsim_aide_core flightsim_aide_platform)
+  target_link_libraries(core_tests PRIVATE flightsim_aide_core flightsim_aide_platform flightsim_aide_msfs_logic)
   target_include_directories(core_tests SYSTEM PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/third_party/doctest")
   # Golden fixtures are shared with the Dart tests.
   target_compile_definitions(core_tests PRIVATE
