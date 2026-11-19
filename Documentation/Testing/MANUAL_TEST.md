@@ -464,7 +464,7 @@ Result: NOT RUN | 2026-11-17 | Needs the owner with a phone (or the PC) and the 
 5. Change the livery: the app shows the new livery name after the load, with no wrong value in between.
 6. Change to another aircraft (a default one, for example the Cessna 152): the app shows it, the checklist changes or says there is none, and the values on screen are not the loading values (altitude near 53 800, parking brake 0, alternator 1) at any moment.
 7. Reload the same aircraft: the app shows it again after the load, not before.
-8. Return to the main menu: the app shows no aircraft or waits, with no wrong value. Quit the simulator: the companion ends by itself within about ten seconds.
+8. Return to the main menu: MSFS sends no event for it and keeps the last flight's values, so the app keeps showing the last aircraft with frozen values (a known limit, D-89 (7)); starting a flight updates it. Quit the simulator: the companion ends by itself within about ten seconds.
 
 Pass line: all eight hold.
 
