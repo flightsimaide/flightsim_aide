@@ -69,6 +69,17 @@ The result is `plugin/build-xp/flightsim_aide.xpl`. Install it by copying it to 
 
 macOS and Linux build commands are in `plugin/README.md`.
 
+### The Microsoft Flight Simulator companion (Windows only)
+
+Needs the Microsoft Flight Simulator SDK (free, from the simulator's Developer Mode or Microsoft's download page; it is not in this repository). Set `MSFS2024_SDK` to the folder that holds `SimConnect SDK`, or pass `-Sdk`:
+
+```
+plugin\build_msfs.ps1 -Sdk "C:\MSFS 2024 SDK"
+tools\platform\win\msfs_setup\build_setup.ps1 -Sdk "C:\MSFS 2024 SDK"   # the Setup program, with the companion inside
+```
+
+The results are `plugin\build-msfs\flightsim_aide_msfs.exe` and `tools\platform\win\msfs_setup\out\FlightSimAide-MSFS-Setup.exe`. The Setup program also embeds every `*_clist.txt` of `Documentation\Examples\msfs\`. The tests for the parts that need no SDK run with `plugin\build.ps1`. To check a checklist against the running simulator: `dart run tools/msfs_name_check.dart http://127.0.0.1:18086 <file>`. What each MSFS test needs is in `Documentation/Testing/MANUAL_TEST.md` (AC-68, AC-69).
+
 ## Checking everything
 
 ```

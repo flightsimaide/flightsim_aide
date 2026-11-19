@@ -55,3 +55,7 @@ Build-time tools that are not shipped (for example `flutter_launcher_icons`) are
 ## Branding
 
 The icon and logo in `assets/branding/` were designed for this project and are covered by this repository's MIT licence unless a file says otherwise.
+
+## SimConnect (Microsoft Flight Simulator companion)
+
+The Microsoft Flight Simulator companion (`plugin/src/msfs/`) is linked with the SimConnect static library from the Microsoft Flight Simulator SDK, so `FlightSimAide-MSFS-Setup.exe` and the companion program inside it contain Microsoft's code. The SDK is published by Microsoft for building add-ons and is used under its own licence (the Microsoft Flight Simulator SDK EULA). No SDK file is in this repository; to build the companion you install the SDK yourself (see `BUILDING.md`). Microsoft Flight Simulator is a trademark of Microsoft; FlightSim Aide is not affiliated with or endorsed by Microsoft.
