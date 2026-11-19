@@ -4,6 +4,10 @@
 //
 //   dart run tools/msfs_snapshot.dart take <baseUrl> <names.txt> <out.tsv>
 //   dart run tools/msfs_snapshot.dart diff <before.tsv> <after.tsv>
+//   dart run tools/msfs_snapshot.dart watch <baseUrl> <names.txt>
+//
+// `watch` prints every change as it happens, with the time, until stopped. A
+// name that changes more than 6 times in 10 seconds is muted (a clock, a gauge).
 //
 // names.txt has one name per line (`A:...`, `L:...`, `B:...`); blank lines and
 // lines starting with # are skipped. A name the sim does not know is saved as
@@ -80,7 +84,11 @@ Future<Map<String, String>> _readBatch(
       }
     }
     if (answered.length >= names.length && gotValue.length >= names.length) {
-      if (!done.isCompleted) done.complete();
+      // Input events are read about four times a second after the sim lists
+      // them, so keep listening a little for their first real value.
+      Future<void>.delayed(const Duration(seconds: 3), () {
+        if (!done.isCompleted) done.complete();
+      });
     }
   });
   for (var i = 0; i < names.length; i++) {
@@ -88,11 +96,71 @@ Future<Map<String, String>> _readBatch(
       jsonEncode({'op': 'subscribe', 'id': i, 'name': names[i], 'hz': 2}),
     );
   }
-  await done.future.timeout(const Duration(seconds: 8), onTimeout: () {});
+  await done.future.timeout(const Duration(seconds: 12), onTimeout: () {});
   await sub.cancel();
   await socket.close();
   return result;
 }
+
+/// Prints each change of [names] as it happens. Runs until the process ends.
+Future<void> watchNames(
+  String baseUrl,
+  List<String> names,
+  void Function(String) write,
+) async {
+  final url = Uri.parse(baseUrl).replace(scheme: 'ws', path: '/v1/stream');
+  final last = <String, String>{};
+  final changes = <String, List<DateTime>>{};
+  final muted = <String>{};
+  var ready = false;
+  Future<void>.delayed(const Duration(seconds: 6), () => ready = true);
+  for (var start = 0; start < names.length; start += _batch) {
+    final end = start + _batch < names.length ? start + _batch : names.length;
+    final part = names.sublist(start, end);
+    final socket = await WebSocket.connect(url.toString());
+    socket.listen((message) {
+      final Object? frame = jsonDecode(message as String);
+      if (frame is! Map<String, Object?> || frame['op'] != 'values') return;
+      final v = frame['v'];
+      if (v is! Map<String, Object?>) return;
+      v.forEach((key, value) {
+        final i = int.parse(key);
+        if (i >= part.length) return;
+        final name = part[i];
+        final now = value == null ? '-' : '$value';
+        final before = last[name];
+        last[name] = now;
+        if (before == null || before == now || !ready || muted.contains(name)) {
+          return;
+        }
+        final x = double.tryParse(before);
+        final y = double.tryParse(now);
+        if (x != null && y != null && (x - y).abs() < 0.001) return;
+        final at = DateTime.now();
+        final log = (changes[name] ??= [])
+          ..add(at)
+          ..removeWhere((d) => at.difference(d).inSeconds > 10);
+        if (log.length > 6) {
+          muted.add(name);
+          write('${_clock(at)}  (muted, changes constantly) $name');
+          return;
+        }
+        write('${_clock(at)}  $name: $before -> $now');
+      });
+    });
+    for (var i = 0; i < part.length; i++) {
+      socket.add(
+        jsonEncode({'op': 'subscribe', 'id': i, 'name': part[i], 'hz': 4}),
+      );
+    }
+  }
+  write('watching ${names.length} names; the first 6 seconds are not shown');
+  await Completer<void>().future;
+}
+
+String _clock(DateTime t) =>
+    '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}:'
+    '${t.second.toString().padLeft(2, '0')}';
 
 /// Runs the tool; returns the exit code.
 Future<int> msfsSnapshot(
@@ -140,8 +208,23 @@ Future<int> msfsSnapshot(
     write('${all.length} names saved to ${args[3]} ($unknown unknown)');
     return 0;
   }
+  if (args.length == 3 && args[0] == 'watch') {
+    final file = File(args[2]);
+    if (!file.existsSync()) {
+      write('no such file: ${args[2]}');
+      return 2;
+    }
+    try {
+      await watchNames(args[1], namesIn(file.readAsStringSync()), write);
+    } on Object catch (e) {
+      write('cannot read from ${args[1]}: $e');
+      return 2;
+    }
+    return 0;
+  }
   write('usage: msfs_snapshot.dart take <baseUrl> <names.txt> <out.tsv>');
   write('       msfs_snapshot.dart diff <before.tsv> <after.tsv>');
+  write('       msfs_snapshot.dart watch <baseUrl> <names.txt>');
   return 2;
 }
 
