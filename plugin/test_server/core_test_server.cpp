@@ -185,7 +185,7 @@ int main(int argc, char** argv) {
   config.port = port;
   config.simVersion = "core_test_server";
   config.os = flightsim_aide::hostOsName();
-  config.pluginVersion = "0.1.0";
+  config.pluginVersion = "0.3.0";
   config.runId = flightsim_aide::makeRunId();
   // Same start path as the plugin shell. An explicit --port is the only port
   // tried; without one the OS picks (tests, device runs).

@@ -6,7 +6,7 @@
 
 namespace flightsim_aide {
 
-const char* pluginVersion() { return "0.2.1"; }
+const char* pluginVersion() { return "0.3.0"; }
 
 const char* hostOsName() {
 #if defined(_WIN32)

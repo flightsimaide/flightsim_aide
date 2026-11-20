@@ -33,6 +33,21 @@ TEST_CASE("an L-variable's datum keeps its L: prefix") {
   CHECK(parseMsfsName("L:FUEL_Push_Pump_1, bool")->unit == "bool");
 }
 
+TEST_CASE("a Z-variable keeps its Z: prefix and reads like an L-variable") {
+  const auto v = parseMsfsName("Z:SWS_EXIT_PassengerDoor_Handle, bool");
+  REQUIRE(v);
+  CHECK(v->kind == MsfsVar::Kind::zVar);
+  CHECK(v->datum == "Z:SWS_EXIT_PassengerDoor_Handle");
+  CHECK(v->unit == "bool");
+  CHECK(parseMsfsName("z:Foo")->datum == "Z:Foo");
+  CHECK(parseMsfsName("Z:Foo")->unit == "number");
+  CHECK(parseMsfsName("Z:X")->key() != parseMsfsName("L:X")->key());
+  CHECK(parseMsfsName("Z:X")->key() == parseMsfsName("z:x")->key());
+  CHECK_FALSE(parseMsfsName("Z:"));
+  CHECK_FALSE(parseMsfsName("Z:X:1"));
+  CHECK_FALSE(parseMsfsName("Z:X,bool,number"));
+}
+
 TEST_CASE("a B-variable is an input event with no unit") {
   const auto v = parseMsfsName("B:ELECTRICAL_BATTERY_2");
   REQUIRE(v);

@@ -84,7 +84,7 @@ A signal is a named number. Names are opaque strings. For the X-Plane plugin a n
 
 - `flightsim_aide/aircraft_generation` (integer): the same counter as `generation` in `/v1/aircraft`.
 
-For the Microsoft Flight Simulator companion a name is one of three forms, written as the sim writes them (a checklist quotes them, `GRAMMAR.md` N6): `A:NAME[:index][, unit]` a simulation variable (unit default `number`), `L:NAME[, unit]` a local variable of the aircraft, `B:NAME` an input event. L-variable names are case-insensitive. See section 11 for what the companion answers.
+For the Microsoft Flight Simulator companion a name is one of four forms, written as the sim writes them (a checklist quotes them, `GRAMMAR.md` N6): `A:NAME[:index][, unit]` a simulation variable (unit default `number`), `L:NAME[, unit]` a local variable of the aircraft, `B:NAME` an input event, `Z:NAME[, unit]` a variable private to the aircraft's model (read like an `L:`; it holds, for example, the state of a door handle). L- and Z-variable names are case-insensitive. See section 11 for what the companion answers.
 
 A name the companion does not know is `unknown_name`; one it knows but cannot read as a single number (a whole array, a string) is `unsupported`. An array **element** is named `name[n]` (section 9). Both are deterministic: the same name always gets the same answer.
 
@@ -189,10 +189,11 @@ Golden cases: `testing/fixtures/protocol/stream_cases.json` (the `array range` a
 
 **Aircraft.** `icao` is the aircraft key: the `ATC MODEL` value, and for a default aircraft that reports `ATCCOM.AC_MODEL C152.0.text` the model in it (`C152`). `description` is `TITLE` (the livery). `aircraftPath` is `msfs/<key>`, opaque: two liveries of one aircraft share it, and so the checklist. Before any flight is loaded the aircraft is `No aircraft loaded` with the path `msfs/none` and no checklist. `generation` rises once per load, after the new aircraft's values can be trusted (below). The checklist file is `<key>_clist.txt`, then `clist.txt`, in the `checklists` folder next to the companion's own folder (`<package>\checklists`).
 
-**Names.** `A:`, `L:` and `B:` (section 6). Answers to a subscribe:
+**Names.** `A:`, `L:`, `Z:` and `B:` (section 6). Answers to a subscribe:
 - an A-variable the sim refuses, or a wrong unit, is `unknown_name` (SimConnect exception `NAME_UNRECOGNIZED`); the answer waits up to 0.4 s for the sim;
 - a `B:` name that is not in the sim's list of input events for the loaded aircraft is `unknown_name`; one that is not a number is `unsupported`;
 - an L-variable that does not exist reads `0` and cannot be told from one that does, so it is **always accepted** (an exception to the rule that an unknown name is `unknown_name`, D-86);
+- a Z-variable behaves like an L-variable: SimConnect reads `0` for one that does not exist (measured on the PC-12), so it is **always accepted**;
 - any other form, and any `[n]` or `[a..b]` index, is `unknown_name`.
 
 **Values.** A value is `null` while the aircraft is loading and for a variable the sim cannot read now. The measured load (D-88) is `SimStop`, `FlightLoaded`, `SimStart`, then `AircraftLoaded` 2 to 3 s later; values read in that window are wrong (altitude 53819.6, parking brake 0). So after a load starts the companion reports `null` until the sim runs again, `AircraftLoaded` was seen, the aircraft was read again and 2 s passed, and only then publishes the new aircraft and raises `generation`. A change of `TITLE` (a livery) with no load event is treated as a load. Pausing the sim changes nothing: values keep arriving. A `B:` value is read at 4 Hz from the sim and so can lag a switch by up to 0.25 s.

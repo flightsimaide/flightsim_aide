@@ -42,15 +42,15 @@ bool validSimVarDatum(const std::string& datum) {
 }  // namespace
 
 std::string MsfsVar::key() const {
-  const char* prefix = kind == Kind::simVar ? "a:" : kind == Kind::localVar ? "l:" : "b:";
-  // An L-variable's datum already starts with "L:".
-  return std::string(kind == Kind::localVar ? "" : prefix) + lower(datum) + "," + lower(unit);
+  const char* prefix = kind == Kind::simVar ? "a:" : kind == Kind::inputEvent ? "b:" : "";
+  // An L- or Z-variable's datum already starts with its own prefix.
+  return std::string(prefix) + lower(datum) + "," + lower(unit);
 }
 
 std::optional<MsfsVar> parseMsfsName(const std::string& name) {
   if (name.size() < 3 || name[1] != ':' || hasControl(name)) return std::nullopt;
   const char tag = static_cast<char>(std::tolower(static_cast<unsigned char>(name[0])));
-  if (tag != 'a' && tag != 'l' && tag != 'b') return std::nullopt;
+  if (tag != 'a' && tag != 'l' && tag != 'b' && tag != 'z') return std::nullopt;
   const std::string rest = name.substr(2);
 
   std::string head = rest;
@@ -74,10 +74,10 @@ std::optional<MsfsVar> parseMsfsName(const std::string& name) {
     v.datum = head;
     return v;
   }
-  if (tag == 'l') {
+  if (tag == 'l' || tag == 'z') {
     if (head.find(':') != std::string::npos) return std::nullopt;
-    v.kind = MsfsVar::Kind::localVar;
-    v.datum = "L:" + head;
+    v.kind = tag == 'l' ? MsfsVar::Kind::localVar : MsfsVar::Kind::zVar;
+    v.datum = std::string(tag == 'l' ? "L:" : "Z:") + head;
     v.unit = hasUnit ? unit : "number";
     return v;
   }
