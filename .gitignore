@@ -70,6 +70,7 @@ plugin/build-msfs/
 # Local example checklists: the folder and its README are tracked, the checklists are not.
 /Documentation/Examples/*
 !/Documentation/Examples/README.md
+!/Documentation/Examples/SWS_issues.md
 
 # Local dataref lists read from the author's sim (names and values belong to
 # Laminar Research, add-on authors and others): the folder and its README are
