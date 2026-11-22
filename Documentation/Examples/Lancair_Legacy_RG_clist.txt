@@ -3,7 +3,6 @@
 # No datarefs yet: every item is ticked by the pilot.
 
 sw_checklist:PREFLIGHT - COCKPIT
-sw_item:Control lock|REMOVED
 sw_item:Ignition|OFF
 sw_item:Gear switch|DOWN
 sw_item:Master|ON
@@ -71,7 +70,6 @@ sw_item:Throttle|OPEN
 sw_item_details:About 1/4 inch
 sw_item:Propeller|FULL FORWARD
 sw_item:Boost pump|CHECK
-sw_item:Prime|AS REQUIRED
 sw_item:Mags|BOTH
 sw_item:Starter|ENGAGE
 sw_item_details:30 seconds on, then 4 minutes off
