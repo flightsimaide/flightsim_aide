@@ -4,6 +4,8 @@ A place for example checklist files (the XChecklist format, see `Documentation/R
 
 The author keeps a PC-12 checklist here (`Thranda_PC12_clist.txt`, for the Thranda PC-12/47 in X-Plane 12). It is not part of the repository. The commands guide in `Documentation/Reference/checklist_docs/xchecklist_commands.md` takes some of its example lines from it; the other examples come from `testing/fixtures/`.
 
+`Lancair_Legacy_RG_clist.txt` is the exception: a checklist for the Lancair Legacy RG written by the project author, in their own words, and tracked in git. It has no datarefs yet (every item is ticked by hand). It is a sim aid, not an approved procedure.
+
 To use a checklist with X-Plane, copy it into the aircraft's folder, next to the `.acf` file, named after that file with `_clist.txt` added (for example `Cessna_172SP_clist.txt`).
 
 Thranda, Pilatus and X-Plane are trademarks of their owners. FlightSim Aide is not affiliated with, or endorsed by, any of them.

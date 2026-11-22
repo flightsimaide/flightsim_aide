@@ -1,0 +1,392 @@
+# Lancair Legacy RG checklist. Not an approved procedure: a sim aid only.
+# Written by the project author; the procedures are the author's own wording.
+# No datarefs yet: every item is ticked by the pilot.
+
+sw_checklist:PREFLIGHT - COCKPIT
+sw_item:Control lock|REMOVED
+sw_item:Ignition|OFF
+sw_item:Gear switch|DOWN
+sw_item:Master|ON
+sw_item:Gear lights|3 GREEN
+sw_item:Fuel quantity|CHECK
+sw_item:Fuel selector|FULLEST TANK
+sw_item:Flaps|DOWN
+sw_item:Lights|CHECK
+sw_item_details:Night flight only
+sw_item:Master|OFF
+sw_item:Parking brake|SET
+sw_continue:PREFLIGHT - EXTERIOR
+
+sw_checklist:PREFLIGHT - EXTERIOR
+sw_item_heading:Left Wing|center
+sw_item:Pitot tube|CLEAR
+sw_item_details:Cover off, no obstruction
+sw_item:Fuel drains|DRAIN
+sw_item_details:Two per wing
+sw_item:Tie-down|DISCONNECTED
+sw_item:Fuel level and cap|CHECK
+sw_item_details:Visual level, cap secure
+sw_item:Aileron|FREE
+sw_item_details:Moves smoothly and does not touch the flap
+sw_item:Flap|SECURE
+sw_item_details:Moves, hinge pins clipped and wired
+sw_item_heading:Tail|center
+sw_item:Static port|CLEAR
+sw_item:Tail tie-down|DISCONNECTED
+sw_item:Control surfaces|FREE
+sw_item_details:Secure, nothing rubbing
+sw_item_heading:Right Wing|center
+sw_item:Flap|SECURE
+sw_item:Aileron|FREE
+sw_item:Fuel level and cap|CHECK
+sw_item:Tie-down|DISCONNECTED
+sw_item:Fuel drains|DRAIN
+sw_item_details:Two per wing
+sw_item_heading:Nose|center
+sw_item:Intake covers|REMOVED
+sw_item:Oil level|CHECK
+sw_item:Dipstick and inspection door|SECURE
+sw_continue:BEFORE START
+
+sw_checklist:BEFORE START
+sw_item:Brakes|HOLD
+sw_item:Circuit breakers|IN
+sw_item:Master|OFF
+sw_item:Avionics master|OFF
+sw_item:Avionics switches|OFF
+sw_item:Gear switch|DOWN
+sw_item:Cockpit lights|ON
+sw_item:Trim|SET FOR TAKEOFF
+sw_item:Canopy|LATCHED
+sw_continue:ENGINE START
+
+sw_checklist:ENGINE START
+sw_item:Master|ON
+sw_item:Fuel quantity|CHECK
+sw_item_details:Compare with the visual check
+sw_item:NAV light|ON
+sw_item:Carb heat / alternate air|OFF
+sw_item:Mixture|RICH
+sw_item:Throttle|OPEN
+sw_item_details:About 1/4 inch
+sw_item:Propeller|FULL FORWARD
+sw_item:Boost pump|CHECK
+sw_item:Prime|AS REQUIRED
+sw_item:Mags|BOTH
+sw_item:Starter|ENGAGE
+sw_item_details:30 seconds on, then 4 minutes off
+sw_item:Throttle|1000 RPM
+sw_item:Oil pressure|CHECK
+sw_item_details:Shut down if none within 30 seconds
+sw_item:Alternator|ON
+sw_item:Avionics|ON
+sw_item:Mixture|LEAN
+sw_item_details:During taxi, to limit plug fouling
+sw_itemvoid:Backfire|KEEP CRANKING
+sw_continue:TAXI AND WARM-UP
+
+sw_checklist:FLOODED START
+sw_item:Mixture|CUT-OFF
+sw_item:Propeller|FULL FORWARD
+sw_item:Throttle|HALF OPEN
+sw_item:Mags|BOTH
+sw_item:Starter|ENGAGE
+sw_item:Throttle|IDLE
+sw_item_details:About 1000 RPM once running
+sw_item:Mixture|RICH
+
+sw_checklist:TAXI AND WARM-UP
+sw_item:Transponder|ALT
+sw_item:Area around and behind|CLEAR
+sw_item:Brakes|CHECK
+sw_item:Propeller|FULL FORWARD
+sw_item:Warm-up|900-1000 RPM
+sw_item_details:Avoid long idling at low RPM
+sw_item:Oil door|CLOSED
+sw_continue:RUN-UP
+
+sw_checklist:RUN-UP
+sw_item:Canopy|LOCKED
+sw_item:Area|CLEAR
+sw_item:Parking brake|SET
+sw_item:Clylinder temperature|CHECK
+sw_item:Oil temperature|GREEN
+sw_item:Throttle|1800 RPM
+sw_item:Propeller|CYCLE TWICE
+sw_item:Mags|CHECK
+sw_item_details:Continental: 150 RPM drop max. 50 RPM between mags
+sw_item:Throttle|IDLE
+sw_item_details:Then 1000 RPM
+sw_item:Suction|CHECK
+sw_item_details:4.8 to 5.2 in. Hg
+sw_continue:BEFORE TAKEOFF
+
+sw_checklist:BEFORE TAKEOFF
+sw_item:Canopy|LOCKED
+sw_item:Flight instruments|CHECK
+sw_item_details:Allow 5 minutes for the gyros to erect, 8 if in cloud
+sw_item:Fuel quantity|CHECK
+sw_item:Fuel selector|CHECK
+sw_item_details:Fullest tank
+sw_item:Oil pressure and temperature|SWITCH
+sw_item:Circuit breakers|IN
+sw_item:Master|ON
+sw_item:Avionics master|ON
+sw_item:Radios|SET
+sw_item:Autopilot|OFF
+sw_item:Transponder|ALT
+sw_item:Propeller|FULL FORWARD
+sw_item:Mixture|RICH
+sw_item:Boost pump|AS DESIRED
+sw_item:Trim|SET
+sw_item:Flaps|TAKEOFF
+sw_item_details:-10 degrees
+sw_item:Speed brakes|RETRACTED
+sw_item:Controls|FREE
+sw_item:Door seal|ON
+sw_continue:LINE-UP
+
+sw_checklist:LINE-UP
+sw_item:Strobes|ON
+sw_item:Transponder|ALT
+sw_item:Approach and departure path|CLEAR
+sw_item:Boost|AS REQUIRED
+sw_item:Clearance|RECEIVED
+sw_item:Runway|CLEAR
+sw_item:Time|NOTE
+sw_continue:TAKEOFF AND CLIMB
+
+sw_checklist:TAKEOFF AND CLIMB
+sw_item:Power|2700 RPM
+sw_item:Oil temperature|100 F MIN
+sw_item:Cylinder head temperature|150 F MIN
+sw_item:Engine instruments|CHECK
+sw_item:Flight instruments|CHECK
+sw_item:Rotate|65-67 KTS
+sw_continue:CLIMB
+
+sw_checklist:CLIMB
+sw_item:Climb|120 KTS
+sw_item_details:Above 1000 ft AGL
+sw_item:Positive Climb|BRAKES TAP
+sw_item:Gear|UP
+sw_item:Flaps|UP
+sw_item_details:Above 800 ft AGL
+sw_item:Propeller|2500 RPM
+sw_item:Mixture|LEAN
+sw_item_details:For climb
+sw_item:Cylinder head temperature|500 F MAX
+sw_item:Oil temperature|240 F MAX
+sw_item:Normal climb|140 KTS OR GREATER
+sw_item_details:Vx 102 KTS
+sw_item_details:Vy 135 KTS
+sw_continue:CRUISE
+
+sw_checklist:CRUISE
+sw_item:Throttle|AS DESIRED
+sw_item:Ram air|OPEN
+sw_item:Propeller|2400 RPM
+sw_item:Mixture|LEAN
+sw_item_details:Best Power 50°F to 100°F rich of peak
+sw_item_details:Best Economy 50°F lean of peak
+sw_item:Low boost pump|ON
+sw_item_details:Above 10,000 ft
+sw_continue:DESCENT
+
+sw_checklist:DESCENT
+sw_item:Fuel selector|AS DESIRED
+sw_item_details:Fullest tank
+sw_item:Fuel pump|OFF
+sw_item:Altimeter|SET
+sw_item:Mixture|ENRICHEN THROUGH DESCENT
+sw_item:Power|AS REQUIRED
+sw_item_details:Avoid rapid cooling
+sw_item:Cylinder head temperature|ABOVE 180 F
+sw_item:Ram air|CLOSED
+sw_continue:BEFORE LANDING
+
+sw_checklist:BEFORE LANDING
+sw_item:Fuel selector|AS DESIRED
+sw_item_details:Fullest tank
+sw_item:Fuel pump|AS DESIRED
+sw_item:Mixture|RICH
+sw_item:Gear|3 GREEN
+sw_item_details:Down, 140 kt maximum
+sw_item:Flaps|FULL
+sw_item_details:120 kt maximum
+sw_item:Propeller|FULL FORWARD
+sw_item:Brakes|CHECK
+sw_item_details:Pump if soft
+sw_item:Approach speed|95-100 KTS
+sw_continue:AFTER LANDING
+
+sw_checklist:BALKED LANDING
+sw_item:Throttle|FULL
+sw_item:Climb|ESTABLISHED 95 KTS
+sw_item:Flaps|20 DEG
+sw_item:Positive Climb|BRAKES TAP
+sw_item:Gear|UP
+
+sw_checklist:AFTER LANDING
+sw_item:Flaps|UP
+sw_item:Strobes|OFF
+sw_item:Transponder|ALT
+sw_item:Lights|AS REQUIRED
+sw_item:Trim|RESET
+sw_item_details:For takeoff
+sw_item:Door seal|OFF
+sw_item:Time|NOTE
+sw_continue:SHUTDOWN
+
+sw_checklist:SHUTDOWN
+sw_item:Radios|OFF
+sw_item:Avionics master|OFF
+sw_item:Throttle|IDLE
+sw_item:Mixture|CUT-OFF
+sw_item:Fuel selector|OFF
+sw_item:Mags|OFF
+sw_item_details:After the engine stops
+sw_item:Lights|OFF
+sw_item:Master|OFF
+sw_item:Parking brake|SET
+sw_item:Chocks and tie-down|SECURE
+sw_item:Parking brake|RELEASED
+
+################################################################
+# EMERGENCY AND ABNORMAL
+################################################################
+sw_checklist:ENGINE FAILURE - TAKEOFF OR LOW
+sw_itemvoid:Land ahead if the runway allows|Below about 700 ft pick a site within 30 deg of the nose
+sw_item:Best glide|120 kts
+sw_item:Emergency|DECLARE
+sw_item:Fuel pump|ON
+sw_item:Fuel selector|FULLEST TANK
+sw_item:Mixture|RICH
+sw_item:Mags|CYCLE
+sw_item_details:Then back to BOTH
+sw_item:Flaps|FULL
+sw_item_details:On final
+
+sw_checklist:ENGINE FAILURE - IN FLIGHT
+sw_item:Best glide|120 kts
+sw_item:Landing site|PICK
+sw_item:Fuel pump|ON
+sw_item_details:Low boost, or high boost if none fitted
+sw_item:Fuel selector|FULLEST TANK
+sw_item:Mixture|RICH
+sw_item:Mags|CYCLE
+sw_item_details:Then back to BOTH
+sw_item:Starter|ENGAGE
+sw_item_details:If the propeller has stopped
+sw_item:Emergency|DECLARE
+sw_item:Position|CALL
+sw_item_details:On the active frequency or 121.5
+sw_item:Transponder|7700
+
+sw_checklist:ROUGH ENGINE
+sw_item:Mixture|RICH
+sw_item:Power|REDUCE
+sw_item_details:About 2100 RPM, if still rough
+sw_item:Mags|L, BOTH, R, BEST
+sw_item:Mixture|READJUST
+sw_itemvoid:If the cause is unclear|Land at the nearest airport
+
+sw_checklist:ENGINE FIRE - IN FLIGHT
+sw_itemvoid:Acrid smell|Treat as electrical first
+sw_item:Avionics master|OFF
+sw_item:Master|OFF
+sw_item:Radios and lights|OFF
+sw_itemvoid:If the smell clears|Master ON, then one item at a time. Land soon
+sw_item_heading:If Fire Continues|center
+sw_item:Throttle|IDLE
+sw_item:Mixture|CUT-OFF
+sw_item:Fuel shutoff valve|OFF
+sw_item:Fuel pump|OFF
+sw_item:Transponder|7700
+sw_item:Radio|EMERGENCY
+sw_item_details:Call "emergency" and position
+sw_item:Land|IMMEDIATELY
+sw_item_details:Exit the aircraft
+
+sw_checklist:ENGINE FIRE - ON THE GROUND
+sw_item:Throttle|IDLE
+sw_item:Mixture|CUT-OFF
+sw_item:Radio|EMERGENCY
+sw_item_details:Call "emergency" and position
+sw_item:Master|OFF
+sw_item:Mags|OFF
+sw_itemvoid:During start|Keep cranking. Taxiing: stop and exit
+
+sw_checklist:EMERGENCY DESCENT
+sw_item:Power|IDLE
+sw_item:Speed brakes|OPEN
+sw_item:Propeller|HIGH RPM
+sw_item:Gear|DOWN
+sw_item_details:Once slow enough (140 kt), then hold 150 kt
+sw_item:Transponder|7700
+
+sw_checklist:GLIDE CONFIGURATION
+sw_item:Gear|UP
+sw_item:Glide speed|120 KTS
+sw_item:Flaps|UP
+sw_item:Propeller|LOW RPM
+
+sw_checklist:FORCED LANDING - NO POWER
+sw_itemvoid:Do this once the field is certain
+sw_item:Canopy|LATCHED
+sw_item:Gear|UP OR DOWN
+sw_item_details:Up for water or soft ground, down for rough ground
+sw_item:Fuel pump|OFF
+sw_item:Mixture|CUT-OFF
+sw_item:Mags|OFF
+sw_item:Flaps|AS REQUIRED
+sw_item:Master|OFF
+sw_item:Aircraft|EXIT
+sw_item_details:After it stops. Stay clear until there is no fire risk
+
+sw_checklist:ALTERNATOR FAILURE
+sw_item:Master|OFF
+sw_item:Avionics master|OFF
+sw_item:Lights|OFF
+sw_item:Circuit breakers|CHECK
+sw_item_details:If one popped: all equipment off, reset, master ON, then add items one at a time
+
+sw_checklist:GEAR WILL NOT STAY UP
+sw_item:Airspeed|REDUCE
+sw_item:Gear circuit breaker|PULL
+sw_item:Gear switch|DOWN
+sw_item:Gear dump valve|OPEN
+sw_item:Gear|3 GREEN
+sw_item:Gear dump valve|CLOSED
+sw_itemvoid:A slip may help it lock|Do not retract again before landing
+
+sw_checklist:SPEED BRAKE FAULT
+sw_item:Speed brake breaker|PULL
+sw_item_details:Retracts them
+sw_itemvoid:Never use in icing|Expect a higher sink rate if one stays out
+
+sw_checklist:CANOPY UNLATCHED IN FLIGHT
+sw_itemvoid:Do not open the canopy
+sw_item:Airspeed|REDUCE
+sw_item:Canopy|RELATCH
+sw_item_details:If it will not lock, land as soon as practical
+
+sw_checklist:PROPELLER OVERSPEED
+sw_item:Throttle|IDLE
+sw_item:Airspeed|REDUCE
+sw_item_details:Until the governor controls the RPM
+sw_item:Throttle|ADD SLOWLY
+sw_item:Mixture|ADJUST
+sw_itemvoid:Over 200 RPM above redline|Inspect the engine after landing
+
+sw_checklist:SPIN RECOVERY
+sw_item:Stick|NEUTRAL
+sw_item_details:Or forward
+sw_item:Rudder|FULL OPPOSITE
+sw_item:Pull-out|SMOOTH
+sw_item_details:4.5 g maximum; avoid a second stall
+
+sw_checklist:EMERGENCY SPEED REDUCTION
+sw_item:Throttle|IDLE
+sw_item:Gear|DOWN
+sw_itemvoid:Afterwards|Inspect the gear before any retraction

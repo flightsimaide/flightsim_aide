@@ -71,6 +71,7 @@ plugin/build-msfs/
 /Documentation/Examples/*
 !/Documentation/Examples/README.md
 !/Documentation/Examples/SWS_issues.md
+!/Documentation/Examples/Lancair_Legacy_RG_clist.txt
 
 # Local dataref lists read from the author's sim (names and values belong to
 # Laminar Research, add-on authors and others): the folder and its README are
