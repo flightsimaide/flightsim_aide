@@ -1,4 +1,4 @@
-# Lancair Legacy RG checklist. Not an approved procedure: a sim aid only.
+# Lancair Legacy RG550 checklist. Not an approved procedure: a sim aid only.
 # Written by the project author; the procedures are the author's own wording.
 # No datarefs yet: every item is ticked by the pilot.
 
@@ -109,7 +109,7 @@ sw_checklist:RUN-UP
 sw_item:Canopy|LOCKED
 sw_item:Area|CLEAR
 sw_item:Parking brake|SET
-sw_item:Clylinder temperature|CHECK
+sw_item:Cylinder temperature|CHECK
 sw_item:Oil temperature|GREEN
 sw_item:Throttle|1800 RPM
 sw_item:Propeller|CYCLE TWICE
@@ -162,7 +162,7 @@ sw_item:Oil temperature|100 F MIN
 sw_item:Cylinder head temperature|150 F MIN
 sw_item:Engine instruments|CHECK
 sw_item:Flight instruments|CHECK
-sw_item:Rotate|65-67 KTS
+sw_item:Rotate|65-75 KTS
 sw_continue:CLIMB
 
 sw_checklist:CLIMB
